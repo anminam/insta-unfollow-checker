@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Insta Unfollow Checker",
+    "description": "Extension name"
+  },
+  "appDesc": {
+    "message": "맞팔하지 않는 Instagram 사용자를 찾아 언팔로우하세요",
+    "description": "Extension description"
+  },
+  "popupTagline": {
+    "message": "맞팔하지 않는 사람 찾기",
+    "description": "Popup subtitle"
+  },
+  "popupButton": {
+    "message": "분석 하러가기",
+    "description": "Popup open button text"
+  }
+}

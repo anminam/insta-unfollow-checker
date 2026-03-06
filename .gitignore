@@ -1,0 +1,5 @@
+CLAUDE.md
+.bkit/
+docs/.pdca-snapshots/
+docs/.pdca-status.json
+docs/.bkit-memory.json

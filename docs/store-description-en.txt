@@ -1,0 +1,49 @@
+Find out who doesn't follow you back on Instagram — instantly.
+
+🔍 Key Features
+
+• Following/Follower Analysis — Collects your full lists and compares mutual follows
+• Non-Followers Detection — Instantly find accounts that don't follow you back
+• Mutual Follows Tab — See all accounts that follow each other
+• One-Click Unfollow — Unfollow individually, by selection, or all at once
+• Scheduled Unfollow — Safely processes 1 account every 3-5 minutes
+
+📊 Statistics & Tracking
+
+• Follower/Following/Non-follower trend charts
+• Follower change tracking (gained/lost)
+• Up to 20 analysis history snapshots
+• Snapshot comparison for detailed changes
+• Follower ratio health indicator
+
+🛡️ Data Management
+
+• Whitelist — Protect specific accounts from batch unfollow
+• User Notes & Tags — Add memos and categorize accounts (Friends/Celebs/Brands/Work)
+• CSV Export — View analysis results in spreadsheets
+• JSON Backup/Restore — Safely backup all your data
+
+⚙️ Convenience Features
+
+• Dark mode support (auto-detects system theme)
+• Korean & English language support
+• Real-time search & filters
+• Sort by name, verified status, or oldest
+• Keyboard shortcuts (Ctrl+A, Esc, Ctrl+F)
+• Shift+Click range selection
+• Auto analysis (runs every 24 hours in background)
+• Badge notifications for follower changes
+
+🔒 Privacy
+
+• All data is stored locally in your browser only
+• No data is sent to any external server
+• Uses your existing Instagram web session (no extra login needed)
+
+📋 Required Permissions
+
+• instagram.com — Fetch following/follower data
+• googleapis.com — Google sign-in for access control
+• cookies — Instagram session authentication
+• storage — Store analysis results locally
+• alarms — Schedule automatic analysis

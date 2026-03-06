@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - Insta Unfollow Checker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      color: #333;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: #fafafa;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #111;
+    }
+    .last-updated {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 32px;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      color: #222;
+    }
+    p, li {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+    ul {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: 600;
+    }
+    .contact {
+      margin-top: 40px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+    a { color: #3897f0; }
+  </style>
+</head>
+<body>
+
+<h1>Privacy Policy</h1>
+<p class="last-updated">Last updated: March 4, 2026</p>
+
+<p>Insta Unfollow Checker ("the Extension") is a Chrome browser extension that helps you identify Instagram users who don't follow you back. This privacy policy explains what data we collect, how it is used, and how it is stored.</p>
+
+<h2>1. Data We Collect</h2>
+
+<table>
+  <tr>
+    <th>Data Type</th>
+    <th>Purpose</th>
+    <th>Source</th>
+  </tr>
+  <tr>
+    <td>Instagram following list</td>
+    <td>Compare with followers to find non-mutual follows</td>
+    <td>Instagram GraphQL API (using your existing web session)</td>
+  </tr>
+  <tr>
+    <td>Instagram follower list</td>
+    <td>Compare with following to find non-mutual follows</td>
+    <td>Instagram GraphQL API (using your existing web session)</td>
+  </tr>
+  <tr>
+    <td>Google email address</td>
+    <td>Access control via authorized user list</td>
+    <td>Google OAuth 2.0 (chrome.identity)</td>
+  </tr>
+</table>
+
+<h2>2. How Data Is Stored</h2>
+
+<p>All data is stored <strong>locally on your device</strong>. We do not operate any backend servers and do not store any of your data externally.</p>
+
+<table>
+  <tr>
+    <th>Storage Location</th>
+    <th>Data</th>
+    <th>Retention</th>
+  </tr>
+  <tr>
+    <td>localStorage (browser)</td>
+    <td>Unfollow history, analysis snapshots, whitelist, user memos, preferences</td>
+    <td>Until you clear browser data or uninstall</td>
+  </tr>
+  <tr>
+    <td>sessionStorage (browser)</td>
+    <td>Analysis cache</td>
+    <td>10-minute TTL, cleared when tab closes</td>
+  </tr>
+  <tr>
+    <td>chrome.storage.local</td>
+    <td>Auto-analysis snapshots, Google auth cache</td>
+    <td>Auth cache: 24-hour TTL. Snapshots: until cleared</td>
+  </tr>
+</table>
+
+<h2>3. Third-Party Services</h2>
+
+<p>The Extension communicates with the following external services:</p>
+
+<ul>
+  <li><strong>Instagram (instagram.com)</strong> — To fetch your following/follower lists and perform follow/unfollow actions. Uses your existing Instagram web session cookies. No additional login is required.</li>
+  <li><strong>Google APIs (googleapis.com)</strong> — To authenticate your Google account and check the authorized user list via Google Sheets API. Only your email address is accessed.</li>
+</ul>
+
+<p>We do <strong>not</strong> send data to any other third-party services, analytics platforms, or advertising networks.</p>
+
+<h2>4. Data Sharing</h2>
+
+<p>We do <strong>not</strong> sell, trade, or share your data with any third parties. Your Instagram data and Google email remain on your local device.</p>
+
+<h2>5. Permissions Explained</h2>
+
+<table>
+  <tr>
+    <th>Permission</th>
+    <th>Why It's Needed</th>
+  </tr>
+  <tr>
+    <td>cookies</td>
+    <td>Read Instagram session cookies (csrftoken, ds_user_id) for API authentication</td>
+  </tr>
+  <tr>
+    <td>storage</td>
+    <td>Store auto-analysis results and auth cache locally</td>
+  </tr>
+  <tr>
+    <td>alarms</td>
+    <td>Schedule automatic background analysis (every 24 hours)</td>
+  </tr>
+  <tr>
+    <td>identity</td>
+    <td>Google OAuth sign-in for access control</td>
+  </tr>
+  <tr>
+    <td>host_permissions (instagram.com)</td>
+    <td>Access Instagram API endpoints for data fetching</td>
+  </tr>
+  <tr>
+    <td>host_permissions (cdninstagram.com, fbcdn.net)</td>
+    <td>Load profile images from Instagram CDN</td>
+  </tr>
+  <tr>
+    <td>host_permissions (googleapis.com)</td>
+    <td>Google Sheets API for authorized user list verification</td>
+  </tr>
+</table>
+
+<h2>6. Data Security</h2>
+
+<p>Since all data is stored locally in your browser, it is protected by your operating system and browser security. The Extension does not transmit your data to any server we operate.</p>
+
+<h2>7. Your Rights</h2>
+
+<ul>
+  <li><strong>View your data:</strong> All stored data is accessible in your browser's developer tools (Application tab).</li>
+  <li><strong>Delete your data:</strong> Use the Extension's data management features (JSON backup/restore, CSV export) or clear your browser data.</li>
+  <li><strong>Uninstall:</strong> Removing the Extension deletes all chrome.storage.local data. localStorage data can be cleared via browser settings.</li>
+</ul>
+
+<h2>8. Children's Privacy</h2>
+
+<p>This Extension is not intended for use by children under 13. We do not knowingly collect data from children.</p>
+
+<h2>9. Changes to This Policy</h2>
+
+<p>We may update this privacy policy from time to time. Changes will be posted on this page with an updated revision date.</p>
+
+<div class="contact">
+  <h2 style="margin-top: 0;">10. Contact</h2>
+  <p>If you have questions about this privacy policy, please open an issue on our <a href="https://github.com/anminam/insta-unfollow-checker" target="_blank" rel="noopener">GitHub repository</a>.</p>
+</div>
+
+</body>
+</html>

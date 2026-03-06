@@ -1,0 +1,18 @@
+{
+  "appName": {
+    "message": "Insta Unfollow Checker",
+    "description": "Extension name"
+  },
+  "appDesc": {
+    "message": "Find Instagram users who don't follow you back",
+    "description": "Extension description"
+  },
+  "popupTagline": {
+    "message": "Find non-followers",
+    "description": "Popup subtitle"
+  },
+  "popupButton": {
+    "message": "Start Analysis",
+    "description": "Popup open button text"
+  }
+}
