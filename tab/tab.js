@@ -1,229 +1,25 @@
-// ── i18n ──
+// ── Tab Entry Point (ES Module) ──
 
-const I18N = {
-  ko: {
-    subtitle: '맞팔하지 않는 사람 찾기',
-    retry: '다시 시도',
-    statsTitle: '통계 대시보드',
-    snapshotTitle: '분석 이력',
-    historyTitle: '언팔로우 기록',
-    scheduledTitle: '예약 언팔로우',
-    scheduledRemaining: (n) => `대기 중: ${n}명`,
-    scheduledCancel: '취소',
-    startAnalysis: '분석 시작',
-    preparing: '준비 중...',
-    following: '팔로잉',
-    followers: '팔로워',
-    mutual: '맞팔',
-    notFollowing: '맞팔안함',
-    searchPlaceholder: '사용자 검색...',
-    verified: '인증',
-    sortDefault: '기본순',
-    sortName: '이름순',
-    sortVerified: '인증우선',
-    sortOldest: '오래된순',
-    selectAll: '전체 선택',
-    scheduledUnfollow: '예약 언팔',
-    unfollowSelected: '선택 언팔로우',
-    stop: '중지',
-    no: '아니오',
-    yes: '네',
-    collectingFollowing: '팔로잉 수집 중',
-    collectingFollowers: '팔로워 수집 중',
-    startingAnalysis: '분석 시작 중...',
-    unfollowing: '언팔로우 진행 중',
-    waitingSafety: '안전을 위해 대기 중',
-    resumeIn: (s) => `${s}초 후 재개`,
-    stopped: (n) => `중지됨! ${n}명 언팔로우 완료`,
-    completed: (n) => `완료! ${n}명 언팔로우됨`,
-    confirmUnfollow: (n) => `${n}명을 언팔하겠습니다.\n하시겠습니까?`,
-    confirmSchedule: (n) => `${n}명을 예약 언팔합니다.\n하루에 나눠서 진행됩니다.`,
-    noSearchResults: '검색 결과가 없습니다.',
-    allMutual: '모든 팔로잉이 맞팔 중입니다!',
-    emptyList: '목록이 비어있습니다.',
-    prevUnfollowed: '이전에 팔취',
-    protected: '보호',
-    oldFollowing: '오래된 팔로잉',
-    refollow: '다시 팔로우',
-    refollowed: '완료',
-    unfollow: '언팔로우',
-    done: '완료',
-    fail: '실패',
-    error: '오류',
-    stopping: '중지 중...',
-    followerChanges: '팔로워 변동 상세',
-    lostFollowers: (n) => `언팔한 사람 (${n})`,
-    newFollowers: (n) => `새 팔로워 (${n})`,
-    justNow: '방금 전',
-    minutesAgo: (n) => `${n}분 전`,
-    hoursAgo: (n) => `${n}시간 전`,
-    daysAgo: (n) => `${n}일 전`,
-    chartFollowers: '팔로워',
-    chartFollowing: '팔로잉',
-    chartNotFollowing: '맞팔안함',
-    ratio: '비율',
-    autoAnalysis: '자동 분석 (24시간마다)',
-    backup: '백업',
-    restore: '복원',
-    backupSuccess: '백업 파일이 다운로드되었습니다.',
-    restoreSuccess: '데이터가 복원되었습니다.',
-    restoreFail: '복원에 실패했습니다.',
-    compareSnapshots: '비교',
-    close: '닫기',
-    selectTwoSnapshots: '비교할 스냅샷 2개를 선택하세요.',
-    comparedFollowers: '팔로워 변동',
-    comparedFollowing: '팔로잉 변동',
-    comparedNotFollowing: '맞팔안함 변동',
-    memoTitle: '메모',
-    memoPlaceholder: '메모를 입력하세요...',
-    save: '저장',
-    memoSaved: '메모가 저장되었습니다.',
-    tagFriend: '친구',
-    tagCeleb: '셀럽',
-    tagBrand: '브랜드',
-    tagWork: '업무',
-    toastUnfollowed: (u) => `@${u} 언팔로우 완료`,
-    toastRefollowed: (u) => `@${u} 다시 팔로우 완료`,
-    toastCopied: '클립보드에 복사되었습니다.',
-    NOT_LOGGED_IN: '인스타그램에 먼저 로그인해주세요.\ninstagram.com에 접속하여 로그인 후 다시 시도하세요.',
-    RATE_LIMITED: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
-    API_CHANGED: 'Instagram API가 변경되었을 수 있습니다.\n익스텐션 업데이트를 확인해주세요.',
-    UNFOLLOW_FAILED: '언팔로우에 실패했습니다. 잠시 후 다시 시도해주세요.',
-    FOLLOW_FAILED: '팔로우에 실패했습니다. 잠시 후 다시 시도해주세요.',
-    authRequired: '로그인이 필요합니다',
-    googleLogin: 'Google로 로그인',
-    logout: '로그아웃',
-    loggingIn: '로그인 중...',
-    NOT_AUTHORIZED: '승인 대기 중입니다. 관리자가 승인하면 사용할 수 있습니다.',
-    GOOGLE_API_ERROR: 'Google API 오류가 발생했습니다.',
-    GOOGLE_NO_EMAIL: '이메일 정보를 가져올 수 없습니다.',
-    SHEET_ACCESS_ERROR: '허용 목록을 확인할 수 없습니다.',
-    GOOGLE_LOGIN_CANCELLED: '로그인이 취소되었습니다.',
-    etaRemaining: (m, s) => `남은 시간: ${m}분 ${s}초`,
-    etaRemainingSeconds: (s) => `남은 시간: ${s}초`,
-  },
-  en: {
-    subtitle: 'Find non-mutual followers',
-    retry: 'Retry',
-    statsTitle: 'Stats Dashboard',
-    snapshotTitle: 'Analysis History',
-    historyTitle: 'Unfollow History',
-    scheduledTitle: 'Scheduled Unfollows',
-    scheduledRemaining: (n) => `Pending: ${n}`,
-    scheduledCancel: 'Cancel',
-    startAnalysis: 'Start Analysis',
-    preparing: 'Preparing...',
-    following: 'Following',
-    followers: 'Followers',
-    mutual: 'Mutual',
-    notFollowing: 'Not Following Back',
-    searchPlaceholder: 'Search users...',
-    verified: 'Verified',
-    sortDefault: 'Default',
-    sortName: 'By Name',
-    sortVerified: 'Verified First',
-    sortOldest: 'Oldest First',
-    selectAll: 'Select All',
-    scheduledUnfollow: 'Schedule',
-    unfollowSelected: 'Unfollow Selected',
-    stop: 'Stop',
-    no: 'No',
-    yes: 'Yes',
-    collectingFollowing: 'Collecting following',
-    collectingFollowers: 'Collecting followers',
-    startingAnalysis: 'Starting analysis...',
-    unfollowing: 'Unfollowing',
-    waitingSafety: 'Waiting for safety',
-    resumeIn: (s) => `Resume in ${s}s`,
-    stopped: (n) => `Stopped! ${n} unfollowed`,
-    completed: (n) => `Done! ${n} unfollowed`,
-    confirmUnfollow: (n) => `Unfollow ${n} users?\nAre you sure?`,
-    confirmSchedule: (n) => `Schedule ${n} unfollows.\nThey will be spread over time.`,
-    noSearchResults: 'No results found.',
-    allMutual: 'All your followings follow you back!',
-    emptyList: 'List is empty.',
-    prevUnfollowed: 'Prev unfollowed',
-    protected: 'Protected',
-    oldFollowing: 'Old following',
-    refollow: 'Re-follow',
-    refollowed: 'Done',
-    unfollow: 'Unfollow',
-    done: 'Done',
-    fail: 'Failed',
-    error: 'Error',
-    stopping: 'Stopping...',
-    followerChanges: 'Follower Changes',
-    lostFollowers: (n) => `Lost followers (${n})`,
-    newFollowers: (n) => `New followers (${n})`,
-    justNow: 'Just now',
-    minutesAgo: (n) => `${n}m ago`,
-    hoursAgo: (n) => `${n}h ago`,
-    daysAgo: (n) => `${n}d ago`,
-    chartFollowers: 'Followers',
-    chartFollowing: 'Following',
-    chartNotFollowing: 'Not Following Back',
-    ratio: 'Ratio',
-    autoAnalysis: 'Auto analysis (every 24h)',
-    backup: 'Backup',
-    restore: 'Restore',
-    backupSuccess: 'Backup downloaded.',
-    restoreSuccess: 'Data restored.',
-    restoreFail: 'Restore failed.',
-    compareSnapshots: 'Compare',
-    close: 'Close',
-    selectTwoSnapshots: 'Select 2 snapshots to compare.',
-    comparedFollowers: 'Follower changes',
-    comparedFollowing: 'Following changes',
-    comparedNotFollowing: 'Not-following changes',
-    memoTitle: 'Memo',
-    memoPlaceholder: 'Enter a memo...',
-    save: 'Save',
-    memoSaved: 'Memo saved.',
-    tagFriend: 'Friend',
-    tagCeleb: 'Celeb',
-    tagBrand: 'Brand',
-    tagWork: 'Work',
-    toastUnfollowed: (u) => `@${u} unfollowed`,
-    toastRefollowed: (u) => `@${u} re-followed`,
-    toastCopied: 'Copied to clipboard.',
-    NOT_LOGGED_IN: 'Please log in to Instagram first.\nGo to instagram.com and sign in.',
-    RATE_LIMITED: 'Too many requests. Please try again later.',
-    API_CHANGED: 'Instagram API may have changed.\nPlease check for extension updates.',
-    UNFOLLOW_FAILED: 'Unfollow failed. Please try again later.',
-    FOLLOW_FAILED: 'Follow failed. Please try again later.',
-    authRequired: 'Login required',
-    googleLogin: 'Sign in with Google',
-    logout: 'Logout',
-    loggingIn: 'Signing in...',
-    NOT_AUTHORIZED: 'Pending approval. You can use the app once the admin approves.',
-    GOOGLE_API_ERROR: 'Google API error occurred.',
-    GOOGLE_NO_EMAIL: 'Could not retrieve email information.',
-    SHEET_ACCESS_ERROR: 'Could not verify the allowlist.',
-    GOOGLE_LOGIN_CANCELLED: 'Login was cancelled.',
-    etaRemaining: (m, s) => `Time left: ${m}m ${s}s`,
-    etaRemainingSeconds: (s) => `Time left: ${s}s`,
-  }
-};
-
-const LANG_KEY = 'insta-lang';
-let currentLang = localStorage.getItem(LANG_KEY) || 'ko';
-
-function t(key, ...args) {
-  const val = I18N[currentLang]?.[key] || I18N.ko[key] || key;
-  return typeof val === 'function' ? val(...args) : val;
-}
-
-function applyI18n() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.dataset.i18n);
-  });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    el.placeholder = t(el.dataset.i18nPlaceholder);
-  });
-  filterSortSelect.querySelectorAll('option').forEach(opt => {
-    if (opt.dataset.i18n) opt.textContent = t(opt.dataset.i18n);
-  });
-}
+import { t, applyI18n, getLang, setLang } from './modules/i18n.js';
+import {
+  CACHE_KEY, SNAPSHOT_KEY, DARK_MODE_KEY, SORT_KEY,
+  getWhitelist, saveWhitelist, toggleWhitelist,
+  getMemos, getUserMemo, setUserMemo, saveMemos,
+  getUnfollowHistory, saveUnfollowHistory, recordUnfollow, removeUnfollowRecord,
+  getCachedAnalysis, setCachedAnalysis,
+  getSnapshots, saveSnapshot, deleteSnapshot,
+  getScheduledQueue, saveScheduledQueue,
+  getSortPreference, saveSortPreference,
+  isOnboardingDone, setOnboardingDone,
+  getScheduledInterval, saveScheduledInterval,
+  getScheduledDailyLimit, saveScheduledDailyLimit,
+  UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
+} from './modules/storage.js';
+import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode } from './modules/ui.js';
+import { drawStatsChart } from './modules/chart.js';
+import { getFilteredUsers } from './modules/filter.js';
+import { renderUserList } from './modules/renderer.js';
+import { batchUnfollow } from './modules/unfollow.js';
 
 // ── DOM Elements ──
 
@@ -238,6 +34,7 @@ const followingCountEl = document.getElementById('following-count');
 const followerCountEl = document.getElementById('follower-count');
 const mutualCountEl = document.getElementById('mutual-count');
 const notFollowingCountEl = document.getElementById('not-following-count');
+const followerOnlyCountEl = document.getElementById('follower-only-count');
 const ratioValueEl = document.getElementById('ratio-value');
 const selectAllCheckbox = document.getElementById('select-all');
 const unfollowSelectedBtn = document.getElementById('unfollow-selected-btn');
@@ -251,7 +48,7 @@ const unfollowProgress = document.getElementById('unfollow-progress');
 const unfollowMessage = document.getElementById('unfollow-message');
 const unfollowTarget = document.getElementById('unfollow-target');
 const unfollowBar = document.getElementById('unfollow-bar');
-const unfollowCount = document.getElementById('unfollow-count');
+const unfollowCountEl = document.getElementById('unfollow-count');
 const unfollowStopBtn = document.getElementById('unfollow-stop-btn');
 const unfollowEta = document.getElementById('unfollow-eta');
 const tabNav = document.querySelector('.tab-nav');
@@ -260,6 +57,7 @@ const tabFollowingCount = document.getElementById('tab-following-count');
 const tabFollowerCount = document.getElementById('tab-follower-count');
 const tabMutualCount = document.getElementById('tab-mutual-count');
 const tabNotFollowingCount = document.getElementById('tab-not-following-count');
+const tabFollowerOnlyCount = document.getElementById('tab-follower-only-count');
 const darkModeBtn = document.getElementById('dark-mode-btn');
 const langSelect = document.getElementById('lang-select');
 const filterSearchInput = document.getElementById('filter-search');
@@ -267,7 +65,6 @@ const filterVerifiedBtn = document.getElementById('filter-verified-btn');
 const filterSortSelect = document.getElementById('filter-sort');
 const filterExportBtn = document.getElementById('filter-export-btn');
 const autoAnalysisToggle = document.getElementById('auto-analysis-toggle');
-const toastContainer = document.getElementById('toast-container');
 const authGate = document.getElementById('auth-gate');
 const mainApp = document.getElementById('main-app');
 const googleLoginBtn = document.getElementById('google-login-btn');
@@ -279,452 +76,81 @@ const progressStep = document.getElementById('progress-step');
 const progressPercent = document.getElementById('progress-percent');
 const progressEtaEl = document.getElementById('progress-eta');
 
-const UNFOLLOW_DELAY_MIN = 3000;
-const UNFOLLOW_DELAY_MAX = 5000;
-const UNFOLLOW_BATCH_SIZE = 10;
-const UNFOLLOW_BATCH_PAUSE = 30000;
-const STORAGE_KEY = 'insta-unfollow-history';
-const SNAPSHOT_KEY = 'insta-analysis-snapshots';
-const MAX_SNAPSHOTS = 20;
-const WHITELIST_KEY = 'insta-whitelist';
-const DARK_MODE_KEY = 'insta-dark-mode';
-const SORT_KEY = 'insta-sort-preference';
-const CACHE_KEY = 'insta-analysis-cache';
-const SCHEDULED_KEY = 'insta-scheduled-unfollow';
-const MEMO_KEY = 'insta-user-memos';
-const OLD_FOLLOWING_THRESHOLD = 0.7;
+// ── Stat delta elements ──
+const deltaFollowing = document.getElementById('delta-following');
+const deltaFollower = document.getElementById('delta-follower');
+const deltaMutual = document.getElementById('delta-mutual');
+const deltaNotFollowing = document.getElementById('delta-not-following');
+const deltaFollowerOnly = document.getElementById('delta-follower-only');
+
+// ── Scheduled settings ──
+const scheduledIntervalSlider = document.getElementById('scheduled-interval-slider');
+const scheduledIntervalValue = document.getElementById('scheduled-interval-value');
+const scheduledDailyLimitInput = document.getElementById('scheduled-daily-limit-input');
 
 // ── State ──
 
 let currentTab = 'not-following';
 let analysisData = null;
-let unfollowStopped = false;
 let filterVerified = false;
 let scheduledTimer = null;
 const selectedIds = new Set();
-let lastClickedIndex = -1; // for shift+click
-const compareSelected = new Set(); // snapshot compare indices
+let lastClickedIndex = -1;
+const compareSelected = new Set();
 let progressStartTime = 0;
 let currentPhase = '';
 
-// ── Helpers ──
+// ── Helper: check wide screen ──
 
-function show(el) { el.classList.remove('hidden'); }
-function hide(el) { el.classList.add('hidden'); }
+function isWideScreen() {
+  return window.innerWidth >= 768;
+}
 
-function showConfirm(message) {
-  return new Promise(resolve => {
-    const modal = document.getElementById('confirm-modal');
-    const msg = document.getElementById('confirm-message');
-    const yesBtn = document.getElementById('confirm-yes');
-    const noBtn = document.getElementById('confirm-no');
-    msg.textContent = message;
-    show(modal);
-    const cleanup = (result) => {
-      hide(modal);
-      yesBtn.removeEventListener('click', onYes);
-      noBtn.removeEventListener('click', onNo);
-      resolve(result);
-    };
-    const onYes = () => cleanup(true);
-    const onNo = () => cleanup(false);
-    yesBtn.addEventListener('click', onYes);
-    noBtn.addEventListener('click', onNo);
+// ── Filtered users wrapper ──
+
+function getFiltered() {
+  return getFilteredUsers({
+    analysisData,
+    currentTab,
+    searchQuery: filterSearchInput.value,
+    filterVerified,
+    sortValue: filterSortSelect.value
   });
 }
 
-function randomDelay(min, max) {
-  const ms = Math.floor(Math.random() * (max - min + 1)) + min;
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+function refreshList() {
+  const showControls = currentTab === 'not-following';
+  const users = getFiltered();
+  const emptyMsg = filterSearchInput.value.trim() || filterVerified
+    ? t('noSearchResults')
+    : showControls
+      ? t('allMutual')
+      : t('emptyList');
 
-function formatEta(totalSeconds) {
-  const sec = Math.max(0, Math.round(totalSeconds));
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return m > 0 ? t('etaRemaining', m, s) : t('etaRemainingSeconds', s);
-}
+  renderUserList(userListEl, users, showControls, selectedIds, { isWideScreen: isWideScreen() });
 
-function estimateEta(completed, total) {
-  const remaining = total - completed;
-  if (remaining <= 0) return 0;
-
-  // Average delay per user: ~4s (midpoint of 3-5s)
-  const avgDelay = (UNFOLLOW_DELAY_MIN + UNFOLLOW_DELAY_MAX) / 2 / 1000;
-  // Batch pauses: every UNFOLLOW_BATCH_SIZE users, ~32.5s pause
-  const avgBatchPause = (UNFOLLOW_BATCH_PAUSE + 2500) / 1000;
-
-  let eta = remaining * avgDelay;
-  const batchesLeft = Math.floor((remaining - 1) / UNFOLLOW_BATCH_SIZE);
-  // Subtract already-elapsed within current batch
-  const posInBatch = completed % UNFOLLOW_BATCH_SIZE;
-  const currentBatchRemaining = UNFOLLOW_BATCH_SIZE - posInBatch;
-  const firstBatchPause = (remaining > currentBatchRemaining && currentBatchRemaining < UNFOLLOW_BATCH_SIZE) ? 1 : 0;
-  const totalPauses = firstBatchPause + Math.max(0, batchesLeft - (firstBatchPause ? 0 : 0));
-  const pauseCount = Math.floor(remaining / UNFOLLOW_BATCH_SIZE) + (posInBatch > 0 && remaining > currentBatchRemaining ? 0 : 0);
-
-  // Simpler calculation: count how many batch boundaries remain
-  let pauses = 0;
-  for (let i = 1; i <= remaining; i++) {
-    if ((completed + i) % UNFOLLOW_BATCH_SIZE === 0 && (completed + i) < total) {
-      pauses++;
-    }
+  if (users.length === 0) {
+    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${emptyMsg}</p>`;
   }
-  eta += pauses * avgBatchPause;
-
-  return eta;
-}
-
-function countdownDelay(seconds, onTick) {
-  return new Promise(resolve => {
-    let remaining = seconds;
-    onTick(remaining);
-    const timer = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        clearInterval(timer);
-        resolve();
-      } else {
-        onTick(remaining);
-      }
-    }, 1000);
-  });
-}
-
-const FALLBACK_AVATAR = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 44%22><rect fill=%22%23efefef%22 width=%2244%22 height=%2244%22 rx=%2222%22/><text x=%2222%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%23bbb%22 font-size=%2218%22>?</text></svg>';
-
-async function loadImageAsBlob(url) {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return FALLBACK_AVATAR;
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
-  } catch {
-    return FALLBACK_AVATAR;
-  }
-}
-
-function getErrorText(errorCode) {
-  return t(errorCode) || `${t('error')}: ${errorCode}`;
-}
-
-// ── Toast Notifications ──
-
-function showToast(message, type = '') {
-  const toast = document.createElement('div');
-  toast.className = `toast${type ? ` toast-${type}` : ''}`;
-  toast.textContent = message;
-  toastContainer.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  updateSelectedCount();
 }
 
 // ── Dark Mode ──
 
-function initDarkMode() {
-  const saved = localStorage.getItem(DARK_MODE_KEY);
-  let isDark;
-  if (saved !== null) {
-    isDark = saved === 'true';
-  } else {
-    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  applyDarkMode(isDark);
-}
-
-function applyDarkMode(isDark) {
-  document.documentElement.classList.toggle('dark', isDark);
-  darkModeBtn.textContent = isDark ? '☀️' : '🌙';
-}
-
-darkModeBtn.addEventListener('click', () => {
-  const isDark = !document.documentElement.classList.contains('dark');
-  applyDarkMode(isDark);
-  localStorage.setItem(DARK_MODE_KEY, String(isDark));
-});
+initDarkMode(darkModeBtn);
+darkModeBtn.addEventListener('click', () => toggleDarkMode(darkModeBtn));
 
 // ── Language ──
 
-langSelect.value = currentLang;
+langSelect.value = getLang();
 langSelect.addEventListener('change', () => {
-  currentLang = langSelect.value;
-  localStorage.setItem(LANG_KEY, currentLang);
-  applyI18n();
+  setLang(langSelect.value);
+  applyI18n(filterSortSelect);
   if (analysisData) refreshList();
   showSnapshots();
   showHistory();
   showScheduledStatus();
 });
-
-// ── Whitelist (localStorage) ──
-
-function getWhitelist() {
-  try {
-    return new Set(JSON.parse(localStorage.getItem(WHITELIST_KEY)) || []);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveWhitelist(set) {
-  localStorage.setItem(WHITELIST_KEY, JSON.stringify([...set]));
-}
-
-function isWhitelisted(userId) {
-  return getWhitelist().has(userId);
-}
-
-function toggleWhitelist(userId) {
-  const wl = getWhitelist();
-  if (wl.has(userId)) {
-    wl.delete(userId);
-  } else {
-    wl.add(userId);
-  }
-  saveWhitelist(wl);
-  return wl.has(userId);
-}
-
-// ── User Memos (localStorage) ──
-
-function getMemos() {
-  try {
-    return JSON.parse(localStorage.getItem(MEMO_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveMemos(memos) {
-  localStorage.setItem(MEMO_KEY, JSON.stringify(memos));
-}
-
-function getUserMemo(userId) {
-  const memos = getMemos();
-  return memos[userId] || null;
-}
-
-function setUserMemo(userId, text, tags) {
-  const memos = getMemos();
-  if (!text && (!tags || tags.length === 0)) {
-    delete memos[userId];
-  } else {
-    memos[userId] = { text: text || '', tags: tags || [] };
-  }
-  saveMemos(memos);
-}
-
-// ── Unfollow History (localStorage) ──
-
-function getUnfollowHistory() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveUnfollowHistory(history) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-}
-
-function recordUnfollow(userId, username) {
-  const history = getUnfollowHistory();
-  history[userId] = { username, date: new Date().toISOString() };
-  saveUnfollowHistory(history);
-}
-
-function removeUnfollowRecord(userId) {
-  const history = getUnfollowHistory();
-  delete history[userId];
-  saveUnfollowHistory(history);
-}
-
-function wasUnfollowed(userId) {
-  const history = getUnfollowHistory();
-  return !!history[userId];
-}
-
-// ── Analysis Cache (sessionStorage) ──
-
-function getCachedAnalysis() {
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (Date.now() - data.timestamp > 600000) {
-      sessionStorage.removeItem(CACHE_KEY);
-      return null;
-    }
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function setCachedAnalysis(following, followers, notFollowingBack, mutual, totalFollowing, totalFollowers) {
-  sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-    following, followers, notFollowingBack, mutual,
-    totalFollowing, totalFollowers,
-    timestamp: Date.now()
-  }));
-}
-
-// ── Analysis Snapshots (localStorage) ──
-
-function getSnapshots() {
-  try {
-    return JSON.parse(localStorage.getItem(SNAPSHOT_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSnapshot(following, followers, notFollowingBack, followerUsernames, followingUsernames) {
-  const snapshots = getSnapshots();
-  snapshots.unshift({
-    date: new Date().toISOString(),
-    following,
-    followers,
-    notFollowingBack,
-    followerUsernames: followerUsernames || [],
-    followingUsernames: followingUsernames || []
-  });
-  if (snapshots.length > MAX_SNAPSHOTS) snapshots.length = MAX_SNAPSHOTS;
-  localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshots));
-}
-
-// ── Scheduled Unfollow ──
-
-function getScheduledQueue() {
-  try {
-    return JSON.parse(localStorage.getItem(SCHEDULED_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveScheduledQueue(queue) {
-  localStorage.setItem(SCHEDULED_KEY, JSON.stringify(queue));
-}
-
-function showScheduledStatus() {
-  const queue = getScheduledQueue();
-  const section = document.getElementById('scheduled-section');
-  const statusEl = document.getElementById('scheduled-status');
-  const listEl = document.getElementById('scheduled-list');
-
-  if (queue.length === 0) {
-    hide(section);
-    return;
-  }
-
-  statusEl.textContent = t('scheduledRemaining', queue.length);
-  listEl.innerHTML = '';
-  queue.slice(0, 10).forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'scheduled-item';
-    div.textContent = `@${item.username}`;
-    listEl.appendChild(div);
-  });
-  if (queue.length > 10) {
-    const more = document.createElement('div');
-    more.className = 'scheduled-item';
-    more.textContent = `...+${queue.length - 10}`;
-    listEl.appendChild(more);
-  }
-  show(section);
-}
-
-async function processScheduledQueue() {
-  const queue = getScheduledQueue();
-  if (queue.length === 0) return;
-
-  const item = queue.shift();
-  saveScheduledQueue(queue);
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'UNFOLLOW_USER',
-      data: { userId: item.userId }
-    });
-    if (response.success) {
-      recordUnfollow(item.userId, item.username);
-      showToast(t('toastUnfollowed', item.username), 'success');
-    }
-  } catch {
-    // Skip failed
-  }
-
-  showScheduledStatus();
-
-  if (queue.length > 0) {
-    const delay = 180000 + Math.random() * 120000;
-    scheduledTimer = setTimeout(processScheduledQueue, delay);
-  }
-}
-
-document.getElementById('scheduled-cancel-btn').addEventListener('click', () => {
-  saveScheduledQueue([]);
-  if (scheduledTimer) clearTimeout(scheduledTimer);
-  scheduledTimer = null;
-  showScheduledStatus();
-});
-
-// ── Filter / Sort ──
-
-function getSortPreference() {
-  return localStorage.getItem(SORT_KEY) || 'default';
-}
-
-function saveSortPreference(value) {
-  localStorage.setItem(SORT_KEY, value);
-}
-
-function getFilteredUsers() {
-  if (!analysisData) return [];
-
-  let users;
-  switch (currentTab) {
-    case 'following': users = [...analysisData.following]; break;
-    case 'followers': users = [...analysisData.followers]; break;
-    case 'mutual': users = [...analysisData.mutual]; break;
-    case 'not-following': users = [...analysisData.notFollowingBack]; break;
-    default: users = [];
-  }
-
-  // Search filter
-  const query = filterSearchInput.value.trim().toLowerCase();
-  if (query) {
-    users = users.filter(u =>
-      u.username.toLowerCase().includes(query) ||
-      (u.full_name && u.full_name.toLowerCase().includes(query))
-    );
-  }
-
-  // Verified filter
-  if (filterVerified) {
-    users = users.filter(u => u.is_verified);
-  }
-
-  // Sort
-  const sort = filterSortSelect.value;
-  if (sort === 'name') {
-    users.sort((a, b) => a.username.localeCompare(b.username));
-  } else if (sort === 'verified') {
-    users.sort((a, b) => (b.is_verified ? 1 : 0) - (a.is_verified ? 1 : 0));
-  } else if (sort === 'oldest') {
-    users.reverse();
-  }
-
-  return users;
-}
-
-function refreshList() {
-  const showControls = currentTab === 'not-following';
-  const users = getFilteredUsers();
-  renderUserList(users, showControls);
-  updateSelectedCount();
-}
 
 // ── Progress Listener ──
 
@@ -734,7 +160,6 @@ chrome.runtime.onMessage.addListener((message) => {
     const phaseText = phase === 'following' ? t('collectingFollowing') : t('collectingFollowers');
     const percent = total > 0 ? Math.round((current / total) * 100) : 0;
 
-    // Reset timer on phase change
     if (phase !== currentPhase) {
       currentPhase = phase;
       progressStartTime = Date.now();
@@ -747,7 +172,6 @@ chrome.runtime.onMessage.addListener((message) => {
     progressPercent.textContent = `${percent}%`;
     progressCount.textContent = `${current} / ${total}`;
 
-    // ETA calculation
     if (current > 0 && total > 0 && current < total) {
       const elapsed = (Date.now() - progressStartTime) / 1000;
       const rate = current / elapsed;
@@ -776,7 +200,6 @@ function switchTab(tabName) {
     hide(toolbar);
   }
 
-  // Reset search/filter/selection on tab switch
   filterSearchInput.value = '';
   filterVerified = false;
   filterVerifiedBtn.classList.remove('active');
@@ -812,10 +235,14 @@ filterSortSelect.addEventListener('change', () => {
 // ── CSV Export ──
 
 filterExportBtn.addEventListener('click', () => {
-  const users = getFilteredUsers();
+  const users = getFiltered();
   if (users.length === 0) return;
 
-  const tabNames = { 'following': t('following'), 'followers': t('followers'), 'mutual': t('mutual'), 'not-following': t('notFollowing') };
+  const tabNames = {
+    'following': t('following'), 'followers': t('followers'),
+    'mutual': t('mutual'), 'not-following': t('notFollowing'),
+    'follower-only': t('followerOnly')
+  };
   const bom = '\uFEFF';
   const header = 'username,full_name,is_verified,memo,tags';
   const memos = getMemos();
@@ -852,6 +279,49 @@ function updateRatio(totalFollowing, totalFollowers) {
   ratioValueEl.className = `stat-value ${cls}`;
 }
 
+// ── Stat Delta Badges ──
+
+function updateStatDeltas(totalFollowing, totalFollowers, mutualCount, notFollowingCount, followerOnlyCount) {
+  const snapshots = getSnapshots();
+  if (snapshots.length < 1) {
+    // No previous snapshot to compare
+    clearDeltas();
+    return;
+  }
+
+  // Compare with the most recent snapshot (before current one is saved)
+  const prev = snapshots[0];
+  setDelta(deltaFollowing, totalFollowing - prev.following);
+  setDelta(deltaFollower, totalFollowers - prev.followers);
+  setDelta(deltaMutual, mutualCount - (prev.following - prev.notFollowingBack));
+  setDelta(deltaNotFollowing, notFollowingCount - prev.notFollowingBack, true);
+  if (deltaFollowerOnly) {
+    const prevFollowerOnly = prev.followers - (prev.following - prev.notFollowingBack);
+    setDelta(deltaFollowerOnly, followerOnlyCount - prevFollowerOnly);
+  }
+}
+
+function setDelta(el, diff, invertColor = false) {
+  if (!el) return;
+  if (diff === 0 || isNaN(diff)) {
+    el.textContent = '';
+    return;
+  }
+  const sign = diff > 0 ? '+' : '';
+  el.textContent = `${sign}${diff}`;
+  if (invertColor) {
+    el.className = `stat-delta ${diff > 0 ? 'down' : 'up'}`;
+  } else {
+    el.className = `stat-delta ${diff > 0 ? 'up' : 'down'}`;
+  }
+}
+
+function clearDeltas() {
+  [deltaFollowing, deltaFollower, deltaMutual, deltaNotFollowing, deltaFollowerOnly].forEach(el => {
+    if (el) el.textContent = '';
+  });
+}
+
 // ── Analysis ──
 
 async function startAnalysis() {
@@ -861,7 +331,8 @@ async function startAnalysis() {
       following: cached.following,
       followers: cached.followers,
       notFollowingBack: cached.notFollowingBack,
-      mutual: cached.mutual
+      mutual: cached.mutual,
+      followerOnly: cached.followerOnly || []
     };
     hide(startSection);
     hide(errorSection);
@@ -893,19 +364,23 @@ async function startAnalysis() {
     const { following, followers, notFollowingBack, totalFollowing, totalFollowers } = response.data;
 
     const followerIds = new Set(followers.map(u => u.id));
+    const followingIds = new Set(following.map(u => u.id));
     const mutual = following.filter(u => followerIds.has(u.id));
+    const followerOnly = followers.filter(u => !followingIds.has(u.id));
 
-    analysisData = { following, followers, notFollowingBack, mutual };
+    analysisData = { following, followers, notFollowingBack, mutual, followerOnly };
 
     const followerUsernames = followers.map(u => u.username);
     const followingUsernames = following.map(u => u.username);
 
-    setCachedAnalysis(following, followers, notFollowingBack, mutual, totalFollowing, totalFollowers);
+    // Calculate deltas before saving new snapshot
+    updateStatDeltas(totalFollowing, totalFollowers, mutual.length, notFollowingBack.length, followerOnly.length);
+
+    setCachedAnalysis(following, followers, notFollowingBack, mutual, followerOnly, totalFollowing, totalFollowers);
 
     hide(progressSection);
     showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames);
 
-    // Clear badge on fresh analysis
     chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
   } catch (error) {
     hide(progressSection);
@@ -920,12 +395,14 @@ function showResults(totalFollowing, totalFollowers, followerUsernames, followin
   followerCountEl.textContent = totalFollowers;
   mutualCountEl.textContent = analysisData.mutual.length;
   notFollowingCountEl.textContent = analysisData.notFollowingBack.length;
+  if (followerOnlyCountEl) followerOnlyCountEl.textContent = analysisData.followerOnly.length;
   updateRatio(totalFollowing, totalFollowers);
 
   tabFollowingCount.textContent = totalFollowing;
   tabFollowerCount.textContent = totalFollowers;
   tabMutualCount.textContent = analysisData.mutual.length;
   tabNotFollowingCount.textContent = analysisData.notFollowingBack.length;
+  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
 
   saveSnapshot(
     totalFollowing,
@@ -944,183 +421,20 @@ function showResultsFromCache(cached) {
   followerCountEl.textContent = cached.totalFollowers;
   mutualCountEl.textContent = analysisData.mutual.length;
   notFollowingCountEl.textContent = analysisData.notFollowingBack.length;
+  if (followerOnlyCountEl) followerOnlyCountEl.textContent = analysisData.followerOnly.length;
   updateRatio(cached.totalFollowing, cached.totalFollowers);
 
   tabFollowingCount.textContent = cached.totalFollowing;
   tabFollowerCount.textContent = cached.totalFollowers;
   tabMutualCount.textContent = analysisData.mutual.length;
   tabNotFollowingCount.textContent = analysisData.notFollowingBack.length;
+  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
 
   show(resultSection);
   switchTab('not-following');
 }
 
-// ── Render User List (Virtual Scroll) ──
-
-const ITEM_HEIGHT = 65;
-const BUFFER_COUNT = 5;
-
-function renderUserList(users, showUnfollowControls) {
-  userListEl.innerHTML = '';
-  userListEl.onscroll = null;
-
-  if (users.length === 0) {
-    const emptyMsg = filterSearchInput.value.trim() || filterVerified
-      ? t('noSearchResults')
-      : showUnfollowControls
-        ? t('allMutual')
-        : t('emptyList');
-    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${emptyMsg}</p>`;
-    return;
-  }
-
-  if (users.length <= 100) {
-    renderAllUsers(users, showUnfollowControls);
-    return;
-  }
-
-  // Virtual scroll for large lists
-  const totalHeight = users.length * ITEM_HEIGHT;
-  const spacer = document.createElement('div');
-  spacer.style.height = `${totalHeight}px`;
-  spacer.style.position = 'relative';
-  userListEl.appendChild(spacer);
-
-  const avatarObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const img = entry.target;
-      const picUrl = img.dataset.picUrl;
-      if (picUrl) {
-        loadImageAsBlob(picUrl).then(blobUrl => { img.src = blobUrl; });
-        delete img.dataset.picUrl;
-      }
-      avatarObserver.unobserve(img);
-    });
-  }, { root: userListEl, rootMargin: '100px' });
-
-  let renderedRange = { start: -1, end: -1 };
-
-  const renderVisible = () => {
-    const scrollTop = userListEl.scrollTop;
-    const viewHeight = userListEl.clientHeight;
-    let start = Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER_COUNT;
-    let end = Math.ceil((scrollTop + viewHeight) / ITEM_HEIGHT) + BUFFER_COUNT;
-    start = Math.max(0, start);
-    end = Math.min(users.length, end);
-
-    if (start === renderedRange.start && end === renderedRange.end) return;
-
-    const existing = spacer.querySelectorAll('.user-card');
-    existing.forEach(card => {
-      const idx = parseInt(card.dataset.index, 10);
-      if (idx < start || idx >= end) card.remove();
-    });
-
-    for (let i = start; i < end; i++) {
-      if (spacer.querySelector(`[data-index="${i}"]`)) continue;
-      const card = createUserCard(users[i], showUnfollowControls, i);
-      card.style.position = 'absolute';
-      card.style.top = `${i * ITEM_HEIGHT}px`;
-      card.style.left = '0';
-      card.style.right = '0';
-      spacer.appendChild(card);
-      const img = card.querySelector('.user-avatar');
-      if (img) avatarObserver.observe(img);
-    }
-
-    renderedRange = { start, end };
-  };
-
-  renderVisible();
-  userListEl.onscroll = renderVisible;
-}
-
-function renderAllUsers(users, showUnfollowControls) {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const img = entry.target;
-      const picUrl = img.dataset.picUrl;
-      if (picUrl) {
-        loadImageAsBlob(picUrl).then(blobUrl => { img.src = blobUrl; });
-        delete img.dataset.picUrl;
-      }
-      observer.unobserve(img);
-    });
-  }, { rootMargin: '100px' });
-
-  users.forEach((user, i) => {
-    const card = createUserCard(user, showUnfollowControls, i);
-    userListEl.appendChild(card);
-    const img = card.querySelector('.user-avatar');
-    observer.observe(img);
-  });
-}
-
-function createUserCard(user, showUnfollowControls, index) {
-  const card = document.createElement('div');
-  card.className = 'user-card';
-  card.dataset.userId = user.id;
-  card.dataset.index = index;
-
-  const verified = user.is_verified ? '<span class="user-verified">&#10003;</span>' : '';
-  const unfollowedBadge = wasUnfollowed(user.id) ? `<span class="badge-unfollowed">${t('prevUnfollowed')}</span>` : '';
-  const whitelisted = isWhitelisted(user.id);
-  const whitelistBadge = whitelisted ? `<span class="badge-whitelist">${t('protected')}</span>` : '';
-
-  const isOldFollowing = showUnfollowControls && analysisData &&
-    index >= analysisData.notFollowingBack.length * (1 - OLD_FOLLOWING_THRESHOLD);
-  const oldBadge = isOldFollowing ? `<span class="badge-old">${t('oldFollowing')}</span>` : '';
-
-  // Tags from memo
-  const memo = getUserMemo(user.id);
-  const tagBadges = (memo?.tags || []).map(tag =>
-    `<span class="badge-tag badge-tag-${tag}">${t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))}</span>`
-  ).join('');
-
-  const memoPreview = memo?.text
-    ? `<div class="user-memo-preview">${memo.text.slice(0, 40)}${memo.text.length > 40 ? '...' : ''}</div>`
-    : '';
-
-  const isChecked = selectedIds.has(user.id);
-  const checkboxHtml = showUnfollowControls
-    ? `<input type="checkbox" class="user-checkbox" data-user-id="${user.id}"${whitelisted ? ' disabled' : ''}${isChecked && !whitelisted ? ' checked' : ''}>`
-    : '';
-
-  let actionsHtml = '';
-  if (showUnfollowControls) {
-    const wlClass = whitelisted ? ' active' : '';
-    const memoClass = memo ? ' has-memo' : '';
-    actionsHtml = `<div class="user-actions">
-      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${user.username}" title="메모">📝</button>
-      <button class="btn-whitelist${wlClass}" data-user-id="${user.id}" title="화이트리스트">🛡️</button>
-      <button class="btn-unfollow" data-user-id="${user.id}" data-username="${user.username}"${whitelisted ? ' disabled' : ''}>${t('unfollow')}</button>
-    </div>`;
-  } else {
-    const memoClass = memo ? ' has-memo' : '';
-    actionsHtml = `<div class="user-actions">
-      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${user.username}" title="메모">📝</button>
-    </div>`;
-  }
-
-  card.innerHTML = `
-    ${checkboxHtml}
-    <img class="user-avatar" src="${FALLBACK_AVATAR}" data-pic-url="${user.profile_pic_url}" alt="${user.username}">
-    <div class="user-info">
-      <div class="user-username">
-        <a class="username-link" href="https://www.instagram.com/${user.username}/" target="_blank" rel="noopener">${user.username}</a>${verified}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
-      </div>
-      <div class="user-fullname">${user.full_name}</div>
-      ${memoPreview}
-    </div>
-    ${actionsHtml}
-  `;
-
-  return card;
-}
-
-// ── Selection (Set-based for virtual scroll) ──
+// ── Selection ──
 
 function updateSelectedCount() {
   selectedCountEl.textContent = selectedIds.size;
@@ -1137,7 +451,7 @@ function syncCheckboxesToSet() {
 selectAllCheckbox.addEventListener('change', () => {
   const whitelist = getWhitelist();
   if (selectAllCheckbox.checked) {
-    const users = getFilteredUsers();
+    const users = getFiltered();
     users.forEach(u => {
       if (!whitelist.has(u.id)) selectedIds.add(u.id);
     });
@@ -1148,7 +462,7 @@ selectAllCheckbox.addEventListener('change', () => {
   updateSelectedCount();
 });
 
-// ── Shift+Click Range Selection ──
+// ── Shift+Click ──
 
 userListEl.addEventListener('click', (e) => {
   const cb = e.target.closest('.user-checkbox');
@@ -1157,7 +471,7 @@ userListEl.addEventListener('click', (e) => {
   const currentIndex = parseInt(cb.closest('.user-card').dataset.index, 10);
 
   if (e.shiftKey && lastClickedIndex >= 0) {
-    const users = getFilteredUsers();
+    const users = getFiltered();
     const whitelist = getWhitelist();
     const start = Math.min(lastClickedIndex, currentIndex);
     const end = Math.max(lastClickedIndex, currentIndex);
@@ -1165,17 +479,13 @@ userListEl.addEventListener('click', (e) => {
 
     for (let i = start; i <= end; i++) {
       if (i < users.length && !whitelist.has(users[i].id)) {
-        if (shouldCheck) {
-          selectedIds.add(users[i].id);
-        } else {
-          selectedIds.delete(users[i].id);
-        }
+        if (shouldCheck) selectedIds.add(users[i].id);
+        else selectedIds.delete(users[i].id);
       }
     }
     syncCheckboxesToSet();
     updateSelectedCount();
 
-    // Update selectAll state
     const selectableCount = users.filter(u => !whitelist.has(u.id)).length;
     selectAllCheckbox.checked = selectableCount > 0 && selectedIds.size >= selectableCount;
   }
@@ -1186,14 +496,11 @@ userListEl.addEventListener('click', (e) => {
 userListEl.addEventListener('change', (e) => {
   if (e.target.classList.contains('user-checkbox')) {
     const uid = e.target.dataset.userId;
-    if (e.target.checked) {
-      selectedIds.add(uid);
-    } else {
-      selectedIds.delete(uid);
-    }
+    if (e.target.checked) selectedIds.add(uid);
+    else selectedIds.delete(uid);
     updateSelectedCount();
     const whitelist = getWhitelist();
-    const users = getFilteredUsers();
+    const users = getFiltered();
     const selectableCount = users.filter(u => !whitelist.has(u.id)).length;
     selectAllCheckbox.checked = selectableCount > 0 && selectedIds.size >= selectableCount;
   }
@@ -1219,15 +526,12 @@ userListEl.addEventListener('click', (e) => {
     if (unfollowBtn) unfollowBtn.disabled = true;
     selectedIds.delete(userId);
     if (!usernameDiv.querySelector('.badge-whitelist')) {
-      const verified = usernameDiv.querySelector('.user-verified');
+      const verifiedEl = usernameDiv.querySelector('.user-verified');
       const badge = document.createElement('span');
       badge.className = 'badge-whitelist';
       badge.textContent = t('protected');
-      if (verified) {
-        verified.insertAdjacentElement('afterend', badge);
-      } else {
-        usernameDiv.querySelector('.username-link').insertAdjacentElement('afterend', badge);
-      }
+      if (verifiedEl) verifiedEl.insertAdjacentElement('afterend', badge);
+      else usernameDiv.querySelector('.username-link').insertAdjacentElement('afterend', badge);
     }
   } else {
     if (checkbox) checkbox.disabled = false;
@@ -1259,7 +563,6 @@ userListEl.addEventListener('click', (e) => {
   input.value = existing?.text || '';
   memoTargetTags = existing?.tags ? [...existing.tags] : [];
 
-  // Update tag buttons
   modal.querySelectorAll('.tag-btn').forEach(btn => {
     btn.classList.toggle('active', memoTargetTags.includes(btn.dataset.tag));
   });
@@ -1273,7 +576,7 @@ document.getElementById('memo-modal').addEventListener('click', (e) => {
   if (tagBtn) {
     const tag = tagBtn.dataset.tag;
     if (memoTargetTags.includes(tag)) {
-      memoTargetTags = memoTargetTags.filter(t => t !== tag);
+      memoTargetTags = memoTargetTags.filter(tg => tg !== tag);
       tagBtn.classList.remove('active');
     } else {
       memoTargetTags.push(tag);
@@ -1328,33 +631,21 @@ userListEl.addEventListener('click', async (e) => {
       showToast(t('toastUnfollowed', username), 'success');
     } else {
       btn.textContent = t('fail');
-      setTimeout(() => {
-        btn.textContent = t('unfollow');
-        btn.disabled = false;
-      }, 2000);
+      setTimeout(() => { btn.textContent = t('unfollow'); btn.disabled = false; }, 2000);
     }
   } catch {
     btn.textContent = t('error');
-    setTimeout(() => {
-      btn.textContent = t('unfollow');
-      btn.disabled = false;
-    }, 2000);
+    setTimeout(() => { btn.textContent = t('unfollow'); btn.disabled = false; }, 2000);
   }
 });
 
 // ── Batch Unfollow ──
 
-unfollowStopBtn.addEventListener('click', () => {
-  unfollowStopped = true;
-  unfollowStopBtn.disabled = true;
-  unfollowStopBtn.textContent = t('stopping');
-});
-
 unfollowSelectedBtn.addEventListener('click', async () => {
   if (selectedIds.size === 0) return;
 
   const whitelist = getWhitelist();
-  const users = getFilteredUsers();
+  const users = getFiltered();
   const targets = users
     .filter(u => selectedIds.has(u.id) && !whitelist.has(u.id))
     .map(u => ({ userId: u.id, username: u.username }));
@@ -1362,98 +653,93 @@ unfollowSelectedBtn.addEventListener('click', async () => {
   if (targets.length === 0) return;
   if (!await showConfirm(t('confirmUnfollow', targets.length))) return;
 
-  unfollowStopped = false;
-  unfollowStopBtn.disabled = false;
-  unfollowStopBtn.textContent = t('stop');
-  hide(resultSection);
-  show(unfollowProgress);
-
-  let completed = 0;
-  const total = targets.length;
-
-  // Show initial ETA
-  unfollowEta.textContent = formatEta(estimateEta(0, total));
-
-  for (let i = 0; i < targets.length; i++) {
-    if (unfollowStopped) break;
-
-    const { userId, username } = targets[i];
-    const current = i + 1;
-    const percent = Math.round((current / total) * 100);
-
-    unfollowMessage.textContent = `${t('unfollowing')}... (${current}/${total})`;
-    unfollowTarget.textContent = `@${username}`;
-    unfollowBar.style.width = `${percent}%`;
-    unfollowCount.textContent = `${current} / ${total}`;
-    unfollowEta.textContent = formatEta(estimateEta(completed, total));
-
-    try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'UNFOLLOW_USER',
-        data: { userId }
-      });
-
-      if (response.success) {
-        recordUnfollow(userId, username);
-        const card = userListEl.querySelector(`[data-user-id="${userId}"]`);
-        if (card) {
-          const btn = card.querySelector('.btn-unfollow');
-          if (btn) {
-            btn.textContent = t('done');
-            btn.classList.add('done');
-          }
-          const cb = card.querySelector('.user-checkbox');
-          if (cb) cb.checked = false;
-        }
-      }
-    } catch {
-      // skip failed ones
+  await batchUnfollow({
+    targets,
+    els: {
+      resultSection, unfollowProgress, unfollowMessage, unfollowTarget,
+      unfollowBar, unfollowCount: unfollowCountEl, unfollowStopBtn, unfollowEta, userListEl
+    },
+    selectedIds,
+    onComplete: (completed) => {
+      updateSelectedCount();
+      const remaining = userListEl.querySelectorAll('.btn-unfollow:not(.done)').length;
+      notFollowingCountEl.textContent = remaining;
+      tabNotFollowingCount.textContent = remaining;
     }
-
-    completed++;
-
-    if (unfollowStopped) break;
-
-    if (completed % UNFOLLOW_BATCH_SIZE === 0 && completed < total) {
-      const waitSec = Math.ceil((UNFOLLOW_BATCH_PAUSE + Math.random() * 5000) / 1000);
-      const baseEta = estimateEta(completed, total);
-      await countdownDelay(waitSec, (remaining) => {
-        unfollowMessage.textContent = `${t('waitingSafety')}... (${completed}/${total})`;
-        unfollowTarget.textContent = t('resumeIn', remaining);
-        unfollowEta.textContent = formatEta(baseEta - (waitSec - remaining));
-      });
-      unfollowTarget.textContent = '';
-    } else if (completed < total) {
-      await randomDelay(UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX);
-    }
-  }
-
-  unfollowMessage.textContent = unfollowStopped ? t('stopped', completed) : t('completed', completed);
-  unfollowTarget.textContent = '';
-  unfollowEta.textContent = '';
-  unfollowBar.style.width = unfollowStopped ? `${Math.round((completed / total) * 100)}%` : '100%';
-  unfollowCount.textContent = `${completed} / ${total}`;
-  unfollowStopBtn.disabled = true;
-
-  showToast(unfollowStopped ? t('stopped', completed) : t('completed', completed), 'success');
-
-  setTimeout(() => {
-    hide(unfollowProgress);
-    updateSelectedCount();
-    show(resultSection);
-    const remaining = userListEl.querySelectorAll('.btn-unfollow:not(.done)').length;
-    notFollowingCountEl.textContent = remaining;
-    tabNotFollowingCount.textContent = remaining;
-  }, 2000);
+  });
 });
 
 // ── Scheduled Unfollow ──
+
+function showScheduledStatus() {
+  const queue = getScheduledQueue();
+  const section = document.getElementById('scheduled-section');
+  const statusEl = document.getElementById('scheduled-status');
+  const listEl = document.getElementById('scheduled-list');
+
+  if (queue.length === 0) {
+    hide(section);
+    return;
+  }
+
+  statusEl.textContent = t('scheduledRemaining', queue.length);
+  listEl.innerHTML = '';
+  queue.slice(0, 10).forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'scheduled-item';
+    div.textContent = `@${item.username}`;
+    listEl.appendChild(div);
+  });
+  if (queue.length > 10) {
+    const more = document.createElement('div');
+    more.className = 'scheduled-item';
+    more.textContent = `...+${queue.length - 10}`;
+    listEl.appendChild(more);
+  }
+  show(section);
+}
+
+async function processScheduledQueueLoop() {
+  const queue = getScheduledQueue();
+  if (queue.length === 0) return;
+
+  const item = queue.shift();
+  saveScheduledQueue(queue);
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'UNFOLLOW_USER',
+      data: { userId: item.userId }
+    });
+    if (response.success) {
+      recordUnfollow(item.userId, item.username);
+      showToast(t('toastUnfollowed', item.username), 'success');
+    }
+  } catch {
+    // Skip failed
+  }
+
+  showScheduledStatus();
+
+  if (getScheduledQueue().length > 0) {
+    const intervalMin = getScheduledInterval();
+    const delay = intervalMin * 60000 + Math.random() * 60000;
+    scheduledTimer = setTimeout(processScheduledQueueLoop, delay);
+  }
+}
+
+document.getElementById('scheduled-cancel-btn').addEventListener('click', () => {
+  saveScheduledQueue([]);
+  if (scheduledTimer) clearTimeout(scheduledTimer);
+  scheduledTimer = null;
+  showScheduledStatus();
+});
 
 scheduledUnfollowBtn.addEventListener('click', async () => {
   if (selectedIds.size === 0) return;
 
   const whitelist = getWhitelist();
-  const users = getFilteredUsers();
+  const users = getFiltered();
   const targets = users
     .filter(u => selectedIds.has(u.id) && !whitelist.has(u.id))
     .map(u => ({ userId: u.id, username: u.username }));
@@ -1473,9 +759,29 @@ scheduledUnfollowBtn.addEventListener('click', async () => {
   showScheduledStatus();
 
   if (!scheduledTimer) {
-    scheduledTimer = setTimeout(processScheduledQueue, 5000);
+    scheduledTimer = setTimeout(processScheduledQueueLoop, 5000);
   }
 });
+
+// ── Scheduled Unfollow Settings ──
+
+if (scheduledIntervalSlider) {
+  scheduledIntervalSlider.value = getScheduledInterval();
+  scheduledIntervalValue.textContent = `${getScheduledInterval()}`;
+  scheduledIntervalSlider.addEventListener('input', () => {
+    const val = parseInt(scheduledIntervalSlider.value, 10);
+    scheduledIntervalValue.textContent = `${val}`;
+    saveScheduledInterval(val);
+  });
+}
+
+if (scheduledDailyLimitInput) {
+  scheduledDailyLimitInput.value = getScheduledDailyLimit();
+  scheduledDailyLimitInput.addEventListener('change', () => {
+    const val = parseInt(scheduledDailyLimitInput.value, 10) || 50;
+    saveScheduledDailyLimit(val);
+  });
+}
 
 // ── Error ──
 
@@ -1485,12 +791,13 @@ function showError(errorCode) {
   show(startSection);
 }
 
-// ── Event Listeners ──
+// ── Start / Retry ──
 
 startBtn.addEventListener('click', () => {
   sessionStorage.removeItem(CACHE_KEY);
   startAnalysis();
 });
+
 retryBtn.addEventListener('click', () => {
   hide(errorSection);
   sessionStorage.removeItem(CACHE_KEY);
@@ -1500,9 +807,7 @@ retryBtn.addEventListener('click', () => {
 // ── Keyboard Shortcuts ──
 
 document.addEventListener('keydown', (e) => {
-  // Ctrl/Cmd + A: select all (only in not-following tab with result visible)
   if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !resultSection.classList.contains('hidden') && currentTab === 'not-following') {
-    // Only if not in an input
     if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
       e.preventDefault();
       selectAllCheckbox.checked = !selectAllCheckbox.checked;
@@ -1510,21 +815,23 @@ document.addEventListener('keydown', (e) => {
     }
   }
 
-  // Escape: close modals
   if (e.key === 'Escape') {
     const confirmModal = document.getElementById('confirm-modal');
     const memoModal = document.getElementById('memo-modal');
     const compareModal = document.getElementById('compare-modal');
+    const onboardingOverlay = document.getElementById('onboarding-overlay');
     if (!confirmModal.classList.contains('hidden')) {
       document.getElementById('confirm-no').click();
     } else if (!memoModal.classList.contains('hidden')) {
       document.getElementById('memo-cancel').click();
     } else if (!compareModal.classList.contains('hidden')) {
       document.getElementById('compare-close').click();
+    } else if (onboardingOverlay && !onboardingOverlay.classList.contains('hidden')) {
+      hide(onboardingOverlay);
+      setOnboardingDone();
     }
   }
 
-  // Ctrl/Cmd + F: focus search
   if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !resultSection.classList.contains('hidden')) {
     if (document.activeElement !== filterSearchInput) {
       e.preventDefault();
@@ -1533,120 +840,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
-
-// ── Stats Dashboard (Canvas Chart) ──
-
-function drawStatsChart() {
-  const snapshots = getSnapshots();
-  const canvas = document.getElementById('stats-chart');
-  const section = document.getElementById('stats-section');
-
-  if (snapshots.length < 2) {
-    hide(section);
-    return;
-  }
-
-  show(section);
-
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  ctx.scale(dpr, dpr);
-
-  const data = snapshots.slice(0, 10).reverse();
-  const pad = { top: 20, right: 16, bottom: 30, left: 44 };
-  const chartW = w - pad.left - pad.right;
-  const chartH = h - pad.top - pad.bottom;
-
-  let allValues = [];
-  data.forEach(d => allValues.push(d.following, d.followers, d.notFollowingBack));
-  const minVal = Math.min(...allValues);
-  const maxVal = Math.max(...allValues);
-  const range = maxVal - minVal || 1;
-
-  const style = getComputedStyle(document.documentElement);
-  const colorFollowers = style.getPropertyValue('--chart-line-followers').trim();
-  const colorFollowing = style.getPropertyValue('--chart-line-following').trim();
-  const colorNotFollowing = style.getPropertyValue('--chart-line-notfollowing').trim();
-  const colorGrid = style.getPropertyValue('--chart-grid').trim();
-  const colorText = style.getPropertyValue('--chart-text').trim();
-  const bgCard = style.getPropertyValue('--bg-card').trim();
-
-  ctx.fillStyle = bgCard;
-  ctx.fillRect(0, 0, w, h);
-
-  ctx.strokeStyle = colorGrid;
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.top + (chartH / 4) * i;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(w - pad.right, y);
-    ctx.stroke();
-
-    const val = Math.round(maxVal - (range / 4) * i);
-    ctx.fillStyle = colorText;
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(val, pad.left - 6, y + 3);
-  }
-
-  ctx.fillStyle = colorText;
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
-  data.forEach((d, i) => {
-    const x = pad.left + (chartW / (data.length - 1)) * i;
-    const date = new Date(d.date);
-    const label = `${date.getMonth() + 1}/${date.getDate()}`;
-    ctx.fillText(label, x, h - 8);
-  });
-
-  const drawLine = (key, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    data.forEach((d, i) => {
-      const x = pad.left + (chartW / (data.length - 1)) * i;
-      const y = pad.top + chartH - ((d[key] - minVal) / range) * chartH;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    data.forEach((d, i) => {
-      const x = pad.left + (chartW / (data.length - 1)) * i;
-      const y = pad.top + chartH - ((d[key] - minVal) / range) * chartH;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  };
-
-  drawLine('followers', colorFollowers);
-  drawLine('following', colorFollowing);
-  drawLine('notFollowingBack', colorNotFollowing);
-
-  const legends = [
-    { label: t('chartFollowers'), color: colorFollowers },
-    { label: t('chartFollowing'), color: colorFollowing },
-    { label: t('chartNotFollowing'), color: colorNotFollowing }
-  ];
-  let lx = pad.left;
-  ctx.font = '10px sans-serif';
-  legends.forEach(leg => {
-    ctx.fillStyle = leg.color;
-    ctx.fillRect(lx, 4, 12, 3);
-    ctx.fillStyle = colorText;
-    ctx.textAlign = 'left';
-    ctx.fillText(leg.label, lx + 15, 10);
-    lx += ctx.measureText(leg.label).width + 30;
-  });
-}
 
 // ── Snapshot Display ──
 
@@ -1661,12 +854,8 @@ function showSnapshots() {
     return;
   }
 
-  // Show compare button if 2+ snapshots
-  if (snapshots.length >= 2) {
-    show(compareBtn);
-  } else {
-    hide(compareBtn);
-  }
+  if (snapshots.length >= 2) show(compareBtn);
+  else hide(compareBtn);
 
   snapshotList.innerHTML = '';
   compareSelected.clear();
@@ -1680,7 +869,7 @@ function showSnapshots() {
     const deltaHtml = (current, previous, invertColor) => {
       if (!prev) return '';
       const diff = current - previous;
-      if (diff === 0) return '<span class="snapshot-delta neutral">±0</span>';
+      if (diff === 0) return '<span class="snapshot-delta neutral">\u00B10</span>';
       const cls = invertColor
         ? (diff > 0 ? 'down' : 'up')
         : (diff > 0 ? 'up' : 'down');
@@ -1750,7 +939,6 @@ document.getElementById('snapshot-list').addEventListener('change', (e) => {
 
   if (check.checked) {
     if (compareSelected.size >= 2) {
-      // Uncheck the oldest one
       const oldest = [...compareSelected][0];
       compareSelected.delete(oldest);
       const oldCheck = document.querySelector(`.snapshot-compare-check[data-snap-index="${oldest}"]`);
@@ -1773,14 +961,13 @@ document.getElementById('snapshot-compare-btn').addEventListener('click', () => 
   }
 
   const snapshots = getSnapshots();
-  const indices = [...compareSelected].sort((a, b) => b - a); // older first
+  const indices = [...compareSelected].sort((a, b) => b - a);
   const older = snapshots[indices[0]];
   const newer = snapshots[indices[1]];
 
   const content = document.getElementById('compare-content');
   let html = '';
 
-  // Numeric comparison
   const rows = [
     { label: t('following'), old: older.following, new_: newer.following },
     { label: t('followers'), old: older.followers, new_: newer.followers },
@@ -1792,11 +979,10 @@ document.getElementById('snapshot-compare-btn').addEventListener('click', () => 
     const diff = r.new_ - r.old;
     const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
     const cls = diff > 0 ? 'color:var(--color-up)' : diff < 0 ? 'color:var(--color-danger)' : '';
-    html += `<div class="compare-row"><span class="compare-label">${r.label}</span><div class="compare-values"><span>${r.old}</span><span class="compare-arrow">→</span><span>${r.new_}</span><span style="${cls};font-weight:600">${diffStr}</span></div></div>`;
+    html += `<div class="compare-row"><span class="compare-label">${r.label}</span><div class="compare-values"><span>${r.old}</span><span class="compare-arrow">\u2192</span><span>${r.new_}</span><span style="${cls};font-weight:600">${diffStr}</span></div></div>`;
   });
   html += '</div>';
 
-  // Follower diff
   if (older.followerUsernames && newer.followerUsernames) {
     const oldSet = new Set(older.followerUsernames);
     const newSet = new Set(newer.followerUsernames);
@@ -1819,19 +1005,13 @@ document.getElementById('compare-close').addEventListener('click', () => {
   hide(document.getElementById('compare-modal'));
 });
 
-function deleteSnapshot(index) {
-  const snapshots = getSnapshots();
-  snapshots.splice(index, 1);
-  localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshots));
-  drawStatsChart();
-  showSnapshots();
-}
-
 document.getElementById('snapshot-list').addEventListener('click', (e) => {
   const btn = e.target.closest('.snapshot-delete');
   if (!btn) return;
   const index = parseInt(btn.dataset.index, 10);
   deleteSnapshot(index);
+  drawStatsChart();
+  showSnapshots();
 });
 
 // ── History Display (with Refollow) ──
@@ -1890,17 +1070,11 @@ document.getElementById('history-list').addEventListener('click', async (e) => {
       setTimeout(() => showHistory(), 1500);
     } else {
       btn.textContent = t('fail');
-      setTimeout(() => {
-        btn.textContent = t('refollow');
-        btn.disabled = false;
-      }, 2000);
+      setTimeout(() => { btn.textContent = t('refollow'); btn.disabled = false; }, 2000);
     }
   } catch {
     btn.textContent = t('error');
-    setTimeout(() => {
-      btn.textContent = t('refollow');
-      btn.disabled = false;
-    }, 2000);
+    setTimeout(() => { btn.textContent = t('refollow'); btn.disabled = false; }, 2000);
   }
 });
 
@@ -1908,7 +1082,7 @@ document.getElementById('history-list').addEventListener('click', async (e) => {
 
 document.getElementById('backup-btn').addEventListener('click', () => {
   const data = {
-    version: 3,
+    version: 4,
     date: new Date().toISOString(),
     unfollowHistory: getUnfollowHistory(),
     snapshots: getSnapshots(),
@@ -1918,7 +1092,7 @@ document.getElementById('backup-btn').addEventListener('click', () => {
     settings: {
       darkMode: localStorage.getItem(DARK_MODE_KEY),
       sort: localStorage.getItem(SORT_KEY),
-      lang: localStorage.getItem(LANG_KEY)
+      lang: localStorage.getItem('insta-lang')
     }
   };
   const json = JSON.stringify(data, null, 2);
@@ -1952,15 +1126,13 @@ document.getElementById('restore-file').addEventListener('change', (e) => {
       if (data.settings) {
         if (data.settings.darkMode !== null) localStorage.setItem(DARK_MODE_KEY, data.settings.darkMode);
         if (data.settings.sort) localStorage.setItem(SORT_KEY, data.settings.sort);
-        if (data.settings.lang) localStorage.setItem(LANG_KEY, data.settings.lang);
+        if (data.settings.lang) localStorage.setItem('insta-lang', data.settings.lang);
       }
 
-      // Refresh UI
-      initDarkMode();
-      currentLang = localStorage.getItem(LANG_KEY) || 'ko';
-      langSelect.value = currentLang;
+      initDarkMode(darkModeBtn);
+      langSelect.value = getLang();
       filterSortSelect.value = getSortPreference();
-      applyI18n();
+      applyI18n(filterSortSelect);
       drawStatsChart();
       showSnapshots();
       showHistory();
@@ -1997,25 +1169,43 @@ autoAnalysisToggle.addEventListener('change', async () => {
   }
 });
 
-// ── Format Date ──
+// ── Onboarding Guide ──
 
-function formatDate(isoString) {
-  const d = new Date(isoString);
-  const now = new Date();
-  const diffMs = now - d;
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHour = Math.floor(diffMs / 3600000);
-  const diffDay = Math.floor(diffMs / 86400000);
+function showOnboarding() {
+  if (isOnboardingDone()) return;
 
-  if (diffMin < 1) return t('justNow');
-  if (diffMin < 60) return t('minutesAgo', diffMin);
-  if (diffHour < 24) return t('hoursAgo', diffHour);
-  if (diffDay < 7) return t('daysAgo', diffDay);
+  const overlay = document.getElementById('onboarding-overlay');
+  if (!overlay) return;
 
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}.${mm}.${dd}`;
+  let currentStep = 0;
+  const steps = overlay.querySelectorAll('.onboarding-step');
+  const dots = overlay.querySelectorAll('.onboarding-dot');
+  const prevBtn = document.getElementById('onboarding-prev');
+  const nextBtn = document.getElementById('onboarding-next');
+
+  function updateStep() {
+    steps.forEach((s, i) => s.classList.toggle('hidden', i !== currentStep));
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentStep));
+    prevBtn.classList.toggle('hidden', currentStep === 0);
+    nextBtn.textContent = currentStep === steps.length - 1 ? t('onboardingDone') : t('onboardingNext');
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (currentStep > 0) { currentStep--; updateStep(); }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      updateStep();
+    } else {
+      hide(overlay);
+      setOnboardingDone();
+    }
+  });
+
+  updateStep();
+  show(overlay);
 }
 
 // ── Auth ──
@@ -2038,6 +1228,7 @@ function showAuthGate() {
   hide(mainApp);
   hide(headerAuth);
   hide(authError);
+  showOnboarding();
 }
 
 function showMainApp(email) {
@@ -2057,22 +1248,20 @@ function initMainApp() {
   showScheduledStatus();
   initAutoAnalysis();
 
-  // Clear badge on tab open
   chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
 
-  // Resume scheduled queue if exists
   if (getScheduledQueue().length > 0 && !scheduledTimer) {
-    scheduledTimer = setTimeout(processScheduledQueue, 10000);
+    scheduledTimer = setTimeout(processScheduledQueueLoop, 10000);
   }
 
-  // Load cached analysis on tab reopen
   const cached = getCachedAnalysis();
   if (cached) {
     analysisData = {
       following: cached.following,
       followers: cached.followers,
       notFollowingBack: cached.notFollowingBack,
-      mutual: cached.mutual
+      mutual: cached.mutual,
+      followerOnly: cached.followerOnly || []
     };
     hide(startSection);
     showResultsFromCache(cached);
@@ -2119,8 +1308,17 @@ async function handleLogout() {
 googleLoginBtn.addEventListener('click', handleGoogleLogin);
 logoutBtn.addEventListener('click', handleLogout);
 
+// ── Responsive: re-render on resize ──
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (analysisData) refreshList();
+  }, 200);
+});
+
 // ── Init ──
 
-initDarkMode();
-applyI18n();
+applyI18n(filterSortSelect);
 checkAuthState();

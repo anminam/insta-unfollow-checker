@@ -895,18 +895,6 @@ body {
   overflow-y: auto;
 }
 
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 4px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.user-card:last-child {
-  border-bottom: none;
-}
-
 .user-card.shift-highlight {
   background: var(--color-whitelist-bg);
 }
@@ -1049,17 +1037,6 @@ body {
   padding: 1px 5px;
   margin-left: 6px;
   vertical-align: middle;
-}
-
-.badge-tag {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 600;
-  border-radius: 4px;
-  padding: 1px 5px;
-  margin-left: 4px;
-  vertical-align: middle;
-  border: 1px solid;
 }
 
 .badge-tag-friend {
@@ -1346,4 +1323,244 @@ body {
 
 .username-link:hover {
   text-decoration: underline;
+}
+
+/* ── Stat Delta Badges ── */
+
+.stat-delta {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 2px;
+  min-height: 16px;
+}
+
+.stat-delta.up {
+  color: var(--color-up);
+}
+
+.stat-delta.down {
+  color: var(--color-danger);
+}
+
+/* ── Fan stat ── */
+
+.stat-fan .stat-value {
+  color: var(--color-verified);
+}
+
+/* ── Verified Avatar Ring ── */
+
+.user-avatar.verified-ring {
+  border: 2px solid transparent;
+  background-image: linear-gradient(var(--bg-card), var(--bg-card)),
+    linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+}
+
+/* ── Memo Bubble ── */
+
+.memo-bubble {
+  display: inline-block;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Tag Pills ── */
+
+.badge-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+  border: 1px solid;
+}
+
+/* ── User Card Hover ── */
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--border-light);
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.user-card:hover {
+  background: var(--bg-secondary);
+}
+
+.user-card:last-child {
+  border-bottom: none;
+}
+
+/* ── Scheduled Settings ── */
+
+.scheduled-settings {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.scheduled-setting-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.scheduled-slider {
+  width: 80px;
+  accent-color: var(--color-verified);
+}
+
+.scheduled-number-input {
+  width: 50px;
+  padding: 3px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-container);
+  color: var(--text-primary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.scheduled-setting-value {
+  font-weight: 600;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ── Onboarding Overlay ── */
+
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.onboarding-card {
+  background: var(--bg-container);
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 340px;
+  text-align: center;
+  box-shadow: var(--shadow-modal);
+}
+
+.onboarding-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.onboarding-step h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.onboarding-step p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.onboarding-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 24px 0 20px;
+}
+
+.onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-color);
+  transition: background 0.2s;
+}
+
+.onboarding-dot.active {
+  background: linear-gradient(45deg, #f09433, #dc2743);
+}
+
+.onboarding-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.onboarding-buttons .btn {
+  min-width: 80px;
+}
+
+/* ── Responsive Layout ── */
+
+@media (min-width: 768px) {
+  .container {
+    width: 640px;
+    padding: 32px;
+  }
+
+  .user-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    max-height: 600px;
+  }
+
+  .user-card {
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px 8px;
+  }
+
+  .result-summary {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tab-nav {
+    flex-wrap: wrap;
+  }
+
+  .filter-bar {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    width: 800px;
+    padding: 36px;
+  }
+
+  .user-list {
+    max-height: 700px;
+  }
 }

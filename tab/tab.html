@@ -91,6 +91,17 @@
           <span id="scheduled-status" data-i18n="scheduledRemaining">대기 중: 0명</span>
           <button id="scheduled-cancel-btn" class="btn btn-secondary btn-sm" data-i18n="scheduledCancel">취소</button>
         </div>
+        <div class="scheduled-settings">
+          <label class="scheduled-setting-label">
+            <span data-i18n="scheduledIntervalLabel">언팔 간격 (분)</span>
+            <input type="range" id="scheduled-interval-slider" min="1" max="10" value="4" class="scheduled-slider">
+            <span id="scheduled-interval-value" class="scheduled-setting-value">4</span>
+          </label>
+          <label class="scheduled-setting-label">
+            <span data-i18n="scheduledDailyLimitLabel">일일 최대</span>
+            <input type="number" id="scheduled-daily-limit-input" min="1" max="200" value="50" class="scheduled-number-input">
+          </label>
+        </div>
         <div id="scheduled-list" class="scheduled-list"></div>
       </div>
     </div>
@@ -114,19 +125,28 @@
       <div class="result-summary">
         <div class="stat">
           <span class="stat-value" id="following-count">0</span>
+          <span class="stat-delta" id="delta-following"></span>
           <span class="stat-label" data-i18n="following">팔로잉</span>
         </div>
         <div class="stat">
           <span class="stat-value" id="follower-count">0</span>
+          <span class="stat-delta" id="delta-follower"></span>
           <span class="stat-label" data-i18n="followers">팔로워</span>
         </div>
         <div class="stat stat-mutual">
           <span class="stat-value" id="mutual-count">0</span>
+          <span class="stat-delta" id="delta-mutual"></span>
           <span class="stat-label" data-i18n="mutual">맞팔</span>
         </div>
         <div class="stat stat-highlight">
           <span class="stat-value" id="not-following-count">0</span>
+          <span class="stat-delta" id="delta-not-following"></span>
           <span class="stat-label" data-i18n="notFollowing">맞팔 안함</span>
+        </div>
+        <div class="stat stat-fan">
+          <span class="stat-value" id="follower-only-count">0</span>
+          <span class="stat-delta" id="delta-follower-only"></span>
+          <span class="stat-label" data-i18n="followerOnly">팬</span>
         </div>
         <div class="stat stat-ratio">
           <span class="stat-value" id="ratio-value">0</span>
@@ -140,6 +160,7 @@
         <button class="tab-btn" data-tab="followers"><span data-i18n="followers">팔로워</span> <span id="tab-follower-count">0</span></button>
         <button class="tab-btn" data-tab="mutual"><span data-i18n="mutual">맞팔</span> <span id="tab-mutual-count">0</span></button>
         <button class="tab-btn active" data-tab="not-following"><span data-i18n="notFollowing">맞팔안함</span> <span id="tab-not-following-count">0</span></button>
+        <button class="tab-btn" data-tab="follower-only"><span data-i18n="followerOnly">팬</span> <span id="tab-follower-only-count">0</span></button>
       </nav>
 
       <!-- Filter Bar -->
@@ -228,10 +249,40 @@
 
     </div><!-- /main-app -->
 
+    <!-- Onboarding Overlay -->
+    <div id="onboarding-overlay" class="onboarding-overlay hidden">
+      <div class="onboarding-card">
+        <div class="onboarding-step" data-step="0">
+          <div class="onboarding-icon">🔑</div>
+          <h3 data-i18n="onboardingStep1Title">로그인</h3>
+          <p data-i18n="onboardingStep1Desc">Google 계정으로 로그인하세요.</p>
+        </div>
+        <div class="onboarding-step hidden" data-step="1">
+          <div class="onboarding-icon">🔍</div>
+          <h3 data-i18n="onboardingStep2Title">분석</h3>
+          <p data-i18n="onboardingStep2Desc">분석 시작 버튼을 눌러 팔로잉/팔로워를 수집합니다.</p>
+        </div>
+        <div class="onboarding-step hidden" data-step="2">
+          <div class="onboarding-icon">✅</div>
+          <h3 data-i18n="onboardingStep3Title">결과 확인</h3>
+          <p data-i18n="onboardingStep3Desc">맞팔하지 않는 사람을 확인하고 언팔로우하세요.</p>
+        </div>
+        <div class="onboarding-dots">
+          <span class="onboarding-dot active"></span>
+          <span class="onboarding-dot"></span>
+          <span class="onboarding-dot"></span>
+        </div>
+        <div class="onboarding-buttons">
+          <button id="onboarding-prev" class="btn btn-secondary btn-sm hidden" data-i18n="onboardingPrev">이전</button>
+          <button id="onboarding-next" class="btn btn-primary btn-sm" data-i18n="onboardingNext">다음</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
   </div>
 
-  <script src="tab.js"></script>
+  <script type="module" src="tab.js"></script>
 </body>
 </html>
