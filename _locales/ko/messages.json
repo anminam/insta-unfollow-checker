@@ -8,7 +8,7 @@
     "description": "Extension description"
   },
   "popupTagline": {
-    "message": "맞팔하지 않는 사람 찾기",
+    "message": "나만 팔로우할수 없다!",
     "description": "Popup subtitle"
   },
   "popupButton": {
