@@ -25,7 +25,7 @@ export function drawStatsChart() {
   ctx.scale(dpr, dpr);
 
   const data = snapshots.slice(0, 10).reverse();
-  const pad = { top: 24, right: 20, bottom: 38, left: 52 };
+  const pad = { top: 36, right: 20, bottom: 38, left: 52 };
   const chartW = w - pad.left - pad.right;
   const chartH = h - pad.top - pad.bottom;
 
