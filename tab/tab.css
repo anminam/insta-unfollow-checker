@@ -403,11 +403,19 @@ body {
 .stats-section {
   text-align: left;
   margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+}
+
+.stats-section .history-title {
+  margin-bottom: 8px;
 }
 
 .stats-chart {
   width: 100%;
-  height: 180px;
+  height: 200px;
   border: 1px solid var(--border-card);
   border-radius: 8px;
   background: var(--bg-card);
