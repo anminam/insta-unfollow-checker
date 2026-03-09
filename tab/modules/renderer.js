@@ -1,8 +1,11 @@
 // ── Renderer Module ──
 
 import { t } from './i18n.js';
-import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD } from './storage.js';
+import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate } from './storage.js';
 import { FALLBACK_AVATAR, loadImageAsBlob } from './ui.js';
+
+const GHOST_AVATAR_PATTERN = '44884218_345707102882519_';
+const LONG_WAIT_DAYS = 30;
 
 const ITEM_HEIGHT = 65;
 const BUFFER_COUNT = 5;
@@ -129,6 +132,14 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
     index >= totalUsers * (1 - OLD_FOLLOWING_THRESHOLD);
   const oldBadge = isOldFollowing ? `<span class="badge-old">${t('oldFollowing')}</span>` : '';
 
+  const privateBadge = user.is_private ? `<span class="badge-private">${t('privateAccount')}</span>` : '';
+  const isGhost = user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN);
+  const ghostBadge = isGhost ? `<span class="badge-ghost">${t('ghost')}</span>` : '';
+
+  const firstSeenDate = getFirstSeenDate(user.id);
+  const isLongWait = firstSeenDate && (Date.now() - new Date(firstSeenDate).getTime()) > LONG_WAIT_DAYS * 86400000;
+  const longWaitBadge = isLongWait ? `<span class="badge-long-wait">${t('longWait')}</span>` : '';
+
   // Tags from memo
   const memo = getUserMemo(user.id);
   const tagBadges = (memo?.tags || []).map(tag =>
@@ -154,7 +165,7 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
     actionsHtml = `<div class="user-actions">
       <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${user.username}" title="메모">\uD83D\uDCDD</button>
       <button class="btn-whitelist${wlClass}" data-user-id="${user.id}" title="화이트리스트">\uD83D\uDEE1\uFE0F</button>
-      <button class="btn-unfollow" data-user-id="${user.id}" data-username="${user.username}"${whitelisted ? ' disabled' : ''}>${t('unfollow')}</button>
+      <button class="btn-unfollow" data-user-id="${user.id}" data-username="${user.username}"${whitelisted ? ' disabled' : ''}${user.is_private ? ` title="${t('privateWarning')}"` : ''}>${t('unfollow')}</button>
     </div>`;
   } else {
     const memoClass = memo ? ' has-memo' : '';
@@ -168,7 +179,7 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
     <img class="${avatarClass}" src="${FALLBACK_AVATAR}" data-pic-url="${user.profile_pic_url}" alt="${user.username}">
     <div class="user-info">
       <div class="user-username">
-        <a class="username-link" href="https://www.instagram.com/${user.username}/" target="_blank" rel="noopener">${user.username}</a>${verified}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
+        <a class="username-link" href="https://www.instagram.com/${user.username}/" target="_blank" rel="noopener">${user.username}</a>${verified}${privateBadge}${ghostBadge}${longWaitBadge}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
       </div>
       <div class="user-fullname">${user.full_name}</div>
       ${memoPreview}

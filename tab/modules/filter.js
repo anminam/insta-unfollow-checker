@@ -1,7 +1,9 @@
 // ── Filter Module ──
 // Pure function: receives all state as parameters
 
-export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, sortValue }) {
+const GHOST_AVATAR_PATTERN = '44884218_345707102882519_';
+
+export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, filterGhost, sortValue, whitelistSet, firstSeen }) {
   if (!analysisData) return [];
 
   let users;
@@ -11,6 +13,17 @@ export function getFilteredUsers({ analysisData, currentTab, searchQuery, filter
     case 'mutual': users = [...analysisData.mutual]; break;
     case 'not-following': users = [...analysisData.notFollowingBack]; break;
     case 'follower-only': users = [...analysisData.followerOnly]; break;
+    case 'whitelist': {
+      const wl = whitelistSet || new Set();
+      const allUsers = [...analysisData.following, ...analysisData.followers];
+      const seen = new Set();
+      users = allUsers.filter(u => {
+        if (seen.has(u.id)) return false;
+        seen.add(u.id);
+        return wl.has(u.id);
+      });
+      break;
+    }
     default: users = [];
   }
 
@@ -28,6 +41,11 @@ export function getFilteredUsers({ analysisData, currentTab, searchQuery, filter
     users = users.filter(u => u.is_verified);
   }
 
+  // Ghost filter
+  if (filterGhost) {
+    users = users.filter(u => u.profile_pic_url && u.profile_pic_url.includes(GHOST_AVATAR_PATTERN));
+  }
+
   // Sort
   if (sortValue === 'name') {
     users.sort((a, b) => a.username.localeCompare(b.username));
@@ -35,6 +53,18 @@ export function getFilteredUsers({ analysisData, currentTab, searchQuery, filter
     users.sort((a, b) => (b.is_verified ? 1 : 0) - (a.is_verified ? 1 : 0));
   } else if (sortValue === 'oldest') {
     users.reverse();
+  } else if (sortValue === 'first-seen' && firstSeen) {
+    users.sort((a, b) => {
+      const da = firstSeen[a.id] || '';
+      const db = firstSeen[b.id] || '';
+      return da.localeCompare(db);
+    });
+  } else if (sortValue === 'popular') {
+    users.sort((a, b) => {
+      const scoreA = (a.is_verified ? 2 : 0) + (a.is_private ? 0 : 1);
+      const scoreB = (b.is_verified ? 2 : 0) + (b.is_private ? 0 : 1);
+      return scoreB - scoreA;
+    });
   }
 
   return users;

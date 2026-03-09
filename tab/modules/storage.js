@@ -13,6 +13,8 @@ export const ONBOARDING_KEY = 'insta-onboarding-done';
 export const SCHEDULED_INTERVAL_KEY = 'insta-scheduled-interval';
 export const SCHEDULED_DAILY_LIMIT_KEY = 'insta-scheduled-daily-limit';
 
+export const FIRST_SEEN_KEY = 'insta-first-seen';
+
 export const UNFOLLOW_DELAY_MIN = 3000;
 export const UNFOLLOW_DELAY_MAX = 5000;
 export const UNFOLLOW_BATCH_SIZE = 10;
@@ -203,6 +205,36 @@ export function getScheduledDailyLimit() {
 
 export function saveScheduledDailyLimit(limit) {
   localStorage.setItem(SCHEDULED_DAILY_LIMIT_KEY, String(limit));
+}
+
+// ── First Seen ──
+
+export function getFirstSeen() {
+  try {
+    return JSON.parse(localStorage.getItem(FIRST_SEEN_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+export function recordFirstSeen(users) {
+  const seen = getFirstSeen();
+  const now = new Date().toISOString();
+  let changed = false;
+  users.forEach(u => {
+    if (!seen[u.id]) {
+      seen[u.id] = now;
+      changed = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem(FIRST_SEEN_KEY, JSON.stringify(seen));
+  }
+}
+
+export function getFirstSeenDate(userId) {
+  const seen = getFirstSeen();
+  return seen[userId] || null;
 }
 
 // ── Onboarding ──

@@ -154,6 +154,9 @@
         </div>
       </div>
 
+      <!-- Follower Changes -->
+      <div id="follower-changes" class="follower-changes hidden"></div>
+
       <!-- Tab Navigation -->
       <nav class="tab-nav">
         <button class="tab-btn" data-tab="following"><span data-i18n="following">팔로잉</span> <span id="tab-following-count">0</span></button>
@@ -161,17 +164,21 @@
         <button class="tab-btn" data-tab="mutual"><span data-i18n="mutual">맞팔</span> <span id="tab-mutual-count">0</span></button>
         <button class="tab-btn active" data-tab="not-following"><span data-i18n="notFollowing">맞팔안함</span> <span id="tab-not-following-count">0</span></button>
         <button class="tab-btn" data-tab="follower-only"><span data-i18n="followerOnly">팬</span> <span id="tab-follower-only-count">0</span></button>
+        <button class="tab-btn" data-tab="whitelist"><span data-i18n="whitelist">보호</span> <span id="tab-whitelist-count">0</span></button>
       </nav>
 
       <!-- Filter Bar -->
       <div class="filter-bar">
         <input type="text" id="filter-search" class="filter-search" placeholder="사용자 검색..." data-i18n-placeholder="searchPlaceholder">
         <button id="filter-verified-btn" class="filter-btn" title="인증 계정만">&#10003; <span data-i18n="verified">인증</span></button>
+        <button id="filter-ghost-btn" class="filter-btn" title="고스트 팔로워">&#128123; <span data-i18n="filterGhost">고스트</span></button>
         <select id="filter-sort" class="filter-sort">
           <option value="default" data-i18n="sortDefault">기본순</option>
           <option value="name" data-i18n="sortName">이름순</option>
           <option value="verified" data-i18n="sortVerified">인증우선</option>
           <option value="oldest" data-i18n="sortOldest">오래된순</option>
+          <option value="first-seen" data-i18n="sortFirstSeen">최초발견순</option>
+          <option value="popular" data-i18n="sortPopular">인기순</option>
         </select>
         <button id="filter-export-btn" class="filter-export-btn" title="CSV">📥</button>
       </div>

@@ -32,13 +32,26 @@ export function showConfirm(message) {
   });
 }
 
-export function showToast(message, type = '') {
+export function showToast(message, type = '', action = null) {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = `toast${type ? ` toast-${type}` : ''}`;
   toast.textContent = message;
+
+  if (action) {
+    const btn = document.createElement('button');
+    btn.className = 'toast-action';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => {
+      action.callback();
+      toast.remove();
+    });
+    toast.appendChild(btn);
+  }
+
   container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  const duration = action ? 5000 : 3000;
+  setTimeout(() => toast.remove(), duration);
 }
 
 export function randomDelay(min, max) {

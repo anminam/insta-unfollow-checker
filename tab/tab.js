@@ -13,6 +13,7 @@ import {
   isOnboardingDone, setOnboardingDone,
   getScheduledInterval, saveScheduledInterval,
   getScheduledDailyLimit, saveScheduledDailyLimit,
+  getFirstSeen, recordFirstSeen,
   UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode } from './modules/ui.js';
@@ -64,6 +65,9 @@ const filterSearchInput = document.getElementById('filter-search');
 const filterVerifiedBtn = document.getElementById('filter-verified-btn');
 const filterSortSelect = document.getElementById('filter-sort');
 const filterExportBtn = document.getElementById('filter-export-btn');
+const filterGhostBtn = document.getElementById('filter-ghost-btn');
+const followerChangesEl = document.getElementById('follower-changes');
+const tabWhitelistCount = document.getElementById('tab-whitelist-count');
 const autoAnalysisToggle = document.getElementById('auto-analysis-toggle');
 const authGate = document.getElementById('auth-gate');
 const mainApp = document.getElementById('main-app');
@@ -93,6 +97,7 @@ const scheduledDailyLimitInput = document.getElementById('scheduled-daily-limit-
 let currentTab = 'not-following';
 let analysisData = null;
 let filterVerified = false;
+let filterGhost = false;
 let scheduledTimer = null;
 const selectedIds = new Set();
 let lastClickedIndex = -1;
@@ -114,7 +119,10 @@ function getFiltered() {
     currentTab,
     searchQuery: filterSearchInput.value,
     filterVerified,
-    sortValue: filterSortSelect.value
+    filterGhost,
+    sortValue: filterSortSelect.value,
+    whitelistSet: getWhitelist(),
+    firstSeen: getFirstSeen()
   });
 }
 
@@ -202,7 +210,9 @@ function switchTab(tabName) {
 
   filterSearchInput.value = '';
   filterVerified = false;
+  filterGhost = false;
   filterVerifiedBtn.classList.remove('active');
+  filterGhostBtn.classList.remove('active');
   selectedIds.clear();
   selectAllCheckbox.checked = false;
   lastClickedIndex = -1;
@@ -223,6 +233,12 @@ filterSearchInput.addEventListener('input', refreshList);
 filterVerifiedBtn.addEventListener('click', () => {
   filterVerified = !filterVerified;
   filterVerifiedBtn.classList.toggle('active', filterVerified);
+  refreshList();
+});
+
+filterGhostBtn.addEventListener('click', () => {
+  filterGhost = !filterGhost;
+  filterGhostBtn.classList.toggle('active', filterGhost);
   refreshList();
 });
 
@@ -322,6 +338,49 @@ function clearDeltas() {
   });
 }
 
+// ── Follower Changes (Feature 4) ──
+
+function showFollowerChanges(currentFollowers) {
+  const snapshots = getSnapshots();
+  if (snapshots.length === 0 || !currentFollowers) {
+    hide(followerChangesEl);
+    return;
+  }
+
+  const prev = snapshots[0];
+  if (!prev.followerUsernames) {
+    hide(followerChangesEl);
+    return;
+  }
+
+  const prevSet = new Set(prev.followerUsernames);
+  const currUsernames = currentFollowers.map(u => u.username);
+  const currSet = new Set(currUsernames);
+  const lost = prev.followerUsernames.filter(u => !currSet.has(u));
+  const gained = currUsernames.filter(u => !prevSet.has(u));
+
+  if (lost.length === 0 && gained.length === 0) {
+    followerChangesEl.innerHTML = `<span class="no-changes">${t('noChanges')}</span>`;
+    show(followerChangesEl);
+    return;
+  }
+
+  let html = '<details open>';
+  html += `<summary>${t('followerChanges')}</summary>`;
+  if (gained.length > 0) {
+    html += `<div class="change-gained">${t('newFollowers', gained.length)}</div>`;
+    html += `<div class="changes-list">${gained.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div>`;
+  }
+  if (lost.length > 0) {
+    html += `<div class="change-lost">${t('lostFollowers', lost.length)}</div>`;
+    html += `<div class="changes-list">${lost.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div>`;
+  }
+  html += '</details>';
+
+  followerChangesEl.innerHTML = html;
+  show(followerChangesEl);
+}
+
 // ── Analysis ──
 
 async function startAnalysis() {
@@ -373,6 +432,12 @@ async function startAnalysis() {
     const followerUsernames = followers.map(u => u.username);
     const followingUsernames = following.map(u => u.username);
 
+    // Record first seen dates
+    recordFirstSeen([...following, ...followers]);
+
+    // Show follower changes before saving new snapshot
+    showFollowerChanges(followers);
+
     // Calculate deltas before saving new snapshot
     updateStatDeltas(totalFollowing, totalFollowers, mutual.length, notFollowingBack.length, followerOnly.length);
 
@@ -403,6 +468,7 @@ function showResults(totalFollowing, totalFollowers, followerUsernames, followin
   tabMutualCount.textContent = analysisData.mutual.length;
   tabNotFollowingCount.textContent = analysisData.notFollowingBack.length;
   if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
+  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
 
   saveSnapshot(
     totalFollowing,
@@ -429,6 +495,7 @@ function showResultsFromCache(cached) {
   tabMutualCount.textContent = analysisData.mutual.length;
   tabNotFollowingCount.textContent = analysisData.notFollowingBack.length;
   if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
+  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
 
   show(resultSection);
   switchTab('not-following');
@@ -540,6 +607,7 @@ userListEl.addEventListener('click', (e) => {
     if (badge) badge.remove();
   }
 
+  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
   updateSelectedCount();
 });
 
@@ -628,7 +696,24 @@ userListEl.addEventListener('click', async (e) => {
       if (checkbox) checkbox.checked = false;
       selectedIds.delete(userId);
       updateSelectedCount();
-      showToast(t('toastUnfollowed', username), 'success');
+      showToast(t('toastUnfollowed', username), 'success', {
+        label: t('undoUnfollow'),
+        callback: async () => {
+          try {
+            const refollowResp = await chrome.runtime.sendMessage({
+              action: 'FOLLOW_USER',
+              data: { userId }
+            });
+            if (refollowResp.success) {
+              removeUnfollowRecord(userId);
+              btn.textContent = t('unfollow');
+              btn.classList.remove('done');
+              btn.disabled = false;
+              showToast(t('toastRefollowed', username), 'success');
+            }
+          } catch { /* ignore */ }
+        }
+      });
     } else {
       btn.textContent = t('fail');
       setTimeout(() => { btn.textContent = t('unfollow'); btn.disabled = false; }, 2000);
@@ -1082,13 +1167,14 @@ document.getElementById('history-list').addEventListener('click', async (e) => {
 
 document.getElementById('backup-btn').addEventListener('click', () => {
   const data = {
-    version: 4,
+    version: 5,
     date: new Date().toISOString(),
     unfollowHistory: getUnfollowHistory(),
     snapshots: getSnapshots(),
     whitelist: [...getWhitelist()],
     memos: getMemos(),
     scheduledQueue: getScheduledQueue(),
+    firstSeen: getFirstSeen(),
     settings: {
       darkMode: localStorage.getItem(DARK_MODE_KEY),
       sort: localStorage.getItem(SORT_KEY),
@@ -1123,6 +1209,7 @@ document.getElementById('restore-file').addEventListener('change', (e) => {
       if (data.whitelist) saveWhitelist(new Set(data.whitelist));
       if (data.memos) saveMemos(data.memos);
       if (data.scheduledQueue) saveScheduledQueue(data.scheduledQueue);
+      if (data.firstSeen) localStorage.setItem('insta-first-seen', JSON.stringify(data.firstSeen));
       if (data.settings) {
         if (data.settings.darkMode !== null) localStorage.setItem(DARK_MODE_KEY, data.settings.darkMode);
         if (data.settings.sort) localStorage.setItem(SORT_KEY, data.settings.sort);

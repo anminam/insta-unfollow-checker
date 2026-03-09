@@ -1059,6 +1059,143 @@ body {
   border-color: var(--color-tag-work);
 }
 
+/* ── Private Badge ── */
+
+.badge-private {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ── Ghost Badge ── */
+
+.badge-ghost {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #9e9e9e;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+:root.dark .badge-ghost {
+  color: #888;
+  background: #333;
+  border-color: #555;
+}
+
+/* ── Long Wait Badge ── */
+
+.badge-long-wait {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #e67e22;
+  background: #fef5ec;
+  border: 1px solid #f0c78a;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+:root.dark .badge-long-wait {
+  color: #f0a54a;
+  background: #2d2517;
+  border-color: #5a4520;
+}
+
+/* ── Follower Changes ── */
+
+.follower-changes {
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  font-size: 13px;
+}
+
+.follower-changes summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.follower-changes summary:hover {
+  color: var(--color-verified);
+}
+
+.change-gained {
+  color: var(--color-up);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.change-lost {
+  color: var(--color-danger);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.follower-changes .changes-list {
+  margin-top: 4px;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.follower-changes .changes-list a {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.follower-changes .changes-list a:hover {
+  text-decoration: underline;
+}
+
+.no-changes {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ── Whitelist Stat ── */
+
+.stat-whitelist .stat-value {
+  color: var(--color-whitelist-text);
+}
+
+/* ── Toast Action Button ── */
+
+.toast-action {
+  margin-left: 12px;
+  padding: 2px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toast-action:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* ── Confirm Modal ── */
 
 .modal-overlay {

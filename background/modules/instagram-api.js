@@ -97,7 +97,8 @@ export async function fetchAllFollowing(userId, csrfToken, sendProgress) {
       username: edge.node.username,
       full_name: edge.node.full_name,
       profile_pic_url: edge.node.profile_pic_url,
-      is_verified: edge.node.is_verified
+      is_verified: edge.node.is_verified,
+      is_private: edge.node.is_private
     }));
 
     following.push(...users);
@@ -140,7 +141,8 @@ export async function fetchAllFollowers(userId, csrfToken, sendProgress) {
       username: edge.node.username,
       full_name: edge.node.full_name,
       profile_pic_url: edge.node.profile_pic_url,
-      is_verified: edge.node.is_verified
+      is_verified: edge.node.is_verified,
+      is_private: edge.node.is_private
     }));
 
     followers.push(...users);
