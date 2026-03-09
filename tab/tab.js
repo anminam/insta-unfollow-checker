@@ -79,6 +79,7 @@ const headerAuth = document.getElementById('header-auth');
 const progressStep = document.getElementById('progress-step');
 const progressPercent = document.getElementById('progress-percent');
 const progressEtaEl = document.getElementById('progress-eta');
+const backToStartBtn = document.getElementById('back-to-start-btn');
 
 // ── Stat delta elements ──
 const deltaFollowing = document.getElementById('delta-following');
@@ -887,6 +888,17 @@ retryBtn.addEventListener('click', () => {
   hide(errorSection);
   sessionStorage.removeItem(CACHE_KEY);
   startAnalysis();
+});
+
+backToStartBtn.addEventListener('click', () => {
+  hide(resultSection);
+  hide(followerChangesEl);
+  analysisData = null;
+  show(startSection);
+  drawStatsChart();
+  showSnapshots();
+  showHistory();
+  showScheduledStatus();
 });
 
 // ── Keyboard Shortcuts ──
