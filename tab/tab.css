@@ -893,6 +893,7 @@ body {
 .user-list {
   max-height: 450px;
   overflow-y: auto;
+  padding-bottom: 4px;
 }
 
 .user-card.shift-highlight {
@@ -1667,14 +1668,21 @@ body {
   .user-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px;
+    gap: 6px;
     max-height: 600px;
+    padding-bottom: 6px;
   }
 
   .user-card {
     border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 10px 8px;
+    min-height: 64px;
+    align-content: center;
+  }
+
+  .user-card:last-child {
+    border-bottom: 1px solid var(--border-light);
   }
 
   .result-summary {
