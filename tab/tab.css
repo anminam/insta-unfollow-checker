@@ -467,6 +467,11 @@ body {
   align-items: center;
 }
 
+.snapshot-view {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
 .snapshot-compare-check {
   cursor: pointer;
 }

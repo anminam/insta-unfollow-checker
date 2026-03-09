@@ -986,6 +986,7 @@ function showSnapshots() {
       <div class="snapshot-header">
         <span class="snapshot-date">${formatDate(snap.date)}${autoLabel}</span>
         <div class="snapshot-actions">
+          <button class="btn btn-secondary btn-sm snapshot-view" data-index="${i}">${t('snapshotView')}</button>
           <input type="checkbox" class="snapshot-compare-check" data-snap-index="${i}" title="비교 선택">
           <button class="snapshot-delete" data-index="${i}" title="삭제">&times;</button>
         </div>
@@ -1091,13 +1092,78 @@ document.getElementById('compare-close').addEventListener('click', () => {
 });
 
 document.getElementById('snapshot-list').addEventListener('click', (e) => {
-  const btn = e.target.closest('.snapshot-delete');
-  if (!btn) return;
-  const index = parseInt(btn.dataset.index, 10);
-  deleteSnapshot(index);
-  drawStatsChart();
-  showSnapshots();
+  const deleteBtn = e.target.closest('.snapshot-delete');
+  if (deleteBtn) {
+    const index = parseInt(deleteBtn.dataset.index, 10);
+    deleteSnapshot(index);
+    drawStatsChart();
+    showSnapshots();
+    return;
+  }
+
+  const viewBtn = e.target.closest('.snapshot-view');
+  if (viewBtn) {
+    const index = parseInt(viewBtn.dataset.index, 10);
+    loadSnapshotView(index);
+  }
 });
+
+// ── Snapshot View ──
+
+function loadSnapshotView(index) {
+  const snapshots = getSnapshots();
+  const snap = snapshots[index];
+  if (!snap || !snap.followerUsernames || !snap.followingUsernames) return;
+
+  const toUser = (username) => ({
+    id: username,
+    username,
+    full_name: '',
+    profile_pic_url: '',
+    is_verified: false,
+    is_private: false
+  });
+
+  const followingUsers = snap.followingUsernames.map(toUser);
+  const followerUsers = snap.followerUsernames.map(toUser);
+
+  const followerSet = new Set(snap.followerUsernames);
+  const followingSet = new Set(snap.followingUsernames);
+
+  const notFollowingBack = followingUsers.filter(u => !followerSet.has(u.username));
+  const mutual = followingUsers.filter(u => followerSet.has(u.username));
+  const followerOnly = followerUsers.filter(u => !followingSet.has(u.username));
+
+  analysisData = {
+    following: followingUsers,
+    followers: followerUsers,
+    notFollowingBack,
+    mutual,
+    followerOnly
+  };
+
+  followingCountEl.textContent = snap.following;
+  followerCountEl.textContent = snap.followers;
+  mutualCountEl.textContent = mutual.length;
+  notFollowingCountEl.textContent = notFollowingBack.length;
+  if (followerOnlyCountEl) followerOnlyCountEl.textContent = followerOnly.length;
+  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
+  updateRatio(snap.following, snap.followers);
+  clearDeltas();
+
+  tabFollowingCount.textContent = snap.following;
+  tabFollowerCount.textContent = snap.followers;
+  tabMutualCount.textContent = mutual.length;
+  tabNotFollowingCount.textContent = notFollowingBack.length;
+  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = followerOnly.length;
+
+  hide(startSection);
+  hide(errorSection);
+  hide(progressSection);
+  hide(followerChangesEl);
+  show(resultSection);
+  switchTab('not-following');
+}
 
 // ── History Display (with Refollow) ──
 

@@ -124,6 +124,8 @@ export const I18N = {
     whitelist: '보호',
     removeWhitelist: '보호 해제',
     undoUnfollow: '되돌리기',
+    snapshotView: '이력 보기',
+    backToStart: '돌아가기',
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -248,6 +250,8 @@ export const I18N = {
     whitelist: 'Protected',
     removeWhitelist: 'Unprotect',
     undoUnfollow: 'Undo',
+    snapshotView: 'View History',
+    backToStart: 'Back',
   }
 };
 
