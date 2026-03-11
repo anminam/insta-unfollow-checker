@@ -6,8 +6,14 @@ const AUTO_ANALYSIS_ALARM = 'insta-auto-analysis';
 
 export async function runAutoAnalysis() {
   try {
-    const csrfToken = await getCsrfToken();
-    const userId = await getCurrentUserId();
+    let csrfToken, userId;
+    try {
+      csrfToken = await getCsrfToken();
+      userId = await getCurrentUserId();
+    } catch {
+      console.log('[InstaUnfollow] Auto analysis skipped: not logged in');
+      return;
+    }
     const noop = () => {};
 
     const following = await fetchAllFollowing(userId, csrfToken, noop);

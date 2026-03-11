@@ -13,7 +13,17 @@ export function randomDelay(min, max) {
 
 export async function fetchWithRetry(url, options, maxRetries = MAX_RETRIES) {
   for (let i = 0; i < maxRetries; i++) {
-    const response = await fetch(url, options);
+    let response;
+    try {
+      response = await fetch(url, options);
+    } catch (err) {
+      console.warn(`[InstaUnfollow] Network error (retry ${i + 1}/${maxRetries}):`, err.message);
+      if (i < maxRetries - 1) {
+        await randomDelay(3000, 5000);
+        continue;
+      }
+      throw new Error('NETWORK_ERROR');
+    }
     if (response.status === 429) {
       console.warn(`[InstaUnfollow] Rate limited, waiting 60-90s (retry ${i + 1}/${maxRetries})`);
       await randomDelay(60000, 90000);
