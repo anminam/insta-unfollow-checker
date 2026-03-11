@@ -5,22 +5,9 @@ const ALLOWLIST_RANGE = '사용자!A:B';
 const AUTH_STORAGE_KEY = 'insta-auth';
 const AUTH_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-function getOAuthURL() {
-  const manifest = chrome.runtime.getManifest();
-  const clientId = manifest.oauth2.client_id;
-  const scopes = manifest.oauth2.scopes.join(' ');
-  const redirectUrl = chrome.identity.getRedirectURL();
-  return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=token&scope=${encodeURIComponent(scopes)}`;
-}
-
 export async function googleLogin() {
-  const responseUrl = await chrome.identity.launchWebAuthFlow({
-    url: getOAuthURL(),
-    interactive: true
-  });
-
-  const hashParams = new URL(responseUrl.replace('#', '?')).searchParams;
-  const token = hashParams.get('access_token');
+  const result = await chrome.identity.getAuthToken({ interactive: true });
+  const token = result.token || result;
   if (!token) throw new Error('GOOGLE_API_ERROR');
 
   const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -89,7 +76,7 @@ export async function googleLogout() {
     const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
     const auth = result[AUTH_STORAGE_KEY];
     if (auth?.token) {
-      await fetch(`https://accounts.google.com/o/oauth2/revoke?token=${auth.token}`);
+      await chrome.identity.removeCachedAuthToken({ token: auth.token });
     }
   } catch { /* ignore */ }
   await chrome.storage.local.remove(AUTH_STORAGE_KEY);
