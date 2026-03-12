@@ -87,16 +87,24 @@ export async function googleLogout() {
 const MALICIOUS_RANGE = '악성유저!A:B';
 const REPORT_RANGE = '신고!A:C';
 
+async function getFreshToken() {
+  const result = await chrome.identity.getAuthToken({ interactive: false });
+  const token = result.token || result;
+  if (!token) throw new Error('NOT_LOGGED_IN');
+  return token;
+}
+
 export async function fetchMaliciousUsers() {
-  const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
-  const auth = result[AUTH_STORAGE_KEY];
-  if (!auth?.token) throw new Error('NOT_LOGGED_IN');
+  const token = await getFreshToken();
 
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${ALLOWLIST_SHEET_ID}/values/${encodeURIComponent(MALICIOUS_RANGE)}`;
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${auth.token}` }
+    headers: { Authorization: `Bearer ${token}` }
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.warn('[InstaUnfollow] Malicious list fetch failed:', res.status);
+    return [];
+  }
   const data = await res.json();
   const values = data.values || [];
   return values.map(row => ({
@@ -106,19 +114,19 @@ export async function fetchMaliciousUsers() {
 }
 
 export async function reportMaliciousUser(username, reason) {
-  const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
-  const auth = result[AUTH_STORAGE_KEY];
-  if (!auth?.token || !auth?.email) throw new Error('NOT_LOGGED_IN');
+  const token = await getFreshToken();
+  const authResult = await chrome.storage.local.get(AUTH_STORAGE_KEY);
+  const email = authResult[AUTH_STORAGE_KEY]?.email || 'unknown';
 
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${ALLOWLIST_SHEET_ID}/values/${encodeURIComponent(REPORT_RANGE)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${auth.token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      values: [[auth.email, username, reason]]
+      values: [[email, username, reason]]
     })
   });
   if (!res.ok) throw new Error('SHEET_WRITE_ERROR');
