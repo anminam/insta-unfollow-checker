@@ -14,6 +14,7 @@ import {
   getScheduledInterval, saveScheduledInterval,
   getScheduledDailyLimit, saveScheduledDailyLimit,
   getFirstSeen, recordFirstSeen,
+  setMaliciousUsers,
   UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode } from './modules/ui.js';
@@ -456,7 +457,8 @@ async function startAnalysis() {
 
 // ── Results ──
 
-function showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames) {
+async function showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames) {
+  fetchMaliciousUsersList();
   followingCountEl.textContent = totalFollowing;
   followerCountEl.textContent = totalFollowers;
   mutualCountEl.textContent = analysisData.mutual.length;
@@ -639,6 +641,66 @@ userListEl.addEventListener('click', (e) => {
   show(modal);
   input.focus();
 });
+
+// ── Report Malicious User ──
+
+userListEl.addEventListener('click', (e) => {
+  const reportBtn = e.target.closest('.btn-report');
+  if (!reportBtn) return;
+
+  const username = reportBtn.dataset.username;
+  const userId = reportBtn.dataset.userId;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">${t('reportTitle')}</div>
+      <div class="memo-username">@${username}</div>
+      <textarea class="memo-input" rows="3" placeholder="${t('reportPlaceholder')}"></textarea>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary report-cancel">${t('no')}</button>
+        <button class="btn btn-danger report-submit">${t('reportSubmit')}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const textarea = overlay.querySelector('.memo-input');
+  textarea.focus();
+
+  overlay.querySelector('.report-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
+
+  overlay.querySelector('.report-submit').addEventListener('click', async () => {
+    const reason = textarea.value.trim();
+    if (!reason) return;
+    try {
+      const res = await chrome.runtime.sendMessage({
+        action: 'REPORT_MALICIOUS_USER',
+        data: { username, reason }
+      });
+      if (res.success) {
+        showToast(t('reportSuccess'), 'success');
+      } else {
+        showToast(t('reportFail'), 'error');
+      }
+    } catch {
+      showToast(t('reportFail'), 'error');
+    }
+    overlay.remove();
+  });
+});
+
+async function fetchMaliciousUsersList() {
+  try {
+    const res = await chrome.runtime.sendMessage({ action: 'FETCH_MALICIOUS_USERS' });
+    if (res.success && res.data) {
+      setMaliciousUsers(res.data);
+      refreshList();
+    }
+  } catch { /* ignore */ }
+}
 
 document.getElementById('memo-modal').addEventListener('click', (e) => {
   const tagBtn = e.target.closest('.tag-btn');
@@ -913,6 +975,11 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'Escape') {
+    const reportOverlay = document.querySelector('.modal-overlay:not(.hidden):not(#confirm-modal):not(#memo-modal):not(#compare-modal)');
+    if (reportOverlay && !reportOverlay.id) {
+      reportOverlay.remove();
+      return;
+    }
     const confirmModal = document.getElementById('confirm-modal');
     const memoModal = document.getElementById('memo-modal');
     const compareModal = document.getElementById('compare-modal');

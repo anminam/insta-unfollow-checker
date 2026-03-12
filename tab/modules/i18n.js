@@ -128,6 +128,14 @@ export const I18N = {
     undoUnfollow: '되돌리기',
     snapshotView: '이력 보기',
     backToStart: '돌아가기',
+    malicious: '악성',
+    reportUser: '신고',
+    reportTitle: '악성 유저 신고',
+    reportPlaceholder: '신고 사유를 입력하세요...',
+    reportSubmit: '신고',
+    reportSuccess: '신고가 접수되었습니다.',
+    reportFail: '신고에 실패했습니다.',
+    maliciousTooltip: (reason) => `악성 유저: ${reason}`,
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -256,6 +264,14 @@ export const I18N = {
     undoUnfollow: 'Undo',
     snapshotView: 'View History',
     backToStart: 'Back',
+    malicious: 'Malicious',
+    reportUser: 'Report',
+    reportTitle: 'Report Malicious User',
+    reportPlaceholder: 'Enter reason for report...',
+    reportSubmit: 'Report',
+    reportSuccess: 'Report submitted.',
+    reportFail: 'Report failed.',
+    maliciousTooltip: (reason) => `Malicious user: ${reason}`,
   }
 };
 

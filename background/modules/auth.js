@@ -82,6 +82,49 @@ export async function googleLogout() {
   await chrome.storage.local.remove(AUTH_STORAGE_KEY);
 }
 
+// ── Malicious Users ──
+
+const MALICIOUS_RANGE = '악성유저!A:B';
+const REPORT_RANGE = '신고!A:C';
+
+export async function fetchMaliciousUsers() {
+  const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
+  const auth = result[AUTH_STORAGE_KEY];
+  if (!auth?.token) throw new Error('NOT_LOGGED_IN');
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ALLOWLIST_SHEET_ID}/values/${encodeURIComponent(MALICIOUS_RANGE)}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${auth.token}` }
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  const values = data.values || [];
+  return values.map(row => ({
+    username: (row[0] || '').trim().toLowerCase(),
+    reason: (row[1] || '').trim()
+  })).filter(r => r.username);
+}
+
+export async function reportMaliciousUser(username, reason) {
+  const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
+  const auth = result[AUTH_STORAGE_KEY];
+  if (!auth?.token || !auth?.email) throw new Error('NOT_LOGGED_IN');
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${ALLOWLIST_SHEET_ID}/values/${encodeURIComponent(REPORT_RANGE)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      values: [[auth.email, username, reason]]
+    })
+  });
+  if (!res.ok) throw new Error('SHEET_WRITE_ERROR');
+  return true;
+}
+
 export async function getAuthStatus() {
   const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
   const auth = result[AUTH_STORAGE_KEY];

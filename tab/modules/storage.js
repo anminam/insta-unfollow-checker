@@ -237,6 +237,24 @@ export function getFirstSeenDate(userId) {
   return seen[userId] || null;
 }
 
+// ── Malicious Users Cache ──
+
+let maliciousUsersCache = null;
+
+export function setMaliciousUsers(users) {
+  maliciousUsersCache = new Map(users.map(u => [u.username, u.reason]));
+}
+
+export function getMaliciousInfo(username) {
+  if (!maliciousUsersCache) return null;
+  const reason = maliciousUsersCache.get(username.toLowerCase());
+  return reason !== undefined ? reason : null;
+}
+
+export function isMalicious(username) {
+  return getMaliciousInfo(username) !== null;
+}
+
 // ── Onboarding ──
 
 export function isOnboardingDone() {

@@ -1,7 +1,7 @@
 // ── Service Worker Entry Point (ES Module) ──
 
 import { getCsrfToken, getCurrentUserId, fetchAllFollowing, fetchAllFollowers, findNotFollowingBack, unfollowUser, followUser } from './modules/instagram-api.js';
-import { googleLogin, googleLogout, getAuthStatus } from './modules/auth.js';
+import { googleLogin, googleLogout, getAuthStatus, fetchMaliciousUsers, reportMaliciousUser } from './modules/auth.js';
 import { initAlarmListener, setAutoAnalysis, getAutoAnalysisStatus } from './modules/auto-analysis.js';
 
 // Initialize alarm listener
@@ -84,6 +84,16 @@ async function handleMessage(message, sender) {
       case 'GET_AUTH_STATUS': {
         const status = await getAuthStatus();
         return { success: true, data: status };
+      }
+
+      case 'FETCH_MALICIOUS_USERS': {
+        const users = await fetchMaliciousUsers();
+        return { success: true, data: users };
+      }
+
+      case 'REPORT_MALICIOUS_USER': {
+        await reportMaliciousUser(message.data.username, message.data.reason);
+        return { success: true };
       }
 
       default:
