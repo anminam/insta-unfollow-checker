@@ -702,7 +702,8 @@ async function fetchMaliciousUsersList() {
     const res = await chrome.runtime.sendMessage({ action: 'FETCH_MALICIOUS_USERS' });
     if (res.success && res.data) {
       setMaliciousUsers(res.data);
-      refreshList();
+      if (analysisData) refreshList();
+      showSnapshots();
     }
   } catch { /* ignore */ }
 }
@@ -1558,4 +1559,5 @@ window.addEventListener('resize', () => {
 // ── Init ──
 
 applyI18n(filterSortSelect);
+fetchMaliciousUsersList();
 checkAuthState();
