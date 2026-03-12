@@ -129,7 +129,11 @@ export async function reportMaliciousUser(username, reason) {
       values: [[email, username, reason]]
     })
   });
-  if (!res.ok) throw new Error('SHEET_WRITE_ERROR');
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error('[InstaUnfollow] Report write failed:', res.status, body);
+    throw new Error('SHEET_WRITE_ERROR');
+  }
   return true;
 }
 
