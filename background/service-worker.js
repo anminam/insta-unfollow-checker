@@ -2,8 +2,9 @@
 
 import { getCsrfToken, getCurrentUserId, fetchAllFollowing, fetchAllFollowers, findNotFollowingBack, unfollowUser, followUser } from './modules/instagram-api.js';
 import { googleLogin, googleLogout, getAuthStatus, fetchMaliciousUsers, reportMaliciousUser } from './modules/auth.js';
-// 자동 분석 임시 비활성화 — 기존 알람 제거
-chrome.alarms.clear('insta-auto-analysis');
+import { initAlarmListener, setAutoAnalysis, getAutoAnalysisStatus } from './modules/auto-analysis.js';
+
+initAlarmListener();
 
 // ── Message Handler ──
 
@@ -55,12 +56,13 @@ async function handleMessage(message, sender) {
       }
 
       case 'SET_AUTO_ANALYSIS': {
-        // 임시 비활성화
+        await setAutoAnalysis(message.data.enabled, message.data.periodMinutes);
         return { success: true };
       }
 
       case 'GET_AUTO_ANALYSIS_STATUS': {
-        return { success: true, data: { enabled: false } };
+        const status = await getAutoAnalysisStatus();
+        return { success: true, data: status };
       }
 
       case 'CLEAR_BADGE': {
