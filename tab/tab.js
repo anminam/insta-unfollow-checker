@@ -14,7 +14,7 @@ import {
   getScheduledInterval, saveScheduledInterval,
   getScheduledDailyLimit, saveScheduledDailyLimit,
   getFirstSeen, recordFirstSeen,
-  setMaliciousUsers, isMalicious,
+  setMaliciousUsers, isMalicious, getMaliciousInfo,
   UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode } from './modules/ui.js';
@@ -129,8 +129,12 @@ function getFiltered() {
 }
 
 function usernameLink(u) {
-  const badge = isMalicious(u) ? `<span class="badge-malicious" style="font-size:10px;margin-left:2px;">${t('malicious')}</span>` : '';
-  return `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>${badge}`;
+  const reason = getMaliciousInfo(u);
+  if (reason !== null) {
+    const tooltip = t('maliciousTooltip', reason);
+    return `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a><span class="badge-malicious" style="font-size:10px;margin-left:2px;" title="${tooltip}">${t('malicious')}</span>`;
+  }
+  return `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`;
 }
 
 function refreshList() {
