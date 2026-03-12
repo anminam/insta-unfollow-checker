@@ -54,7 +54,12 @@ export async function runAutoAnalysis() {
       notFollowingBack: notFollowingBack.length
     });
   } catch (error) {
-    console.error('[InstaUnfollow] Auto analysis failed:', error);
+    const msg = error?.message || '';
+    if (msg === 'NETWORK_ERROR' || msg.includes('Failed to fetch')) {
+      console.log('[InstaUnfollow] Auto analysis skipped: network unavailable');
+    } else {
+      console.error('[InstaUnfollow] Auto analysis failed:', msg);
+    }
   }
 }
 
