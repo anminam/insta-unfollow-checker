@@ -2,7 +2,7 @@
 
 export const I18N = {
   ko: {
-    subtitle: '나만 팔로우할수 없다!',
+    subtitle: '나만 팔로우할 수 없다!',
     retry: '다시 시도',
     statsTitle: '통계 대시보드',
     snapshotTitle: '분석 이력',
