@@ -14,7 +14,7 @@ import {
   getScheduledInterval, saveScheduledInterval,
   getScheduledDailyLimit, saveScheduledDailyLimit,
   getFirstSeen, recordFirstSeen,
-  setMaliciousUsers,
+  setMaliciousUsers, isMalicious,
   UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode } from './modules/ui.js';
@@ -126,6 +126,11 @@ function getFiltered() {
     whitelistSet: getWhitelist(),
     firstSeen: getFirstSeen()
   });
+}
+
+function usernameLink(u) {
+  const badge = isMalicious(u) ? `<span class="badge-malicious" style="font-size:10px;margin-left:2px;">${t('malicious')}</span>` : '';
+  return `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>${badge}`;
 }
 
 function refreshList() {
@@ -371,11 +376,11 @@ function showFollowerChanges(currentFollowers) {
   html += `<summary>${t('followerChanges')}</summary>`;
   if (gained.length > 0) {
     html += `<div class="change-gained">${t('newFollowers', gained.length)}</div>`;
-    html += `<div class="changes-list">${gained.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div>`;
+    html += `<div class="changes-list">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div>`;
   }
   if (lost.length > 0) {
     html += `<div class="change-lost">${t('lostFollowers', lost.length)}</div>`;
-    html += `<div class="changes-list">${lost.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div>`;
+    html += `<div class="changes-list">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div>`;
   }
   html += '</details>';
 
@@ -1050,10 +1055,10 @@ function showSnapshots() {
 
       if (lost.length > 0 || gained.length > 0) {
         const lostHtml = lost.length > 0
-          ? `<div><span class="change-label-lost">${t('lostFollowers', lost.length)}</span><div class="snapshot-changes-list">${lost.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div></div>`
+          ? `<div><span class="change-label-lost">${t('lostFollowers', lost.length)}</span><div class="snapshot-changes-list">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`
           : '';
         const gainedHtml = gained.length > 0
-          ? `<div><span class="change-label-new">${t('newFollowers', gained.length)}</span><div class="snapshot-changes-list">${gained.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div></div>`
+          ? `<div><span class="change-label-new">${t('newFollowers', gained.length)}</span><div class="snapshot-changes-list">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`
           : '';
         changesHtml = `<details class="snapshot-changes"><summary>${t('followerChanges')}</summary>${lostHtml}${gainedHtml}</details>`;
       }
@@ -1155,10 +1160,10 @@ document.getElementById('snapshot-compare-btn').addEventListener('click', () => 
     const gained = newer.followerUsernames.filter(u => !oldSet.has(u));
 
     if (lost.length > 0) {
-      html += `<div class="compare-section"><h4 class="change-label-lost">${t('lostFollowers', lost.length)}</h4><div class="compare-userlist">${lost.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div></div>`;
+      html += `<div class="compare-section"><h4 class="change-label-lost">${t('lostFollowers', lost.length)}</h4><div class="compare-userlist">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`;
     }
     if (gained.length > 0) {
-      html += `<div class="compare-section"><h4 class="change-label-new">${t('newFollowers', gained.length)}</h4><div class="compare-userlist">${gained.map(u => `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`).join(', ')}</div></div>`;
+      html += `<div class="compare-section"><h4 class="change-label-new">${t('newFollowers', gained.length)}</h4><div class="compare-userlist">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`;
     }
   }
 
