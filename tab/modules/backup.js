@@ -1,0 +1,64 @@
+// ── Backup / Restore Module ──
+
+import {
+  SNAPSHOT_KEY, DARK_MODE_KEY, SORT_KEY,
+  getUnfollowHistory, saveUnfollowHistory,
+  getSnapshots, getWhitelist, saveWhitelist,
+  getMemos, saveMemos,
+  getScheduledQueue, saveScheduledQueue,
+  getFirstSeen, getSortPreference
+} from './storage.js';
+import { showToast } from './ui.js';
+import { t, getLang } from './i18n.js';
+
+export function exportBackup() {
+  const data = {
+    version: 5,
+    date: new Date().toISOString(),
+    unfollowHistory: getUnfollowHistory(),
+    snapshots: getSnapshots(),
+    whitelist: [...getWhitelist()],
+    memos: getMemos(),
+    scheduledQueue: getScheduledQueue(),
+    firstSeen: getFirstSeen(),
+    settings: {
+      darkMode: localStorage.getItem(DARK_MODE_KEY),
+      sort: localStorage.getItem(SORT_KEY),
+      lang: localStorage.getItem('insta-lang')
+    }
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `insta-unfollow-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t('backupSuccess'), 'success');
+}
+
+export function importBackup(file, onComplete) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.unfollowHistory) saveUnfollowHistory(data.unfollowHistory);
+      if (data.snapshots) localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(data.snapshots));
+      if (data.whitelist) saveWhitelist(new Set(data.whitelist));
+      if (data.memos) saveMemos(data.memos);
+      if (data.scheduledQueue) saveScheduledQueue(data.scheduledQueue);
+      if (data.firstSeen) localStorage.setItem('insta-first-seen', JSON.stringify(data.firstSeen));
+      if (data.settings) {
+        if (data.settings.darkMode !== null) localStorage.setItem(DARK_MODE_KEY, data.settings.darkMode);
+        if (data.settings.sort) localStorage.setItem(SORT_KEY, data.settings.sort);
+        if (data.settings.lang) localStorage.setItem('insta-lang', data.settings.lang);
+      }
+      showToast(t('restoreSuccess'), 'success');
+      if (onComplete) onComplete();
+    } catch {
+      showToast(t('restoreFail'), 'error');
+    }
+  };
+  reader.readAsText(file);
+}

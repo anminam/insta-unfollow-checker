@@ -1,7 +1,7 @@
 // ── UI Utilities Module ──
 
 import { t } from './i18n.js';
-import { UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from './storage.js';
+import { UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE, getMaliciousInfo } from './storage.js';
 
 // ── HTML Escape ──
 
@@ -10,6 +10,16 @@ const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": 
 export function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/[&<>"']/g, c => escapeMap[c]);
+}
+
+export function usernameLink(u) {
+  const safe = escapeHtml(u);
+  const reason = getMaliciousInfo(u);
+  if (reason !== null) {
+    const tooltip = escapeHtml(t('maliciousTooltip', reason));
+    return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a><span class="badge-malicious" style="font-size:10px;margin-left:2px;" title="${tooltip}">${t('malicious')}</span>`;
+  }
+  return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a>`;
 }
 
 export function show(el) {

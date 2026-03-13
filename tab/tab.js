@@ -2,26 +2,27 @@
 
 import { t, applyI18n, getLang, setLang } from './modules/i18n.js';
 import {
-  CACHE_KEY, SNAPSHOT_KEY, DARK_MODE_KEY, SORT_KEY,
-  getWhitelist, saveWhitelist, toggleWhitelist,
-  getMemos, getUserMemo, setUserMemo, saveMemos,
-  getUnfollowHistory, saveUnfollowHistory, recordUnfollow, removeUnfollowRecord,
+  CACHE_KEY,
+  getWhitelist, toggleWhitelist,
+  getMemos, getUserMemo, setUserMemo,
+  getUnfollowHistory, recordUnfollow, removeUnfollowRecord,
   getCachedAnalysis, setCachedAnalysis,
-  getSnapshots, saveSnapshot, deleteSnapshot,
+  getSnapshots, saveSnapshot,
   getScheduledQueue, saveScheduledQueue,
   getSortPreference, saveSortPreference,
   isOnboardingDone, setOnboardingDone,
   getScheduledInterval, saveScheduledInterval,
   getScheduledDailyLimit, saveScheduledDailyLimit,
   getFirstSeen, recordFirstSeen,
-  setMaliciousUsers, isMalicious, getMaliciousInfo,
-  UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
+  setMaliciousUsers
 } from './modules/storage.js';
-import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml } from './modules/ui.js';
+import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml, usernameLink } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
 import { getFilteredUsers } from './modules/filter.js';
 import { renderUserList } from './modules/renderer.js';
 import { batchUnfollow } from './modules/unfollow.js';
+import { initSnapshotUI, buildSnapshotAnalysis } from './modules/snapshot-ui.js';
+import { exportBackup, importBackup } from './modules/backup.js';
 
 // ── DOM Elements ──
 
@@ -128,16 +129,6 @@ function getFiltered() {
     whitelistSet: getWhitelist(),
     firstSeen: getFirstSeen()
   });
-}
-
-function usernameLink(u) {
-  const safe = escapeHtml(u);
-  const reason = getMaliciousInfo(u);
-  if (reason !== null) {
-    const tooltip = escapeHtml(t('maliciousTooltip', reason));
-    return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a><span class="badge-malicious" style="font-size:10px;margin-left:2px;" title="${tooltip}">${t('malicious')}</span>`;
-  }
-  return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a>`;
 }
 
 function refreshList() {
@@ -1025,181 +1016,20 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ── Snapshot Display ──
+// ── Snapshot UI (module) ──
 
-function showSnapshots() {
-  const snapshots = getSnapshots();
-  const snapshotSection = document.getElementById('snapshot-section');
-  const snapshotList = document.getElementById('snapshot-list');
-  const compareBtn = document.getElementById('snapshot-compare-btn');
-
-  if (snapshots.length === 0) {
-    hide(snapshotSection);
-    return;
-  }
-
-  if (snapshots.length >= 2) show(compareBtn);
-  else hide(compareBtn);
-
-  snapshotList.innerHTML = '';
-  compareSelected.clear();
-
-  snapshots.forEach((snap, i) => {
-    const prev = snapshots[i + 1];
-    const card = document.createElement('div');
-    card.className = 'snapshot-card';
-    card.dataset.snapIndex = i;
-
-    const deltaHtml = (current, previous, invertColor) => {
-      if (!prev) return '';
-      const diff = current - previous;
-      if (diff === 0) return '<span class="snapshot-delta neutral">\u00B10</span>';
-      const cls = invertColor
-        ? (diff > 0 ? 'down' : 'up')
-        : (diff > 0 ? 'up' : 'down');
-      const sign = diff > 0 ? '+' : '';
-      return `<span class="snapshot-delta ${cls}">${sign}${diff}</span>`;
-    };
-
-    let changesHtml = '';
-    if (prev && snap.followerUsernames && prev.followerUsernames) {
-      const prevSet = new Set(prev.followerUsernames);
-      const currSet = new Set(snap.followerUsernames);
-      const lost = prev.followerUsernames.filter(u => !currSet.has(u));
-      const gained = snap.followerUsernames.filter(u => !prevSet.has(u));
-
-      if (lost.length > 0 || gained.length > 0) {
-        const lostHtml = lost.length > 0
-          ? `<div><span class="change-label-lost">${t('lostFollowers', lost.length)}</span><div class="snapshot-changes-list">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`
-          : '';
-        const gainedHtml = gained.length > 0
-          ? `<div><span class="change-label-new">${t('newFollowers', gained.length)}</span><div class="snapshot-changes-list">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`
-          : '';
-        changesHtml = `<details class="snapshot-changes"><summary>${t('followerChanges')}</summary>${lostHtml}${gainedHtml}</details>`;
-      }
-    }
-
-    const autoLabel = snap.auto ? ' (auto)' : '';
-
-    card.innerHTML = `
-      <div class="snapshot-header">
-        <span class="snapshot-date">${formatDate(snap.date)}${autoLabel}</span>
-        <div class="snapshot-actions">
-          <button class="btn btn-secondary btn-sm snapshot-view" data-index="${i}">${t('snapshotView')}</button>
-          <input type="checkbox" class="snapshot-compare-check" data-snap-index="${i}" title="비교 선택">
-          <button class="snapshot-delete" data-index="${i}" title="삭제">&times;</button>
-        </div>
-      </div>
-      <div class="snapshot-stats">
-        <div class="snapshot-stat">
-          <span class="snapshot-stat-label">${t('following')}</span>
-          <span class="snapshot-stat-value">${snap.following}</span>
-          ${deltaHtml(snap.following, prev?.following, false)}
-        </div>
-        <div class="snapshot-stat">
-          <span class="snapshot-stat-label">${t('followers')}</span>
-          <span class="snapshot-stat-value">${snap.followers}</span>
-          ${deltaHtml(snap.followers, prev?.followers, false)}
-        </div>
-        <div class="snapshot-stat">
-          <span class="snapshot-stat-label">${t('notFollowing')}</span>
-          <span class="snapshot-stat-value">${snap.notFollowingBack}</span>
-          ${deltaHtml(snap.notFollowingBack, prev?.notFollowingBack, true)}
-        </div>
-      </div>
-      ${changesHtml}
-    `;
-    snapshotList.appendChild(card);
-  });
-
-  show(snapshotSection);
-}
-
-// ── Snapshot Compare ──
-
-document.getElementById('snapshot-list').addEventListener('change', (e) => {
-  const check = e.target.closest('.snapshot-compare-check');
-  if (!check) return;
-  const idx = parseInt(check.dataset.snapIndex, 10);
-
-  if (check.checked) {
-    if (compareSelected.size >= 2) {
-      const oldest = [...compareSelected][0];
-      compareSelected.delete(oldest);
-      const oldCheck = document.querySelector(`.snapshot-compare-check[data-snap-index="${oldest}"]`);
-      if (oldCheck) oldCheck.checked = false;
-      const oldCard = oldCheck?.closest('.snapshot-card');
-      if (oldCard) oldCard.classList.remove('selected-compare');
-    }
-    compareSelected.add(idx);
-    check.closest('.snapshot-card').classList.add('selected-compare');
-  } else {
-    compareSelected.delete(idx);
-    check.closest('.snapshot-card').classList.remove('selected-compare');
-  }
+const snapshotList = document.getElementById('snapshot-list');
+const { showSnapshots } = initSnapshotUI({
+  snapshotSection: document.getElementById('snapshot-section'),
+  snapshotList,
+  compareBtn: document.getElementById('snapshot-compare-btn'),
+  compareModal: document.getElementById('compare-modal'),
+  compareContent: document.getElementById('compare-content'),
+  compareCloseBtn: document.getElementById('compare-close'),
+  compareSelected
 });
 
-document.getElementById('snapshot-compare-btn').addEventListener('click', () => {
-  if (compareSelected.size !== 2) {
-    showToast(t('selectTwoSnapshots'));
-    return;
-  }
-
-  const snapshots = getSnapshots();
-  const indices = [...compareSelected].sort((a, b) => b - a);
-  const older = snapshots[indices[0]];
-  const newer = snapshots[indices[1]];
-
-  const content = document.getElementById('compare-content');
-  let html = '';
-
-  const rows = [
-    { label: t('following'), old: older.following, new_: newer.following },
-    { label: t('followers'), old: older.followers, new_: newer.followers },
-    { label: t('notFollowing'), old: older.notFollowingBack, new_: newer.notFollowingBack }
-  ];
-
-  html += '<div class="compare-section">';
-  rows.forEach(r => {
-    const diff = r.new_ - r.old;
-    const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
-    const cls = diff > 0 ? 'color:var(--color-up)' : diff < 0 ? 'color:var(--color-danger)' : '';
-    html += `<div class="compare-row"><span class="compare-label">${r.label}</span><div class="compare-values"><span>${r.old}</span><span class="compare-arrow">\u2192</span><span>${r.new_}</span><span style="${cls};font-weight:600">${diffStr}</span></div></div>`;
-  });
-  html += '</div>';
-
-  if (older.followerUsernames && newer.followerUsernames) {
-    const oldSet = new Set(older.followerUsernames);
-    const newSet = new Set(newer.followerUsernames);
-    const lost = older.followerUsernames.filter(u => !newSet.has(u));
-    const gained = newer.followerUsernames.filter(u => !oldSet.has(u));
-
-    if (lost.length > 0) {
-      html += `<div class="compare-section"><h4 class="change-label-lost">${t('lostFollowers', lost.length)}</h4><div class="compare-userlist">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`;
-    }
-    if (gained.length > 0) {
-      html += `<div class="compare-section"><h4 class="change-label-new">${t('newFollowers', gained.length)}</h4><div class="compare-userlist">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`;
-    }
-  }
-
-  content.innerHTML = html;
-  show(document.getElementById('compare-modal'));
-});
-
-document.getElementById('compare-close').addEventListener('click', () => {
-  hide(document.getElementById('compare-modal'));
-});
-
-document.getElementById('snapshot-list').addEventListener('click', (e) => {
-  const deleteBtn = e.target.closest('.snapshot-delete');
-  if (deleteBtn) {
-    const index = parseInt(deleteBtn.dataset.index, 10);
-    deleteSnapshot(index);
-    drawStatsChart();
-    showSnapshots();
-    return;
-  }
-
+snapshotList.addEventListener('click', (e) => {
   const viewBtn = e.target.closest('.snapshot-view');
   if (viewBtn) {
     const index = parseInt(viewBtn.dataset.index, 10);
@@ -1207,54 +1037,27 @@ document.getElementById('snapshot-list').addEventListener('click', (e) => {
   }
 });
 
-// ── Snapshot View ──
-
 function loadSnapshotView(index) {
-  const snapshots = getSnapshots();
-  const snap = snapshots[index];
-  if (!snap || !snap.followerUsernames || !snap.followingUsernames) return;
+  const result = buildSnapshotAnalysis(index);
+  if (!result) return;
 
-  const toUser = (username) => ({
-    id: username,
-    username,
-    full_name: '',
-    profile_pic_url: '',
-    is_verified: false,
-    is_private: false
-  });
+  analysisData = result.analysisData;
+  const s = result.stats;
 
-  const followingUsers = snap.followingUsernames.map(toUser);
-  const followerUsers = snap.followerUsernames.map(toUser);
-
-  const followerSet = new Set(snap.followerUsernames);
-  const followingSet = new Set(snap.followingUsernames);
-
-  const notFollowingBack = followingUsers.filter(u => !followerSet.has(u.username));
-  const mutual = followingUsers.filter(u => followerSet.has(u.username));
-  const followerOnly = followerUsers.filter(u => !followingSet.has(u.username));
-
-  analysisData = {
-    following: followingUsers,
-    followers: followerUsers,
-    notFollowingBack,
-    mutual,
-    followerOnly
-  };
-
-  followingCountEl.textContent = snap.following;
-  followerCountEl.textContent = snap.followers;
-  mutualCountEl.textContent = mutual.length;
-  notFollowingCountEl.textContent = notFollowingBack.length;
-  if (followerOnlyCountEl) followerOnlyCountEl.textContent = followerOnly.length;
+  followingCountEl.textContent = s.following;
+  followerCountEl.textContent = s.followers;
+  mutualCountEl.textContent = s.mutual;
+  notFollowingCountEl.textContent = s.notFollowingBack;
+  if (followerOnlyCountEl) followerOnlyCountEl.textContent = s.followerOnly;
   if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
-  updateRatio(snap.following, snap.followers);
+  updateRatio(s.following, s.followers);
   clearDeltas();
 
-  tabFollowingCount.textContent = snap.following;
-  tabFollowerCount.textContent = snap.followers;
-  tabMutualCount.textContent = mutual.length;
-  tabNotFollowingCount.textContent = notFollowingBack.length;
-  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = followerOnly.length;
+  tabFollowingCount.textContent = s.following;
+  tabFollowerCount.textContent = s.followers;
+  tabMutualCount.textContent = s.mutual;
+  tabNotFollowingCount.textContent = s.notFollowingBack;
+  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = s.followerOnly;
 
   hide(startSection);
   hide(errorSection);
@@ -1328,34 +1131,9 @@ document.getElementById('history-list').addEventListener('click', async (e) => {
   }
 });
 
-// ── Backup / Restore ──
+// ── Backup / Restore (module) ──
 
-document.getElementById('backup-btn').addEventListener('click', () => {
-  const data = {
-    version: 5,
-    date: new Date().toISOString(),
-    unfollowHistory: getUnfollowHistory(),
-    snapshots: getSnapshots(),
-    whitelist: [...getWhitelist()],
-    memos: getMemos(),
-    scheduledQueue: getScheduledQueue(),
-    firstSeen: getFirstSeen(),
-    settings: {
-      darkMode: localStorage.getItem(DARK_MODE_KEY),
-      sort: localStorage.getItem(SORT_KEY),
-      lang: localStorage.getItem('insta-lang')
-    }
-  };
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `insta-unfollow-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(t('backupSuccess'), 'success');
-});
+document.getElementById('backup-btn').addEventListener('click', () => exportBackup());
 
 document.getElementById('restore-btn').addEventListener('click', () => {
   document.getElementById('restore-file').click();
@@ -1365,37 +1143,16 @@ document.getElementById('restore-file').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (data.unfollowHistory) saveUnfollowHistory(data.unfollowHistory);
-      if (data.snapshots) localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(data.snapshots));
-      if (data.whitelist) saveWhitelist(new Set(data.whitelist));
-      if (data.memos) saveMemos(data.memos);
-      if (data.scheduledQueue) saveScheduledQueue(data.scheduledQueue);
-      if (data.firstSeen) localStorage.setItem('insta-first-seen', JSON.stringify(data.firstSeen));
-      if (data.settings) {
-        if (data.settings.darkMode !== null) localStorage.setItem(DARK_MODE_KEY, data.settings.darkMode);
-        if (data.settings.sort) localStorage.setItem(SORT_KEY, data.settings.sort);
-        if (data.settings.lang) localStorage.setItem('insta-lang', data.settings.lang);
-      }
-
-      initDarkMode(darkModeBtn);
-      langSelect.value = getLang();
-      filterSortSelect.value = getSortPreference();
-      applyI18n(filterSortSelect);
-      drawStatsChart();
-      showSnapshots();
-      showHistory();
-      showScheduledStatus();
-
-      showToast(t('restoreSuccess'), 'success');
-    } catch {
-      showToast(t('restoreFail'), 'error');
-    }
-  };
-  reader.readAsText(file);
+  importBackup(file, () => {
+    initDarkMode(darkModeBtn);
+    langSelect.value = getLang();
+    filterSortSelect.value = getSortPreference();
+    applyI18n(filterSortSelect);
+    drawStatsChart();
+    showSnapshots();
+    showHistory();
+    showScheduledStatus();
+  });
   e.target.value = '';
 });
 
