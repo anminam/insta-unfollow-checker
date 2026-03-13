@@ -12,6 +12,8 @@ export const MEMO_KEY = 'insta-user-memos';
 export const ONBOARDING_KEY = 'insta-onboarding-done';
 export const SCHEDULED_INTERVAL_KEY = 'insta-scheduled-interval';
 export const SCHEDULED_DAILY_LIMIT_KEY = 'insta-scheduled-daily-limit';
+export const AUTO_WHITELIST_KEY = 'insta-auto-whitelist';
+export const SMART_SCHEDULE_KEY = 'insta-smart-schedule';
 
 export const FIRST_SEEN_KEY = 'insta-first-seen';
 
@@ -255,6 +257,26 @@ export function getMaliciousInfo(username) {
 
 export function isMalicious(username) {
   return getMaliciousInfo(username) !== null;
+}
+
+// ── Auto Whitelist ──
+
+export function getAutoWhitelist() {
+  return localStorage.getItem(AUTO_WHITELIST_KEY) === 'true';
+}
+
+export function saveAutoWhitelist(enabled) {
+  localStorage.setItem(AUTO_WHITELIST_KEY, String(enabled));
+}
+
+// ── Smart Schedule ──
+
+export function getSmartSchedule() {
+  return localStorage.getItem(SMART_SCHEDULE_KEY) === 'true';
+}
+
+export function saveSmartSchedule(enabled) {
+  localStorage.setItem(SMART_SCHEDULE_KEY, String(enabled));
 }
 
 // ── Onboarding ──

@@ -935,6 +935,11 @@ body {
   color: var(--color-danger);
 }
 
+.stat-growth .stat-value,
+.stat-retention .stat-value {
+  font-size: 14px;
+}
+
 /* ── Filter Bar ── */
 
 .filter-bar {

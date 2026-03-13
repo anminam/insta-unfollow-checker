@@ -2,6 +2,8 @@
 
 import {
   SNAPSHOT_KEY, DARK_MODE_KEY, SORT_KEY,
+  AUTO_WHITELIST_KEY, SMART_SCHEDULE_KEY,
+  SCHEDULED_INTERVAL_KEY, SCHEDULED_DAILY_LIMIT_KEY,
   getUnfollowHistory, saveUnfollowHistory,
   getSnapshots, getWhitelist, saveWhitelist,
   getMemos, saveMemos,
@@ -24,7 +26,11 @@ export function exportBackup() {
     settings: {
       darkMode: localStorage.getItem(DARK_MODE_KEY),
       sort: localStorage.getItem(SORT_KEY),
-      lang: localStorage.getItem('insta-lang')
+      lang: localStorage.getItem('insta-lang'),
+      autoWhitelist: localStorage.getItem(AUTO_WHITELIST_KEY),
+      smartSchedule: localStorage.getItem(SMART_SCHEDULE_KEY),
+      scheduledInterval: localStorage.getItem(SCHEDULED_INTERVAL_KEY),
+      scheduledDailyLimit: localStorage.getItem(SCHEDULED_DAILY_LIMIT_KEY)
     }
   };
   const json = JSON.stringify(data, null, 2);
@@ -53,6 +59,10 @@ export function importBackup(file, onComplete) {
         if (data.settings.darkMode !== null) localStorage.setItem(DARK_MODE_KEY, data.settings.darkMode);
         if (data.settings.sort) localStorage.setItem(SORT_KEY, data.settings.sort);
         if (data.settings.lang) localStorage.setItem('insta-lang', data.settings.lang);
+        if (data.settings.autoWhitelist) localStorage.setItem(AUTO_WHITELIST_KEY, data.settings.autoWhitelist);
+        if (data.settings.smartSchedule) localStorage.setItem(SMART_SCHEDULE_KEY, data.settings.smartSchedule);
+        if (data.settings.scheduledInterval) localStorage.setItem(SCHEDULED_INTERVAL_KEY, data.settings.scheduledInterval);
+        if (data.settings.scheduledDailyLimit) localStorage.setItem(SCHEDULED_DAILY_LIMIT_KEY, data.settings.scheduledDailyLimit);
       }
       showToast(t('restoreSuccess'), 'success');
       if (onComplete) onComplete();

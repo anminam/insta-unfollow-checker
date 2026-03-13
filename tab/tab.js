@@ -3,7 +3,7 @@
 import { t, applyI18n, getLang, setLang } from './modules/i18n.js';
 import {
   CACHE_KEY,
-  getWhitelist, toggleWhitelist,
+  getWhitelist, saveWhitelist, toggleWhitelist,
   getMemos, getUserMemo, setUserMemo,
   getUnfollowHistory, recordUnfollow, removeUnfollowRecord,
   getCachedAnalysis, setCachedAnalysis,
@@ -14,7 +14,9 @@ import {
   getScheduledInterval, saveScheduledInterval,
   getScheduledDailyLimit, saveScheduledDailyLimit,
   getFirstSeen, recordFirstSeen,
-  setMaliciousUsers
+  setMaliciousUsers,
+  getAutoWhitelist, saveAutoWhitelist,
+  getSmartSchedule, saveSmartSchedule
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml, usernameLink } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
@@ -94,6 +96,11 @@ const deltaFollowerOnly = document.getElementById('delta-follower-only');
 const scheduledIntervalSlider = document.getElementById('scheduled-interval-slider');
 const scheduledIntervalValue = document.getElementById('scheduled-interval-value');
 const scheduledDailyLimitInput = document.getElementById('scheduled-daily-limit-input');
+const filterTagSelect = document.getElementById('filter-tag');
+const autoWhitelistToggle = document.getElementById('auto-whitelist-toggle');
+const smartScheduleToggle = document.getElementById('smart-schedule-toggle');
+const growthValueEl = document.getElementById('growth-value');
+const retentionValueEl = document.getElementById('retention-value');
 
 // ── State ──
 
@@ -101,6 +108,7 @@ let currentTab = 'not-following';
 let analysisData = null;
 let filterVerified = false;
 let filterGhost = false;
+let filterTag = '';
 let scheduledTimer = null;
 let scheduledDailyCount = 0;
 let scheduledDailyDate = new Date().toDateString();
@@ -125,9 +133,11 @@ function getFiltered() {
     searchQuery: filterSearchInput.value,
     filterVerified,
     filterGhost,
+    filterTag,
     sortValue: filterSortSelect.value,
     whitelistSet: getWhitelist(),
-    firstSeen: getFirstSeen()
+    firstSeen: getFirstSeen(),
+    memos: getMemos()
   });
 }
 
@@ -216,8 +226,10 @@ function switchTab(tabName) {
   filterSearchInput.value = '';
   filterVerified = false;
   filterGhost = false;
+  filterTag = '';
   filterVerifiedBtn.classList.remove('active');
   filterGhostBtn.classList.remove('active');
+  filterTagSelect.value = '';
   selectedIds.clear();
   selectAllCheckbox.checked = false;
   lastClickedIndex = -1;
@@ -248,6 +260,11 @@ filterVerifiedBtn.addEventListener('click', () => {
 filterGhostBtn.addEventListener('click', () => {
   filterGhost = !filterGhost;
   filterGhostBtn.classList.toggle('active', filterGhost);
+  refreshList();
+});
+
+filterTagSelect.addEventListener('change', () => {
+  filterTag = filterTagSelect.value;
   refreshList();
 });
 
@@ -454,6 +471,8 @@ async function startAnalysis() {
 
     hide(progressSection);
     showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames);
+    autoWhitelistMutuals();
+    updateGrowthAndRetention(totalFollowers);
 
     chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
   } catch (error) {
@@ -854,6 +873,20 @@ async function processScheduledQueueLoop() {
     scheduledDailyCount = 0;
   }
 
+  // Smart schedule: skip night hours
+  if (getSmartSchedule() && isNightTime()) {
+    showToast(t('nightPause'), 'warning');
+    const msUntil6am = (() => {
+      const now = new Date();
+      const sixAm = new Date(now);
+      sixAm.setHours(6, 0, 0, 0);
+      if (sixAm <= now) sixAm.setDate(sixAm.getDate() + 1);
+      return sixAm - now;
+    })();
+    scheduledTimer = setTimeout(processScheduledQueueLoop, msUntil6am + 60000);
+    return;
+  }
+
   // Check daily limit
   const dailyLimit = getScheduledDailyLimit();
   if (scheduledDailyCount >= dailyLimit) {
@@ -940,6 +973,71 @@ if (scheduledDailyLimitInput) {
     const val = parseInt(scheduledDailyLimitInput.value, 10) || 50;
     saveScheduledDailyLimit(val);
   });
+}
+
+// ── Auto Whitelist ──
+
+autoWhitelistToggle.checked = getAutoWhitelist();
+autoWhitelistToggle.addEventListener('change', () => {
+  saveAutoWhitelist(autoWhitelistToggle.checked);
+});
+
+function autoWhitelistMutuals() {
+  if (!getAutoWhitelist() || !analysisData?.mutual) return;
+  const wl = getWhitelist();
+  let added = 0;
+  analysisData.mutual.forEach(u => {
+    if (!wl.has(u.id)) { wl.add(u.id); added++; }
+  });
+  if (added > 0) {
+    saveWhitelist(wl);
+    if (tabWhitelistCount) tabWhitelistCount.textContent = wl.size;
+    showToast(t('autoWhitelistDone', added), 'success');
+  }
+}
+
+// ── Smart Schedule ──
+
+smartScheduleToggle.checked = getSmartSchedule();
+smartScheduleToggle.addEventListener('change', () => {
+  saveSmartSchedule(smartScheduleToggle.checked);
+});
+
+function isNightTime() {
+  const hour = new Date().getHours();
+  return hour >= 0 && hour < 6;
+}
+
+// ── Growth Rate & Retention ──
+
+function updateGrowthAndRetention(totalFollowers) {
+  const snapshots = getSnapshots();
+
+  // Growth rate
+  if (snapshots.length >= 2) {
+    const latest = snapshots[0];
+    const oldest = snapshots[Math.min(snapshots.length - 1, 6)];
+    const daysDiff = (new Date(latest.date) - new Date(oldest.date)) / 86400000;
+    if (daysDiff > 0) {
+      const daily = (totalFollowers - oldest.followers) / daysDiff;
+      growthValueEl.textContent = t('growthDaily', daily);
+      growthValueEl.className = `stat-value ${daily >= 0 ? 'ratio-good' : 'ratio-bad'}`;
+    }
+  }
+
+  // Retention
+  if (snapshots.length >= 2 && snapshots[0].followerUsernames) {
+    const prev = snapshots.find((s, i) => i > 0 && s.followerUsernames);
+    if (prev && prev.followerUsernames) {
+      const prevSet = new Set(prev.followerUsernames);
+      const currentFollowers = analysisData?.followers?.map(u => u.username) || [];
+      const currSet = new Set(currentFollowers);
+      const retained = prev.followerUsernames.filter(u => currSet.has(u)).length;
+      const rate = prevSet.size > 0 ? Math.round((retained / prevSet.size) * 100) : 100;
+      retentionValueEl.textContent = `${rate}%`;
+      retentionValueEl.className = `stat-value ${rate >= 95 ? 'ratio-good' : rate >= 85 ? 'ratio-warning' : 'ratio-bad'}`;
+    }
+  }
 }
 
 // ── Error ──
@@ -1283,7 +1381,10 @@ async function handleGoogleLogin() {
   hide(authError);
 
   try {
-    const response = await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGIN' });
+    const response = await Promise.race([
+      chrome.runtime.sendMessage({ action: 'GOOGLE_LOGIN' }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 30000))
+    ]);
     if (!response.success) {
       throw new Error(response.error || 'GOOGLE_API_ERROR');
     }

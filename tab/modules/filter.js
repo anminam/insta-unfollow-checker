@@ -3,7 +3,7 @@
 
 import { GHOST_AVATAR_PATTERN } from './storage.js';
 
-export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, filterGhost, sortValue, whitelistSet, firstSeen }) {
+export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, filterGhost, filterTag, sortValue, whitelistSet, firstSeen, memos }) {
   if (!analysisData) return [];
 
   let users;
@@ -44,6 +44,14 @@ export function getFilteredUsers({ analysisData, currentTab, searchQuery, filter
   // Ghost filter
   if (filterGhost) {
     users = users.filter(u => u.profile_pic_url && u.profile_pic_url.includes(GHOST_AVATAR_PATTERN));
+  }
+
+  // Tag filter
+  if (filterTag && memos) {
+    users = users.filter(u => {
+      const memo = memos[u.id];
+      return memo && memo.tags && memo.tags.includes(filterTag);
+    });
   }
 
   // Sort
