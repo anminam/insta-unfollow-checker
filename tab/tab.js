@@ -101,6 +101,8 @@ let analysisData = null;
 let filterVerified = false;
 let filterGhost = false;
 let scheduledTimer = null;
+let scheduledDailyCount = 0;
+let scheduledDailyDate = new Date().toDateString();
 const selectedIds = new Set();
 let lastClickedIndex = -1;
 const compareSelected = new Set();
@@ -471,8 +473,7 @@ async function startAnalysis() {
 
 // ── Results ──
 
-async function showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames) {
-  fetchMaliciousUsersList();
+function displayResults(totalFollowing, totalFollowers) {
   followingCountEl.textContent = totalFollowing;
   followerCountEl.textContent = totalFollowers;
   mutualCountEl.textContent = analysisData.mutual.length;
@@ -487,6 +488,12 @@ async function showResults(totalFollowing, totalFollowers, followerUsernames, fo
   if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
   if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
 
+  show(resultSection);
+  switchTab('not-following');
+}
+
+async function showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames) {
+  fetchMaliciousUsersList();
   saveSnapshot(
     totalFollowing,
     totalFollowers,
@@ -494,28 +501,11 @@ async function showResults(totalFollowing, totalFollowers, followerUsernames, fo
     followerUsernames,
     followingUsernames
   );
-
-  show(resultSection);
-  switchTab('not-following');
+  displayResults(totalFollowing, totalFollowers);
 }
 
 function showResultsFromCache(cached) {
-  followingCountEl.textContent = cached.totalFollowing;
-  followerCountEl.textContent = cached.totalFollowers;
-  mutualCountEl.textContent = analysisData.mutual.length;
-  notFollowingCountEl.textContent = analysisData.notFollowingBack.length;
-  if (followerOnlyCountEl) followerOnlyCountEl.textContent = analysisData.followerOnly.length;
-  updateRatio(cached.totalFollowing, cached.totalFollowers);
-
-  tabFollowingCount.textContent = cached.totalFollowing;
-  tabFollowerCount.textContent = cached.totalFollowers;
-  tabMutualCount.textContent = analysisData.mutual.length;
-  tabNotFollowingCount.textContent = analysisData.notFollowingBack.length;
-  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
-  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
-
-  show(resultSection);
-  switchTab('not-following');
+  displayResults(cached.totalFollowing, cached.totalFollowers);
 }
 
 // ── Selection ──
@@ -866,6 +856,20 @@ async function processScheduledQueueLoop() {
   const queue = getScheduledQueue();
   if (queue.length === 0) return;
 
+  // Reset daily count if date changed
+  const today = new Date().toDateString();
+  if (scheduledDailyDate !== today) {
+    scheduledDailyDate = today;
+    scheduledDailyCount = 0;
+  }
+
+  // Check daily limit
+  const dailyLimit = getScheduledDailyLimit();
+  if (scheduledDailyCount >= dailyLimit) {
+    showToast(t('dailyLimitReached', dailyLimit), 'warning');
+    return;
+  }
+
   const item = queue.shift();
   saveScheduledQueue(queue);
 
@@ -876,6 +880,7 @@ async function processScheduledQueueLoop() {
     });
     if (response.success) {
       recordUnfollow(item.userId, item.username);
+      scheduledDailyCount++;
       showToast(t('toastUnfollowed', item.username), 'success');
     }
   } catch {

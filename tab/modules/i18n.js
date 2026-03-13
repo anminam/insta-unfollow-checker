@@ -136,6 +136,7 @@ export const I18N = {
     reportSuccess: '신고가 접수되었습니다.',
     reportFail: '신고에 실패했습니다.',
     maliciousTooltip: (reason) => `악성 유저: ${reason}`,
+    dailyLimitReached: (n) => `일일 언팔 한도(${n}명)에 도달했습니다. 내일 다시 진행됩니다.`,
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -272,6 +273,7 @@ export const I18N = {
     reportSuccess: 'Report submitted.',
     reportFail: 'Report failed.',
     maliciousTooltip: (reason) => `Malicious user: ${reason}`,
+    dailyLimitReached: (n) => `Daily unfollow limit (${n}) reached. Will resume tomorrow.`,
   }
 };
 
