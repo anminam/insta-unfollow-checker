@@ -17,7 +17,7 @@ import {
   setMaliciousUsers, isMalicious, getMaliciousInfo,
   UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE
 } from './modules/storage.js';
-import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode } from './modules/ui.js';
+import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
 import { getFilteredUsers } from './modules/filter.js';
 import { renderUserList } from './modules/renderer.js';
@@ -129,12 +129,13 @@ function getFiltered() {
 }
 
 function usernameLink(u) {
+  const safe = escapeHtml(u);
   const reason = getMaliciousInfo(u);
   if (reason !== null) {
-    const tooltip = t('maliciousTooltip', reason);
-    return `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a><span class="badge-malicious" style="font-size:10px;margin-left:2px;" title="${tooltip}">${t('malicious')}</span>`;
+    const tooltip = escapeHtml(t('maliciousTooltip', reason));
+    return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a><span class="badge-malicious" style="font-size:10px;margin-left:2px;" title="${tooltip}">${t('malicious')}</span>`;
   }
-  return `<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">@${u}</a>`;
+  return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a>`;
 }
 
 function refreshList() {
@@ -239,7 +240,11 @@ tabNav.addEventListener('click', (e) => {
 
 // ── Filter Bar Events ──
 
-filterSearchInput.addEventListener('input', refreshList);
+let searchDebounceTimer;
+filterSearchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(refreshList, 150);
+});
 
 filterVerifiedBtn.addEventListener('click', () => {
   filterVerified = !filterVerified;
@@ -665,8 +670,8 @@ userListEl.addEventListener('click', (e) => {
   overlay.innerHTML = `
     <div class="modal-box">
       <div class="modal-title">${t('reportTitle')}</div>
-      <div class="memo-username">@${username}</div>
-      <textarea class="memo-input" rows="3" placeholder="${t('reportPlaceholder')}"></textarea>
+      <div class="memo-username">@${escapeHtml(username)}</div>
+      <textarea class="memo-input" rows="3" placeholder="${escapeHtml(t('reportPlaceholder'))}"></textarea>
       <div class="modal-buttons">
         <button class="btn btn-secondary report-cancel">${t('no')}</button>
         <button class="btn btn-danger report-submit">${t('reportSubmit')}</button>

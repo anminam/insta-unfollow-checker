@@ -3,6 +3,15 @@
 import { t } from './i18n.js';
 import { UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from './storage.js';
 
+// ── HTML Escape ──
+
+const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+export function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, c => escapeMap[c]);
+}
+
 export function show(el) {
   el.classList.remove('hidden');
 }

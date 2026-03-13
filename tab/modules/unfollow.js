@@ -1,8 +1,8 @@
 // ── Unfollow Module ──
 
 import { t } from './i18n.js';
-import { recordUnfollow, getWhitelist, getScheduledQueue, saveScheduledQueue, getScheduledInterval, UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from './storage.js';
-import { show, hide, showConfirm, showToast, formatEta, estimateEta, randomDelay, countdownDelay } from './ui.js';
+import { recordUnfollow, UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from './storage.js';
+import { show, hide, showToast, formatEta, estimateEta, randomDelay, countdownDelay } from './ui.js';
 
 export async function batchUnfollow({ targets, els, selectedIds, onComplete }) {
   const {
@@ -99,62 +99,4 @@ export async function batchUnfollow({ targets, els, selectedIds, onComplete }) {
     show(resultSection);
     onComplete(completed);
   }, 2000);
-}
-
-export function processScheduledQueue(onProcessed) {
-  const queue = getScheduledQueue();
-  if (queue.length === 0) return null;
-
-  const item = queue.shift();
-  saveScheduledQueue(queue);
-
-  const doProcess = async () => {
-    try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'UNFOLLOW_USER',
-        data: { userId: item.userId }
-      });
-      if (response.success) {
-        recordUnfollow(item.userId, item.username);
-        showToast(t('toastUnfollowed', item.username), 'success');
-      }
-    } catch {
-      // Skip failed
-    }
-
-    onProcessed();
-
-    const remainingQueue = getScheduledQueue();
-    if (remainingQueue.length > 0) {
-      const intervalMin = getScheduledInterval();
-      const delayMs = intervalMin * 60000 + Math.random() * 60000;
-      return setTimeout(() => processScheduledQueue(onProcessed), delayMs);
-    }
-    return null;
-  };
-
-  doProcess();
-
-  // Return a promise-like handle for initial call
-  const remainingQueue = getScheduledQueue();
-  if (remainingQueue.length > 0) {
-    const intervalMin = getScheduledInterval();
-    const delayMs = intervalMin * 60000 + Math.random() * 60000;
-    return delayMs;
-  }
-  return null;
-}
-
-export async function scheduleUnfollow(targets, selectedIds, selectAllCheckbox, onScheduled) {
-  if (targets.length === 0) return;
-  if (!await showConfirm(t('confirmSchedule', targets.length))) return;
-
-  const queue = getScheduledQueue();
-  queue.push(...targets);
-  saveScheduledQueue(queue);
-
-  selectedIds.clear();
-  selectAllCheckbox.checked = false;
-
-  onScheduled();
 }

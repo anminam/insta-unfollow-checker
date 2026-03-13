@@ -1,7 +1,7 @@
 // ── Filter Module ──
 // Pure function: receives all state as parameters
 
-const GHOST_AVATAR_PATTERN = '44884218_345707102882519_';
+import { GHOST_AVATAR_PATTERN } from './storage.js';
 
 export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, filterGhost, sortValue, whitelistSet, firstSeen }) {
   if (!analysisData) return [];

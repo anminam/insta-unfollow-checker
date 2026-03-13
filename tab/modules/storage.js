@@ -15,6 +15,8 @@ export const SCHEDULED_DAILY_LIMIT_KEY = 'insta-scheduled-daily-limit';
 
 export const FIRST_SEEN_KEY = 'insta-first-seen';
 
+export const GHOST_AVATAR_PATTERN = '44884218_345707102882519_';
+
 export const UNFOLLOW_DELAY_MIN = 3000;
 export const UNFOLLOW_DELAY_MAX = 5000;
 export const UNFOLLOW_BATCH_SIZE = 10;

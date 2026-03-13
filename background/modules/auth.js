@@ -21,7 +21,7 @@ export async function googleLogin() {
   const { authorized, pending } = await checkAllowlist(token, email);
 
   await chrome.storage.local.set({
-    [AUTH_STORAGE_KEY]: { email, authorized, token, timestamp: Date.now() }
+    [AUTH_STORAGE_KEY]: { email, authorized, timestamp: Date.now() }
   });
 
   return { email, authorized, pending };
@@ -73,11 +73,8 @@ async function registerUser(token, email) {
 
 export async function googleLogout() {
   try {
-    const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
-    const auth = result[AUTH_STORAGE_KEY];
-    if (auth?.token) {
-      await chrome.identity.removeCachedAuthToken({ token: auth.token });
-    }
+    const token = await getFreshToken();
+    if (token) await chrome.identity.removeCachedAuthToken({ token });
   } catch { /* ignore */ }
   await chrome.storage.local.remove(AUTH_STORAGE_KEY);
 }

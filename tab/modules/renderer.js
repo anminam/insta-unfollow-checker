@@ -1,34 +1,45 @@
 // ── Renderer Module ──
 
 import { t } from './i18n.js';
-import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo } from './storage.js';
-import { FALLBACK_AVATAR, loadImageAsBlob } from './ui.js';
+import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo, GHOST_AVATAR_PATTERN } from './storage.js';
+import { FALLBACK_AVATAR, loadImageAsBlob, escapeHtml } from './ui.js';
 
-const GHOST_AVATAR_PATTERN = '44884218_345707102882519_';
 const LONG_WAIT_DAYS = 30;
 
 const ITEM_HEIGHT = 65;
 const BUFFER_COUNT = 5;
+const BLOB_CACHE_MAX = 500;
 
 // ── Blob Cache ──
 const blobCache = new Map();
 
 export async function loadImageAsBlobCached(url) {
   if (blobCache.has(url)) return blobCache.get(url);
+  if (blobCache.size >= BLOB_CACHE_MAX) {
+    const firstKey = blobCache.keys().next().value;
+    URL.revokeObjectURL(blobCache.get(firstKey));
+    blobCache.delete(firstKey);
+  }
   const blobUrl = await loadImageAsBlob(url);
   blobCache.set(url, blobUrl);
   return blobUrl;
 }
 
+// ── Observer Cleanup ──
+let activeObserver = null;
+
 // ── Render ──
 
 export function renderUserList(userListEl, users, showUnfollowControls, selectedIds, { isWideScreen = false } = {}) {
+  if (activeObserver) {
+    activeObserver.disconnect();
+    activeObserver = null;
+  }
   userListEl.innerHTML = '';
   userListEl.onscroll = null;
 
   if (users.length === 0) {
-    const emptyMsg = t('emptyList');
-    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${emptyMsg}</p>`;
+    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${escapeHtml(t('emptyList'))}</p>`;
     return;
   }
 
@@ -57,6 +68,7 @@ export function renderUserList(userListEl, users, showUnfollowControls, selected
       avatarObserver.unobserve(img);
     });
   }, { root: userListEl, rootMargin: '100px' });
+  activeObserver = avatarObserver;
 
   let renderedRange = { start: -1, end: -1 };
 
@@ -108,6 +120,7 @@ function renderAllUsers(userListEl, users, showUnfollowControls, selectedIds) {
       observer.unobserve(img);
     });
   }, { rootMargin: '100px' });
+  activeObserver = observer;
 
   users.forEach((user, i) => {
     const card = createUserCard(user, showUnfollowControls, i, selectedIds, users.length);
@@ -122,6 +135,9 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
   card.className = 'user-card';
   card.dataset.userId = user.id;
   card.dataset.index = index;
+
+  const safeUsername = escapeHtml(user.username);
+  const safeFullName = escapeHtml(user.full_name);
 
   const verified = user.is_verified ? '<span class="user-verified">&#10003;</span>' : '';
   const unfollowedBadge = wasUnfollowed(user.id) ? `<span class="badge-unfollowed">${t('prevUnfollowed')}</span>` : '';
@@ -142,17 +158,17 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
 
   const maliciousReason = getMaliciousInfo(user.username);
   const maliciousBadge = maliciousReason !== null
-    ? `<span class="badge-malicious" title="${t('maliciousTooltip', maliciousReason)}">${t('malicious')}</span>`
+    ? `<span class="badge-malicious" title="${escapeHtml(t('maliciousTooltip', maliciousReason))}">${t('malicious')}</span>`
     : '';
 
   // Tags from memo
   const memo = getUserMemo(user.id);
   const tagBadges = (memo?.tags || []).map(tag =>
-    `<span class="badge-tag badge-tag-${tag}">${t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))}</span>`
+    `<span class="badge-tag badge-tag-${escapeHtml(tag)}">${t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))}</span>`
   ).join('');
 
   const memoPreview = memo?.text
-    ? `<div class="user-memo-preview"><span class="memo-bubble">${memo.text.slice(0, 40)}${memo.text.length > 40 ? '...' : ''}</span></div>`
+    ? `<div class="user-memo-preview"><span class="memo-bubble">${escapeHtml(memo.text.slice(0, 40))}${memo.text.length > 40 ? '...' : ''}</span></div>`
     : '';
 
   const isChecked = selectedIds.has(user.id);
@@ -165,30 +181,30 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
 
   let actionsHtml = '';
   const memoClass = memo ? ' has-memo' : '';
-  const reportBtn = `<button class="btn-report" data-user-id="${user.id}" data-username="${user.username}" title="${t('reportUser')}">&#9888;</button>`;
+  const reportBtn = `<button class="btn-report" data-user-id="${user.id}" data-username="${safeUsername}" title="${t('reportUser')}">&#9888;</button>`;
   if (showUnfollowControls) {
     const wlClass = whitelisted ? ' active' : '';
     actionsHtml = `<div class="user-actions">
       ${reportBtn}
-      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${user.username}" title="메모">\uD83D\uDCDD</button>
+      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${safeUsername}" title="메모">\uD83D\uDCDD</button>
       <button class="btn-whitelist${wlClass}" data-user-id="${user.id}" title="화이트리스트">\uD83D\uDEE1\uFE0F</button>
-      <button class="btn-unfollow" data-user-id="${user.id}" data-username="${user.username}"${whitelisted ? ' disabled' : ''}${user.is_private ? ` title="${t('privateWarning')}"` : ''}>${t('unfollow')}</button>
+      <button class="btn-unfollow" data-user-id="${user.id}" data-username="${safeUsername}"${whitelisted ? ' disabled' : ''}${user.is_private ? ` title="${t('privateWarning')}"` : ''}>${t('unfollow')}</button>
     </div>`;
   } else {
     actionsHtml = `<div class="user-actions">
       ${reportBtn}
-      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${user.username}" title="메모">\uD83D\uDCDD</button>
+      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${safeUsername}" title="메모">\uD83D\uDCDD</button>
     </div>`;
   }
 
   card.innerHTML = `
     ${checkboxHtml}
-    <img class="${avatarClass}" src="${FALLBACK_AVATAR}" data-pic-url="${user.profile_pic_url}" alt="${user.username}">
+    <img class="${avatarClass}" src="${FALLBACK_AVATAR}" data-pic-url="${escapeHtml(user.profile_pic_url)}" alt="${safeUsername}">
     <div class="user-info">
       <div class="user-username">
-        <a class="username-link" href="https://www.instagram.com/${user.username}/" target="_blank" rel="noopener">${user.username}</a>${verified}${maliciousBadge}${privateBadge}${ghostBadge}${longWaitBadge}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
+        <a class="username-link" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener">${safeUsername}</a>${verified}${maliciousBadge}${privateBadge}${ghostBadge}${longWaitBadge}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
       </div>
-      <div class="user-fullname">${user.full_name}</div>
+      <div class="user-fullname">${safeFullName}</div>
       ${memoPreview}
     </div>
     ${actionsHtml}
