@@ -1,10 +1,20 @@
 // ── Renderer Module ──
 
 import { t } from './i18n.js';
-import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo, GHOST_AVATAR_PATTERN } from './storage.js';
+import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo, GHOST_AVATAR_PATTERN, isUnstableUser } from './storage.js';
 import { FALLBACK_AVATAR, loadImageAsBlob, escapeHtml } from './ui.js';
 
 const LONG_WAIT_DAYS = 30;
+
+function calcGhostScore(user) {
+  let score = 0;
+  if (user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN)) score += 40;
+  if (user.is_private) score += 20;
+  if (!user.full_name || user.full_name.trim() === '') score += 20;
+  if (!user.is_verified) score += 10;
+  if (user.username && /^\w+\d{4,}$/.test(user.username)) score += 10;
+  return Math.min(score, 100);
+}
 
 const ITEM_HEIGHT = 65;
 const BUFFER_COUNT = 5;
@@ -152,6 +162,13 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
   const isGhost = user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN);
   const ghostBadge = isGhost ? `<span class="badge-ghost">${t('ghost')}</span>` : '';
 
+  // Ghost score
+  const ghostScore = calcGhostScore(user);
+  const ghostScoreBadge = ghostScore >= 60 ? `<span class="badge-ghost-score" title="${t('ghostScoreTooltip', ghostScore)}">${t('ghostScore', ghostScore)}</span>` : '';
+
+  // Unstable follower
+  const unstableBadge = isUnstableUser(user.username) ? `<span class="badge-unstable" title="${escapeHtml(t('unstableTooltip'))}">${t('unstableFollower')}</span>` : '';
+
   const firstSeenDate = getFirstSeenDate(user.id);
   const isLongWait = firstSeenDate && (Date.now() - new Date(firstSeenDate).getTime()) > LONG_WAIT_DAYS * 86400000;
   const longWaitBadge = isLongWait ? `<span class="badge-long-wait">${t('longWait')}</span>` : '';
@@ -202,7 +219,7 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
     <img class="${avatarClass}" src="${FALLBACK_AVATAR}" data-pic-url="${escapeHtml(user.profile_pic_url)}" alt="${safeUsername}">
     <div class="user-info">
       <div class="user-username">
-        <a class="username-link" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener">${safeUsername}</a>${verified}${maliciousBadge}${privateBadge}${ghostBadge}${longWaitBadge}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
+        <a class="username-link" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener">${safeUsername}</a>${verified}${maliciousBadge}${privateBadge}${ghostBadge}${ghostScoreBadge}${unstableBadge}${longWaitBadge}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
       </div>
       <div class="user-fullname">${safeFullName}</div>
       ${memoPreview}

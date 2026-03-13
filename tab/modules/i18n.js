@@ -123,6 +123,7 @@ export const I18N = {
     longWait: '30일+',
     sortFirstSeen: '최초발견순',
     sortPopular: '인기순',
+    sortGhostScore: '고스트순',
     noChanges: '변동 없음',
     whitelist: '보호',
     removeWhitelist: '보호 해제',
@@ -148,6 +149,12 @@ export const I18N = {
     growthDaily: (n) => `일 ${n > 0 ? '+' : ''}${n.toFixed(1)}`,
     retention: '유지율',
     retentionDesc: '최근 팔로워 유지율',
+    ghostScore: (n) => `고스트 ${n}%`,
+    ghostScoreTooltip: (n) => `고스트 확률: ${n}% (프로필사진/비공개/이름없음 기반)`,
+    unstableFollower: '불안정',
+    unstableTooltip: '스냅샷에서 팔로우/언팔을 반복하는 유저',
+    exportComparison: '비교 내보내기',
+    comparisonExported: '비교 결과가 클립보드에 복사되었습니다.',
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -271,6 +278,7 @@ export const I18N = {
     longWait: '30d+',
     sortFirstSeen: 'First Seen',
     sortPopular: 'Popular',
+    sortGhostScore: 'Ghost Score',
     noChanges: 'No changes',
     whitelist: 'Protected',
     removeWhitelist: 'Unprotect',
@@ -296,6 +304,12 @@ export const I18N = {
     growthDaily: (n) => `${n > 0 ? '+' : ''}${n.toFixed(1)}/day`,
     retention: 'Retention',
     retentionDesc: 'Recent follower retention',
+    ghostScore: (n) => `Ghost ${n}%`,
+    ghostScoreTooltip: (n) => `Ghost probability: ${n}% (based on avatar/private/name)`,
+    unstableFollower: 'Unstable',
+    unstableTooltip: 'User that repeatedly follows/unfollows across snapshots',
+    exportComparison: 'Export Comparison',
+    comparisonExported: 'Comparison copied to clipboard.',
   }
 };
 

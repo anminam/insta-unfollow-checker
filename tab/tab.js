@@ -16,7 +16,8 @@ import {
   getFirstSeen, recordFirstSeen,
   setMaliciousUsers,
   getAutoWhitelist, saveAutoWhitelist,
-  getSmartSchedule, saveSmartSchedule
+  getSmartSchedule, saveSmartSchedule,
+  buildUnstableUsers
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml, usernameLink } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
@@ -471,6 +472,7 @@ async function startAnalysis() {
 
     hide(progressSection);
     showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames);
+    buildUnstableUsers();
     autoWhitelistMutuals();
     updateGrowthAndRetention(totalFollowers);
 
@@ -515,6 +517,7 @@ async function showResults(totalFollowing, totalFollowers, followerUsernames, fo
 }
 
 function showResultsFromCache(cached) {
+  buildUnstableUsers();
   displayResults(cached.totalFollowing, cached.totalFollowers);
 }
 

@@ -158,8 +158,30 @@ export function initSnapshotUI({ snapshotSection, snapshotList, compareBtn, comp
       }
     }
 
+    html += `<div class="compare-export-row"><button class="btn btn-secondary btn-sm compare-export-btn">${t('exportComparison')}</button></div>`;
+
     compareContent.innerHTML = html;
     show(compareModal);
+
+    const exportBtn = compareContent.querySelector('.compare-export-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        let text = `Snapshot Comparison\n${'='.repeat(40)}\n`;
+        rows.forEach(r => {
+          const diff = r.new_ - r.old;
+          text += `${r.label}: ${r.old} → ${r.new_} (${diff >= 0 ? '+' : ''}${diff})\n`;
+        });
+        if (older.followerUsernames && newer.followerUsernames) {
+          const oldSet2 = new Set(older.followerUsernames);
+          const newSet2 = new Set(newer.followerUsernames);
+          const lost2 = older.followerUsernames.filter(u => !newSet2.has(u));
+          const gained2 = newer.followerUsernames.filter(u => !oldSet2.has(u));
+          if (lost2.length > 0) text += `\nLost (${lost2.length}): ${lost2.join(', ')}\n`;
+          if (gained2.length > 0) text += `\nNew (${gained2.length}): ${gained2.join(', ')}\n`;
+        }
+        navigator.clipboard.writeText(text).then(() => showToast(t('comparisonExported'), 'success'));
+      });
+    }
   });
 
   compareCloseBtn.addEventListener('click', () => {

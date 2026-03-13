@@ -940,6 +940,13 @@ body {
   font-size: 14px;
 }
 
+.compare-export-row {
+  text-align: right;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
 /* ── Filter Bar ── */
 
 .filter-bar {
@@ -1200,6 +1207,8 @@ body {
 .badge-old,
 .badge-private,
 .badge-ghost,
+.badge-ghost-score,
+.badge-unstable,
 .badge-long-wait,
 .badge-malicious {
   display: inline-block;
@@ -1247,6 +1256,30 @@ body {
   color: #6b7280;
   background: #1f2937;
   border-color: #374151;
+}
+
+.badge-ghost-score {
+  color: #ef4444;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+:root.dark .badge-ghost-score {
+  color: #f87171;
+  background: #2d1a1a;
+  border-color: #7f1d1d;
+}
+
+.badge-unstable {
+  color: #f59e0b;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+:root.dark .badge-unstable {
+  color: #fbbf24;
+  background: #292117;
+  border-color: #78350f;
 }
 
 .badge-long-wait {

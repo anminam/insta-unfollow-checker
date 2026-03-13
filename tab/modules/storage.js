@@ -279,6 +279,30 @@ export function saveSmartSchedule(enabled) {
   localStorage.setItem(SMART_SCHEDULE_KEY, String(enabled));
 }
 
+// ── Unstable Followers ──
+
+let unstableUsersCache = null;
+
+export function buildUnstableUsers() {
+  const snapshots = getSnapshots();
+  if (snapshots.length < 3) { unstableUsersCache = new Set(); return; }
+  const recentSnapshots = snapshots.slice(0, Math.min(snapshots.length, 10));
+  const toggleCount = {};
+  for (let i = 1; i < recentSnapshots.length; i++) {
+    const prev = new Set(recentSnapshots[i].followerUsernames || []);
+    const curr = new Set(recentSnapshots[i - 1].followerUsernames || []);
+    if (prev.size === 0 || curr.size === 0) continue;
+    // Users who appeared or disappeared
+    for (const u of curr) { if (!prev.has(u)) toggleCount[u] = (toggleCount[u] || 0) + 1; }
+    for (const u of prev) { if (!curr.has(u)) toggleCount[u] = (toggleCount[u] || 0) + 1; }
+  }
+  unstableUsersCache = new Set(Object.entries(toggleCount).filter(([, c]) => c >= 2).map(([u]) => u));
+}
+
+export function isUnstableUser(username) {
+  return unstableUsersCache ? unstableUsersCache.has(username) : false;
+}
+
 // ── Onboarding ──
 
 export function isOnboardingDone() {

@@ -73,6 +73,19 @@ export function getFilteredUsers({ analysisData, currentTab, searchQuery, filter
       const scoreB = (b.is_verified ? 2 : 0) + (b.is_private ? 0 : 1);
       return scoreB - scoreA;
     });
+  } else if (sortValue === 'ghost-score') {
+    users.sort((a, b) => {
+      const gs = (u) => {
+        let s = 0;
+        if (u.profile_pic_url && u.profile_pic_url.includes(GHOST_AVATAR_PATTERN)) s += 40;
+        if (u.is_private) s += 20;
+        if (!u.full_name || u.full_name.trim() === '') s += 20;
+        if (!u.is_verified) s += 10;
+        if (u.username && /^\w+\d{4,}$/.test(u.username)) s += 10;
+        return Math.min(s, 100);
+      };
+      return gs(b) - gs(a);
+    });
   }
 
   return users;
