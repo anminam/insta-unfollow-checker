@@ -14,5 +14,20 @@
   "popupButton": {
     "message": "분석 하러가기",
     "description": "Popup open button text"
+  },
+  "notifNewFollowers": {
+    "message": "새 팔로워: +$1",
+    "description": "Notification title when gaining followers",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "notifLostFollowers": {
+    "message": "팔로워 감소: $1",
+    "description": "Notification title when losing followers",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "notifFollowerChange": {
+    "message": "팔로워: $1 → $2",
+    "description": "Notification message showing follower count change",
+    "placeholders": { "prev": { "content": "$1" }, "curr": { "content": "$2" } }
   }
 }

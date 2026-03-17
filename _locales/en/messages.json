@@ -14,5 +14,20 @@
   "popupButton": {
     "message": "Start Analysis",
     "description": "Popup open button text"
+  },
+  "notifNewFollowers": {
+    "message": "New followers: +$1",
+    "description": "Notification title when gaining followers",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "notifLostFollowers": {
+    "message": "Lost followers: $1",
+    "description": "Notification title when losing followers",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "notifFollowerChange": {
+    "message": "Followers: $1 → $2",
+    "description": "Notification message showing follower count change",
+    "placeholders": { "prev": { "content": "$1" }, "curr": { "content": "$2" } }
   }
 }

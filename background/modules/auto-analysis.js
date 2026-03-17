@@ -3,6 +3,7 @@
 import { getCsrfToken, getCurrentUserId, fetchAllFollowing, fetchAllFollowers, findNotFollowingBack } from './instagram-api.js';
 
 const AUTO_ANALYSIS_ALARM = 'insta-auto-analysis';
+const NOTIFICATION_THRESHOLD = 5;
 
 export async function runAutoAnalysis() {
   try {
@@ -43,6 +44,28 @@ export async function runAutoAnalysis() {
         const text = diff > 0 ? `+${diff}` : `${diff}`;
         chrome.action.setBadgeText({ text });
         chrome.action.setBadgeBackgroundColor({ color: diff > 0 ? '#00c853' : '#ed4956' });
+
+        // Chrome notification for significant changes
+        if (Math.abs(diff) >= NOTIFICATION_THRESHOLD) {
+          const title = diff > 0
+            ? chrome.i18n.getMessage('notifNewFollowers', [String(diff)])
+            : chrome.i18n.getMessage('notifLostFollowers', [String(diff)]);
+          let message = chrome.i18n.getMessage('notifFollowerChange', [String(prev.followers || 0), String(followers.length)]);
+          if (diff < 0 && prev.followerUsernames) {
+            const currSet = new Set(followerUsernames);
+            const allLost = prev.followerUsernames.filter(u => !currSet.has(u));
+            const shown = allLost.slice(0, 5);
+            if (shown.length > 0) {
+              message = shown.map(u => '@' + u).join(', ') + (allLost.length > 5 ? '...' : '');
+            }
+          }
+          chrome.notifications.create('follower-change', {
+            type: 'basic',
+            iconUrl: '/icons/icon128.png',
+            title,
+            message
+          });
+        }
       } else {
         chrome.action.setBadgeText({ text: '' });
       }
