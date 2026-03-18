@@ -1,20 +1,10 @@
 // ── Renderer Module ──
 
 import { t } from './i18n.js';
-import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo, GHOST_AVATAR_PATTERN, isUnstableUser } from './storage.js';
+import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo, GHOST_AVATAR_PATTERN, isUnstableUser, calcGhostScore, VALID_TAGS } from './storage.js';
 import { FALLBACK_AVATAR, loadImageAsBlob, escapeHtml } from './ui.js';
 
 const LONG_WAIT_DAYS = 30;
-
-function calcGhostScore(user) {
-  let score = 0;
-  if (user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN)) score += 40;
-  if (user.is_private) score += 20;
-  if (!user.full_name || user.full_name.trim() === '') score += 20;
-  if (!user.is_verified) score += 10;
-  if (user.username && /^\w+\d{4,}$/.test(user.username)) score += 10;
-  return Math.min(score, 100);
-}
 
 const ITEM_HEIGHT = 65;
 const BUFFER_COUNT = 5;
@@ -22,6 +12,13 @@ const BLOB_CACHE_MAX = 500;
 
 // ── Blob Cache ──
 const blobCache = new Map();
+
+export function cleanupBlobCache() {
+  for (const blobUrl of blobCache.values()) {
+    URL.revokeObjectURL(blobUrl);
+  }
+  blobCache.clear();
+}
 
 export async function loadImageAsBlobCached(url) {
   if (blobCache.has(url)) return blobCache.get(url);
@@ -180,8 +177,8 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
 
   // Tags from memo
   const memo = getUserMemo(user.id);
-  const tagBadges = (memo?.tags || []).map(tag =>
-    `<span class="badge-tag badge-tag-${escapeHtml(tag)}">${t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))}</span>`
+  const tagBadges = (memo?.tags || []).filter(tag => VALID_TAGS.includes(tag)).map(tag =>
+    `<span class="badge-tag badge-tag-${tag}">${t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))}</span>`
   ).join('');
 
   const memoPreview = memo?.text

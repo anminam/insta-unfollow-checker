@@ -8,7 +8,8 @@ import {
   getSnapshots, getWhitelist, saveWhitelist,
   getMemos, saveMemos,
   getScheduledQueue, saveScheduledQueue,
-  getFirstSeen, getSortPreference
+  getFirstSeen, getSortPreference,
+  validateBackupData
 } from './storage.js';
 import { showToast } from './ui.js';
 import { t, getLang } from './i18n.js';
@@ -49,6 +50,10 @@ export function importBackup(file, onComplete) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
+      if (!validateBackupData(data)) {
+        showToast(t('restoreFail'), 'error');
+        return;
+      }
       if (data.unfollowHistory) saveUnfollowHistory(data.unfollowHistory);
       if (data.snapshots) localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(data.snapshots));
       if (data.whitelist) saveWhitelist(new Set(data.whitelist));

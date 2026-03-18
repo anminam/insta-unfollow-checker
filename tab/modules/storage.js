@@ -18,6 +18,9 @@ export const SMART_SCHEDULE_KEY = 'insta-smart-schedule';
 export const FIRST_SEEN_KEY = 'insta-first-seen';
 
 export const GHOST_AVATAR_PATTERN = '44884218_345707102882519_';
+export const VALID_TAGS = ['friend', 'celeb', 'brand', 'work'];
+export const SCHEDULED_DAILY_COUNT_KEY = 'insta-scheduled-daily-count';
+export const SCHEDULED_DAILY_DATE_KEY = 'insta-scheduled-daily-date';
 
 export const UNFOLLOW_DELAY_MIN = 3000;
 export const UNFOLLOW_DELAY_MAX = 5000;
@@ -301,6 +304,78 @@ export function buildUnstableUsers() {
 
 export function isUnstableUser(username) {
   return unstableUsersCache ? unstableUsersCache.has(username) : false;
+}
+
+// ── Onboarding ──
+
+// ── Ghost Score (shared) ──
+
+export function calcGhostScore(user) {
+  let score = 0;
+  if (user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN)) score += 40;
+  if (user.is_private) score += 20;
+  if (!user.full_name || user.full_name.trim() === '') score += 20;
+  if (!user.is_verified) score += 10;
+  if (user.username && /^\w+\d{4,}$/.test(user.username)) score += 10;
+  return Math.min(score, 100);
+}
+
+// ── Scheduled Daily Count (persistent) ──
+
+export function getScheduledDailyCount() {
+  const savedDate = localStorage.getItem(SCHEDULED_DAILY_DATE_KEY);
+  const today = new Date().toDateString();
+  if (savedDate !== today) {
+    localStorage.setItem(SCHEDULED_DAILY_DATE_KEY, today);
+    localStorage.setItem(SCHEDULED_DAILY_COUNT_KEY, '0');
+    return 0;
+  }
+  return parseInt(localStorage.getItem(SCHEDULED_DAILY_COUNT_KEY), 10) || 0;
+}
+
+export function incrementScheduledDailyCount() {
+  const today = new Date().toDateString();
+  localStorage.setItem(SCHEDULED_DAILY_DATE_KEY, today);
+  const count = getScheduledDailyCount() + 1;
+  localStorage.setItem(SCHEDULED_DAILY_COUNT_KEY, String(count));
+  return count;
+}
+
+// ── Backup Validation ──
+
+const USERNAME_RE = /^[a-zA-Z0-9_.]{1,30}$/;
+
+export function validateBackupData(data) {
+  if (!data || typeof data !== 'object') return false;
+
+  if (data.unfollowHistory && typeof data.unfollowHistory === 'object') {
+    for (const [, entry] of Object.entries(data.unfollowHistory)) {
+      if (typeof entry !== 'object') return false;
+      if (entry.username && !USERNAME_RE.test(entry.username)) return false;
+    }
+  }
+
+  if (data.memos && typeof data.memos === 'object') {
+    for (const [, memo] of Object.entries(data.memos)) {
+      if (typeof memo !== 'object') return false;
+      if (memo.text && typeof memo.text !== 'string') return false;
+      if (memo.tags) {
+        if (!Array.isArray(memo.tags)) return false;
+        if (!memo.tags.every(tag => VALID_TAGS.includes(tag))) return false;
+      }
+    }
+  }
+
+  if (data.scheduledQueue) {
+    if (!Array.isArray(data.scheduledQueue)) return false;
+    for (const item of data.scheduledQueue) {
+      if (item.username && !USERNAME_RE.test(item.username)) return false;
+    }
+  }
+
+  if (data.whitelist && !Array.isArray(data.whitelist)) return false;
+
+  return true;
 }
 
 // ── Onboarding ──

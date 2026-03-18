@@ -144,7 +144,10 @@ export const FALLBACK_AVATAR = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.o
 
 export async function loadImageAsBlob(url) {
   try {
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (!response.ok) return FALLBACK_AVATAR;
     const blob = await response.blob();
     return URL.createObjectURL(blob);

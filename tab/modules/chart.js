@@ -4,10 +4,10 @@ import { t } from './i18n.js';
 import { getSnapshots } from './storage.js';
 import { show, hide } from './ui.js';
 
-export function drawStatsChart() {
+export function drawStatsChart(canvasEl, sectionEl) {
   const snapshots = getSnapshots();
-  const canvas = document.getElementById('stats-chart');
-  const section = document.getElementById('stats-section');
+  const canvas = canvasEl || document.getElementById('stats-chart');
+  const section = sectionEl || document.getElementById('stats-section');
 
   if (snapshots.length < 2) {
     hide(section);

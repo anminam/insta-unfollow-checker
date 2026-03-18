@@ -44,18 +44,21 @@ async function handleMessage(message, sender) {
       }
 
       case 'UNFOLLOW_USER': {
+        if (!message.data?.userId) return { success: false, error: 'Missing userId' };
         const csrfToken = await getCsrfToken();
         const result = await unfollowUser(message.data.userId, csrfToken);
         return { success: result };
       }
 
       case 'FOLLOW_USER': {
+        if (!message.data?.userId) return { success: false, error: 'Missing userId' };
         const csrfToken = await getCsrfToken();
         const result = await followUser(message.data.userId, csrfToken);
         return { success: result };
       }
 
       case 'SET_AUTO_ANALYSIS': {
+        if (!message.data) return { success: false, error: 'Missing data' };
         await setAutoAnalysis(message.data.enabled, message.data.periodMinutes);
         return { success: true };
       }
@@ -91,6 +94,7 @@ async function handleMessage(message, sender) {
       }
 
       case 'REPORT_MALICIOUS_USER': {
+        if (!message.data?.username || !message.data?.reason) return { success: false, error: 'Missing data' };
         await reportMaliciousUser(message.data.username, message.data.reason);
         return { success: true };
       }

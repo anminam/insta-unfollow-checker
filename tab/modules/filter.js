@@ -1,7 +1,7 @@
 // ── Filter Module ──
 // Pure function: receives all state as parameters
 
-import { GHOST_AVATAR_PATTERN } from './storage.js';
+import { GHOST_AVATAR_PATTERN, calcGhostScore } from './storage.js';
 
 export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, filterGhost, filterTag, sortValue, whitelistSet, firstSeen, memos }) {
   if (!analysisData) return [];
@@ -74,18 +74,7 @@ export function getFilteredUsers({ analysisData, currentTab, searchQuery, filter
       return scoreB - scoreA;
     });
   } else if (sortValue === 'ghost-score') {
-    users.sort((a, b) => {
-      const gs = (u) => {
-        let s = 0;
-        if (u.profile_pic_url && u.profile_pic_url.includes(GHOST_AVATAR_PATTERN)) s += 40;
-        if (u.is_private) s += 20;
-        if (!u.full_name || u.full_name.trim() === '') s += 20;
-        if (!u.is_verified) s += 10;
-        if (u.username && /^\w+\d{4,}$/.test(u.username)) s += 10;
-        return Math.min(s, 100);
-      };
-      return gs(b) - gs(a);
-    });
+    users.sort((a, b) => calcGhostScore(b) - calcGhostScore(a));
   }
 
   return users;

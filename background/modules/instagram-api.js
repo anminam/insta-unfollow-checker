@@ -78,8 +78,8 @@ export async function getCurrentUserId() {
   return cookie.value;
 }
 
-export async function fetchAllFollowing(userId, csrfToken, sendProgress) {
-  const following = [];
+async function fetchAllPaginated(userId, csrfToken, sendProgress, queryHash, edgeKey, progressLabel) {
+  const result = [];
   let hasNext = true;
   let endCursor = '';
 
@@ -89,81 +89,45 @@ export async function fetchAllFollowing(userId, csrfToken, sendProgress) {
       first: BATCH_SIZE,
       after: endCursor
     });
-    const url = `https://www.instagram.com/graphql/query/?query_hash=d04b0a864b4b54837c0d870b0e77e076&variables=${encodeURIComponent(variables)}`;
+    const url = `https://www.instagram.com/graphql/query/?query_hash=${queryHash}&variables=${encodeURIComponent(variables)}`;
 
     const response = await fetchWithRetry(url, {
       headers: getHeaders(csrfToken),
       credentials: 'include'
     });
     const data = await response.json();
-    const edgeFollow = data?.data?.user?.edge_follow;
+    const edge = data?.data?.user?.[edgeKey];
 
-    if (!edgeFollow) {
+    if (!edge) {
       throw new Error('API_CHANGED');
     }
 
-    const users = edgeFollow.edges.map(edge => ({
-      id: edge.node.id,
-      username: edge.node.username,
-      full_name: edge.node.full_name,
-      profile_pic_url: edge.node.profile_pic_url,
-      is_verified: edge.node.is_verified,
-      is_private: edge.node.is_private
+    const users = edge.edges.map(e => ({
+      id: e.node.id,
+      username: e.node.username,
+      full_name: e.node.full_name,
+      profile_pic_url: e.node.profile_pic_url,
+      is_verified: e.node.is_verified,
+      is_private: e.node.is_private
     }));
 
-    following.push(...users);
-    hasNext = edgeFollow.page_info.has_next_page;
-    endCursor = edgeFollow.page_info.end_cursor;
+    result.push(...users);
+    hasNext = edge.page_info.has_next_page;
+    endCursor = edge.page_info.end_cursor;
 
-    sendProgress('following', following.length, edgeFollow.count);
+    sendProgress(progressLabel, result.length, edge.count);
     if (hasNext) await randomDelay(1000, 2000);
   }
 
-  return following;
+  return result;
 }
 
-export async function fetchAllFollowers(userId, csrfToken, sendProgress) {
-  const followers = [];
-  let hasNext = true;
-  let endCursor = '';
+export function fetchAllFollowing(userId, csrfToken, sendProgress) {
+  return fetchAllPaginated(userId, csrfToken, sendProgress, 'd04b0a864b4b54837c0d870b0e77e076', 'edge_follow', 'following');
+}
 
-  while (hasNext) {
-    const variables = JSON.stringify({
-      id: userId,
-      first: BATCH_SIZE,
-      after: endCursor
-    });
-    const url = `https://www.instagram.com/graphql/query/?query_hash=c76146de99bb02f6415203be841dd25a&variables=${encodeURIComponent(variables)}`;
-
-    const response = await fetchWithRetry(url, {
-      headers: getHeaders(csrfToken),
-      credentials: 'include'
-    });
-    const data = await response.json();
-    const edgeFollowedBy = data?.data?.user?.edge_followed_by;
-
-    if (!edgeFollowedBy) {
-      throw new Error('API_CHANGED');
-    }
-
-    const users = edgeFollowedBy.edges.map(edge => ({
-      id: edge.node.id,
-      username: edge.node.username,
-      full_name: edge.node.full_name,
-      profile_pic_url: edge.node.profile_pic_url,
-      is_verified: edge.node.is_verified,
-      is_private: edge.node.is_private
-    }));
-
-    followers.push(...users);
-    hasNext = edgeFollowedBy.page_info.has_next_page;
-    endCursor = edgeFollowedBy.page_info.end_cursor;
-
-    sendProgress('followers', followers.length, edgeFollowedBy.count);
-    if (hasNext) await randomDelay(1000, 2000);
-  }
-
-  return followers;
+export function fetchAllFollowers(userId, csrfToken, sendProgress) {
+  return fetchAllPaginated(userId, csrfToken, sendProgress, 'c76146de99bb02f6415203be841dd25a', 'edge_followed_by', 'followers');
 }
 
 export function findNotFollowingBack(following, followers) {
@@ -171,12 +135,7 @@ export function findNotFollowingBack(following, followers) {
   return following.filter(u => !followerIds.has(u.id));
 }
 
-export async function followUser(userId, csrfToken) {
-  const endpoints = [
-    `https://www.instagram.com/api/v1/friendships/create/${userId}/`,
-    `https://www.instagram.com/web/friendships/${userId}/follow/`
-  ];
-
+async function friendshipAction(userId, csrfToken, endpoints, failError) {
   for (const url of endpoints) {
     try {
       const response = await fetchWithRetry(url, {
@@ -196,35 +155,19 @@ export async function followUser(userId, csrfToken) {
       continue;
     }
   }
-  throw new Error('FOLLOW_FAILED');
+  throw new Error(failError);
 }
 
-export async function unfollowUser(userId, csrfToken) {
-  const endpoints = [
+export function followUser(userId, csrfToken) {
+  return friendshipAction(userId, csrfToken, [
+    `https://www.instagram.com/api/v1/friendships/create/${userId}/`,
+    `https://www.instagram.com/web/friendships/${userId}/follow/`
+  ], 'FOLLOW_FAILED');
+}
+
+export function unfollowUser(userId, csrfToken) {
+  return friendshipAction(userId, csrfToken, [
     `https://www.instagram.com/api/v1/friendships/destroy/${userId}/`,
     `https://www.instagram.com/web/friendships/${userId}/unfollow/`
-  ];
-
-  for (const url of endpoints) {
-    try {
-      const response = await fetchWithRetry(url, {
-        method: 'POST',
-        headers: {
-          ...getHeaders(csrfToken),
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        credentials: 'include'
-      });
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        continue;
-      }
-      const data = await response.json();
-      if (data.status === 'ok' || data.friendship_status) return true;
-    } catch (error) {
-      if (error.message === 'RATE_LIMITED' || error.message === 'NOT_LOGGED_IN') throw error;
-      continue;
-    }
-  }
-  throw new Error('UNFOLLOW_FAILED');
+  ], 'UNFOLLOW_FAILED');
 }

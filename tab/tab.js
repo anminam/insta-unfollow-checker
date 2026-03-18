@@ -17,12 +17,13 @@ import {
   setMaliciousUsers,
   getAutoWhitelist, saveAutoWhitelist,
   getSmartSchedule, saveSmartSchedule,
-  buildUnstableUsers
+  buildUnstableUsers,
+  getScheduledDailyCount, incrementScheduledDailyCount
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml, usernameLink } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
 import { getFilteredUsers } from './modules/filter.js';
-import { renderUserList } from './modules/renderer.js';
+import { renderUserList, cleanupBlobCache } from './modules/renderer.js';
 import { batchUnfollow } from './modules/unfollow.js';
 import { initSnapshotUI, buildSnapshotAnalysis } from './modules/snapshot-ui.js';
 import { exportBackup, importBackup } from './modules/backup.js';
@@ -111,8 +112,6 @@ let filterVerified = false;
 let filterGhost = false;
 let filterTag = '';
 let scheduledTimer = null;
-let scheduledDailyCount = 0;
-let scheduledDailyDate = new Date().toDateString();
 const selectedIds = new Set();
 let lastClickedIndex = -1;
 const compareSelected = new Set();
@@ -410,16 +409,20 @@ function showFollowerChanges(currentFollowers) {
 
 // ── Analysis ──
 
+function hydrateFromCache(cached) {
+  analysisData = {
+    following: cached.following,
+    followers: cached.followers,
+    notFollowingBack: cached.notFollowingBack,
+    mutual: cached.mutual,
+    followerOnly: cached.followerOnly || []
+  };
+}
+
 async function startAnalysis() {
   const cached = getCachedAnalysis();
   if (cached) {
-    analysisData = {
-      following: cached.following,
-      followers: cached.followers,
-      notFollowingBack: cached.notFollowingBack,
-      mutual: cached.mutual,
-      followerOnly: cached.followerOnly || []
-    };
+    hydrateFromCache(cached);
     hide(startSection);
     hide(errorSection);
     showResultsFromCache(cached);
@@ -869,13 +872,6 @@ async function processScheduledQueueLoop() {
   const queue = getScheduledQueue();
   if (queue.length === 0) return;
 
-  // Reset daily count if date changed
-  const today = new Date().toDateString();
-  if (scheduledDailyDate !== today) {
-    scheduledDailyDate = today;
-    scheduledDailyCount = 0;
-  }
-
   // Smart schedule: skip night hours
   if (getSmartSchedule() && isNightTime()) {
     showToast(t('nightPause'), 'warning');
@@ -890,9 +886,9 @@ async function processScheduledQueueLoop() {
     return;
   }
 
-  // Check daily limit
+  // Check daily limit (persistent across refreshes)
   const dailyLimit = getScheduledDailyLimit();
-  if (scheduledDailyCount >= dailyLimit) {
+  if (getScheduledDailyCount() >= dailyLimit) {
     showToast(t('dailyLimitReached', dailyLimit), 'warning');
     return;
   }
@@ -907,7 +903,7 @@ async function processScheduledQueueLoop() {
     });
     if (response.success) {
       recordUnfollow(item.userId, item.username);
-      scheduledDailyCount++;
+      incrementScheduledDailyCount();
       showToast(t('toastUnfollowed', item.username), 'success');
     }
   } catch {
@@ -1187,13 +1183,31 @@ function showHistory() {
   entries.forEach(([userId, { username, date }]) => {
     const item = document.createElement('div');
     item.className = 'history-item';
-    item.innerHTML = `
-      <a class="history-username" href="https://www.instagram.com/${username}/" target="_blank" rel="noopener">@${username}</a>
-      <div class="history-right">
-        <button class="btn-refollow" data-user-id="${userId}" data-username="${username}">${t('refollow')}</button>
-        <span class="history-date">${formatDate(date)}</span>
-      </div>
-    `;
+
+    const link = document.createElement('a');
+    link.className = 'history-username';
+    link.href = `https://www.instagram.com/${encodeURIComponent(username)}/`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = `@${username}`;
+
+    const rightDiv = document.createElement('div');
+    rightDiv.className = 'history-right';
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-refollow';
+    btn.dataset.userId = userId;
+    btn.dataset.username = username;
+    btn.textContent = t('refollow');
+
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'history-date';
+    dateSpan.textContent = formatDate(date);
+
+    rightDiv.appendChild(btn);
+    rightDiv.appendChild(dateSpan);
+    item.appendChild(link);
+    item.appendChild(rightDiv);
     historyList.appendChild(item);
   });
 
@@ -1366,13 +1380,7 @@ function initMainApp() {
 
   const cached = getCachedAnalysis();
   if (cached) {
-    analysisData = {
-      following: cached.following,
-      followers: cached.followers,
-      notFollowingBack: cached.notFollowingBack,
-      mutual: cached.mutual,
-      followerOnly: cached.followerOnly || []
-    };
+    hydrateFromCache(cached);
     hide(startSection);
     showResultsFromCache(cached);
   }
@@ -1429,6 +1437,12 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => {
     if (analysisData) refreshList();
   }, 200);
+});
+
+// ── Cleanup ──
+
+window.addEventListener('beforeunload', () => {
+  cleanupBlobCache();
 });
 
 // ── Init ──
