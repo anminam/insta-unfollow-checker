@@ -1454,6 +1454,10 @@ body {
   background: var(--color-danger);
 }
 
+.toast-warning {
+  background: #f59e0b;
+}
+
 .toast-action {
   margin-left: 8px;
   padding: 3px 12px;
@@ -1994,4 +1998,233 @@ body {
   .user-list {
     max-height: 700px;
   }
+}
+
+/* ── Safety Gauge (FR-01) ── */
+
+.safety-gauge-container {
+  margin-top: 12px;
+}
+
+.safety-gauge {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.safety-gauge[data-level="danger"] {
+  border-color: var(--color-danger);
+  background: var(--bg-error);
+}
+
+.safety-gauge[data-level="warning"] {
+  border-color: #f97316;
+}
+
+.safety-gauge-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.safety-gauge-icon {
+  font-size: 16px;
+}
+
+.safety-gauge-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.safety-gauge-meter {
+  position: relative;
+  width: 120px;
+  height: 70px;
+  margin: 0 auto 4px;
+}
+
+.safety-gauge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.safety-gauge-value {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.safety-gauge-label {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.safety-gauge-stats {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ── Profile Preview Popover (FR-02) ── */
+
+.profile-preview-popover {
+  position: fixed;
+  z-index: 500;
+  width: 280px;
+  background: var(--bg-container);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  padding: 16px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: auto;
+}
+
+.profile-preview-popover.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.preview-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--avatar-bg);
+  flex-shrink: 0;
+}
+
+.preview-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.preview-username {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-verified {
+  color: var(--color-verified);
+  font-size: 12px;
+  margin-left: 3px;
+}
+
+.preview-private {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  padding: 1px 7px;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.preview-fullname {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-stats {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 10px;
+}
+
+.preview-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.preview-stat-value {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.preview-stat-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.preview-bio {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 10px;
+  max-height: 60px;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.preview-posts {
+  display: flex;
+  gap: 4px;
+}
+
+.preview-post-thumb {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  background: var(--avatar-bg);
+}
+
+.preview-post-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-video-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }

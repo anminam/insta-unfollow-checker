@@ -27,6 +27,8 @@ import { renderUserList, cleanupBlobCache } from './modules/renderer.js';
 import { batchUnfollow } from './modules/unfollow.js';
 import { initSnapshotUI, buildSnapshotAnalysis } from './modules/snapshot-ui.js';
 import { exportBackup, importBackup } from './modules/backup.js';
+import { renderSafetyGauge, checkSafetyBeforeUnfollow } from './modules/safety.js';
+import { initProfilePreview } from './modules/preview.js';
 
 // ── DOM Elements ──
 
@@ -86,6 +88,7 @@ const progressStep = document.getElementById('progress-step');
 const progressPercent = document.getElementById('progress-percent');
 const progressEtaEl = document.getElementById('progress-eta');
 const backToStartBtn = document.getElementById('back-to-start-btn');
+const safetyGaugeContainer = document.getElementById('safety-gauge-container');
 
 // ── Stat delta elements ──
 const deltaFollowing = document.getElementById('delta-following');
@@ -780,6 +783,7 @@ userListEl.addEventListener('click', async (e) => {
       if (checkbox) checkbox.checked = false;
       selectedIds.delete(userId);
       updateSelectedCount();
+      refreshSafetyGauge();
       showToast(t('toastUnfollowed', username), 'success', {
         label: t('undoUnfollow'),
         callback: async () => {
@@ -820,6 +824,17 @@ unfollowSelectedBtn.addEventListener('click', async () => {
     .map(u => ({ userId: u.id, username: u.username }));
 
   if (targets.length === 0) return;
+
+  // Safety check (FR-01)
+  const safetyCheck = checkSafetyBeforeUnfollow(targets.length);
+  if (!safetyCheck.safe) {
+    showToast(safetyCheck.message, 'warning');
+    return;
+  }
+  if (safetyCheck.message) {
+    showToast(safetyCheck.message, 'warning');
+  }
+
   if (!await showConfirm(t('confirmUnfollow', targets.length))) return;
 
   await batchUnfollow({
@@ -834,6 +849,7 @@ unfollowSelectedBtn.addEventListener('click', async () => {
       const remaining = userListEl.querySelectorAll('.btn-unfollow:not(.done)').length;
       notFollowingCountEl.textContent = remaining;
       tabNotFollowingCount.textContent = remaining;
+      refreshSafetyGauge();
     }
   });
 });
@@ -1007,6 +1023,14 @@ function isNightTime() {
   return hour >= 0 && hour < 6;
 }
 
+// ── Safety Gauge (FR-01) ──
+
+function refreshSafetyGauge() {
+  if (!safetyGaugeContainer) return;
+  // renderSafetyGauge returns static HTML from internal data only (no user input)
+  safetyGaugeContainer.innerHTML = renderSafetyGauge(); // eslint-disable-line no-unsanitized/property
+}
+
 // ── Growth Rate & Retention ──
 
 function updateGrowthAndRetention(totalFollowers) {
@@ -1069,6 +1093,7 @@ backToStartBtn.addEventListener('click', () => {
   showSnapshots();
   showHistory();
   showScheduledStatus();
+  refreshSafetyGauge();
 });
 
 // ── Keyboard Shortcuts ──
@@ -1371,6 +1396,8 @@ function initMainApp() {
   showHistory();
   showScheduledStatus();
   initAutoAnalysis();
+  refreshSafetyGauge();
+  initProfilePreview(userListEl);
 
   chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
 

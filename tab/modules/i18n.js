@@ -155,6 +155,20 @@ export const I18N = {
     unstableTooltip: '스냅샷에서 팔로우/언팔을 반복하는 유저',
     exportComparison: '비교 내보내기',
     comparisonExported: '비교 결과가 클립보드에 복사되었습니다.',
+    // FR-01: Safety Score
+    safetyScore: '계정 안전 점수',
+    safetyLevel_safe: '안전',
+    safetyLevel_caution: '주의',
+    safetyLevel_warning: '경고',
+    safetyLevel_danger: '위험',
+    safetyDaily: (n, max) => `24시간: ${n}/${max}건`,
+    safetyHourly: (n, max) => `1시간: ${n}/${max}건`,
+    safetyDailyExceed: (remaining) => `일일 안전 한도를 초과합니다. 최대 ${remaining}명만 가능합니다.`,
+    safetyHourlyExceed: (remaining) => `시간당 안전 한도를 초과합니다. 최대 ${remaining}명만 가능합니다.`,
+    safetyDailyWarn: '언팔 속도가 빠릅니다. 계정 제재에 주의하세요.',
+    safetyConfirmDanger: '계정 안전 점수가 낮습니다. 계속하시겠습니까?',
+    // FR-02: Profile Preview
+    previewPosts: '게시물',
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -310,6 +324,20 @@ export const I18N = {
     unstableTooltip: 'User that repeatedly follows/unfollows across snapshots',
     exportComparison: 'Export Comparison',
     comparisonExported: 'Comparison copied to clipboard.',
+    // FR-01: Safety Score
+    safetyScore: 'Account Safety Score',
+    safetyLevel_safe: 'Safe',
+    safetyLevel_caution: 'Caution',
+    safetyLevel_warning: 'Warning',
+    safetyLevel_danger: 'Danger',
+    safetyDaily: (n, max) => `24h: ${n}/${max}`,
+    safetyHourly: (n, max) => `1h: ${n}/${max}`,
+    safetyDailyExceed: (remaining) => `Exceeds daily safety limit. Max ${remaining} allowed.`,
+    safetyHourlyExceed: (remaining) => `Exceeds hourly safety limit. Max ${remaining} allowed.`,
+    safetyDailyWarn: 'Unfollow rate is high. Be cautious of account restrictions.',
+    safetyConfirmDanger: 'Your safety score is low. Continue anyway?',
+    // FR-02: Profile Preview
+    previewPosts: 'Posts',
   }
 };
 
