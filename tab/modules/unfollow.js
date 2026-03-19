@@ -4,7 +4,7 @@ import { t } from './i18n.js';
 import { recordUnfollow, UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from './storage.js';
 import { show, hide, showToast, formatEta, estimateEta, randomDelay, countdownDelay } from './ui.js';
 
-export async function batchUnfollow({ targets, els, selectedIds, onComplete }) {
+export async function batchUnfollow({ targets, els, selectedIds, onEachUnfollow, onComplete }) {
   const {
     resultSection, unfollowProgress, unfollowMessage, unfollowTarget,
     unfollowBar, unfollowCount, unfollowStopBtn, unfollowEta, userListEl
@@ -50,6 +50,7 @@ export async function batchUnfollow({ targets, els, selectedIds, onComplete }) {
 
       if (response.success) {
         recordUnfollow(userId, username);
+        if (onEachUnfollow) onEachUnfollow(userId, username);
         const card = userListEl.querySelector(`[data-user-id="${userId}"]`);
         if (card) {
           const btn = card.querySelector('.btn-unfollow');

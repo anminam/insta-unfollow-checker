@@ -18,13 +18,21 @@ export async function googleLogin() {
   const email = userInfo.email;
   if (!email) throw new Error('GOOGLE_NO_EMAIL');
 
-  const { authorized, pending } = await checkAllowlist(token, email);
+  let premium = false;
+  let pending = false;
+  try {
+    const result = await checkAllowlist(token, email);
+    premium = result.authorized;
+    pending = result.pending;
+  } catch {
+    // fail-open: Sheets API 에러 시 로그인 성공, premium=false
+  }
 
   await chrome.storage.local.set({
-    [AUTH_STORAGE_KEY]: { email, authorized, timestamp: Date.now() }
+    [AUTH_STORAGE_KEY]: { email, premium, timestamp: Date.now() }
   });
 
-  return { email, authorized, pending };
+  return { email, premium, pending };
 }
 
 async function checkAllowlist(token, email) {
@@ -137,12 +145,12 @@ export async function reportMaliciousUser(username, reason) {
 export async function getAuthStatus() {
   const result = await chrome.storage.local.get(AUTH_STORAGE_KEY);
   const auth = result[AUTH_STORAGE_KEY];
-  if (!auth || !auth.authorized) return { authorized: false };
+  if (!auth || !auth.email) return { loggedIn: false };
 
   if (Date.now() - auth.timestamp > AUTH_CACHE_TTL) {
     await chrome.storage.local.remove(AUTH_STORAGE_KEY);
-    return { authorized: false };
+    return { loggedIn: false };
   }
 
-  return { authorized: true, email: auth.email };
+  return { loggedIn: true, premium: !!auth.premium, email: auth.email };
 }

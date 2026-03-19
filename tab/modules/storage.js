@@ -22,6 +22,11 @@ export const VALID_TAGS = ['friend', 'celeb', 'brand', 'work'];
 export const SCHEDULED_DAILY_COUNT_KEY = 'insta-scheduled-daily-count';
 export const SCHEDULED_DAILY_DATE_KEY = 'insta-scheduled-daily-date';
 
+export const FREE_ANALYSIS_LIMIT = 50;
+export const FREE_UNFOLLOW_DAILY_LIMIT = 10;
+export const FREE_UNFOLLOW_COUNT_KEY = 'insta-free-unfollow-count';
+export const FREE_UNFOLLOW_DATE_KEY = 'insta-free-unfollow-date';
+
 export const UNFOLLOW_DELAY_MIN = 3000;
 export const UNFOLLOW_DELAY_MAX = 5000;
 export const UNFOLLOW_BATCH_SIZE = 10;
@@ -386,4 +391,31 @@ export function isOnboardingDone() {
 
 export function setOnboardingDone() {
   localStorage.setItem(ONBOARDING_KEY, 'true');
+}
+
+// ── Free Tier Daily Unfollow Count ──
+
+export function getFreeUnfollowCount() {
+  const savedDate = localStorage.getItem(FREE_UNFOLLOW_DATE_KEY);
+  const today = new Date().toDateString();
+  if (savedDate !== today) {
+    localStorage.setItem(FREE_UNFOLLOW_DATE_KEY, today);
+    localStorage.setItem(FREE_UNFOLLOW_COUNT_KEY, '0');
+    return 0;
+  }
+  return parseInt(localStorage.getItem(FREE_UNFOLLOW_COUNT_KEY), 10) || 0;
+}
+
+export function incrementFreeUnfollowCount() {
+  const today = new Date().toDateString();
+  localStorage.setItem(FREE_UNFOLLOW_DATE_KEY, today);
+  const count = getFreeUnfollowCount() + 1;
+  localStorage.setItem(FREE_UNFOLLOW_COUNT_KEY, String(count));
+  return count;
+}
+
+export function canFreeUserUnfollow() {
+  const used = getFreeUnfollowCount();
+  const remaining = Math.max(0, FREE_UNFOLLOW_DAILY_LIMIT - used);
+  return { allowed: remaining > 0, remaining };
 }

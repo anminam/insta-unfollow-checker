@@ -18,7 +18,9 @@ import {
   getAutoWhitelist, saveAutoWhitelist,
   getSmartSchedule, saveSmartSchedule,
   buildUnstableUsers,
-  getScheduledDailyCount, incrementScheduledDailyCount
+  getScheduledDailyCount, incrementScheduledDailyCount,
+  FREE_ANALYSIS_LIMIT, FREE_UNFOLLOW_DAILY_LIMIT,
+  canFreeUserUnfollow, incrementFreeUnfollowCount
 } from './modules/storage.js';
 import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml, usernameLink } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
@@ -89,6 +91,8 @@ const progressPercent = document.getElementById('progress-percent');
 const progressEtaEl = document.getElementById('progress-eta');
 const backToStartBtn = document.getElementById('back-to-start-btn');
 const safetyGaugeContainer = document.getElementById('safety-gauge-container');
+const userTierBadge = document.getElementById('user-tier-badge');
+const freeLimitBanner = document.getElementById('free-limit-banner');
 
 // ── Stat delta elements ──
 const deltaFollowing = document.getElementById('delta-following');
@@ -110,6 +114,8 @@ const retentionValueEl = document.getElementById('retention-value');
 // ── State ──
 
 let currentTab = 'not-following';
+let userTier = 'free';
+let fullNotFollowingBackCount = 0;
 let analysisData = null;
 let filterVerified = false;
 let filterGhost = false;
@@ -412,6 +418,30 @@ function showFollowerChanges(currentFollowers) {
 
 // ── Analysis ──
 
+function applyFreeLimit(data) {
+  if (userTier === 'free' && data.notFollowingBack.length > FREE_ANALYSIS_LIMIT) {
+    fullNotFollowingBackCount = data.notFollowingBack.length;
+    data.notFollowingBack = data.notFollowingBack.slice(0, FREE_ANALYSIS_LIMIT);
+  } else {
+    fullNotFollowingBackCount = data.notFollowingBack.length;
+  }
+}
+
+function showFreeLimitBanner() {
+  if (userTier === 'free' && fullNotFollowingBackCount > FREE_ANALYSIS_LIMIT) {
+    freeLimitBanner.textContent = '';
+    const msg = document.createTextNode(t('freeAnalysisLimit', FREE_ANALYSIS_LIMIT, fullNotFollowingBackCount));
+    freeLimitBanner.appendChild(msg);
+    const hint = document.createElement('span');
+    hint.className = 'upgrade-hint';
+    hint.textContent = t('upgradeToPremium');
+    freeLimitBanner.appendChild(hint);
+    show(freeLimitBanner);
+  } else {
+    hide(freeLimitBanner);
+  }
+}
+
 function hydrateFromCache(cached) {
   analysisData = {
     following: cached.following,
@@ -420,6 +450,7 @@ function hydrateFromCache(cached) {
     mutual: cached.mutual,
     followerOnly: cached.followerOnly || []
   };
+  applyFreeLimit(analysisData);
 }
 
 async function startAnalysis() {
@@ -461,6 +492,7 @@ async function startAnalysis() {
     const followerOnly = followers.filter(u => !followingIds.has(u.id));
 
     analysisData = { following, followers, notFollowingBack, mutual, followerOnly };
+    applyFreeLimit(analysisData);
 
     const followerUsernames = followers.map(u => u.username);
     const followingUsernames = following.map(u => u.username);
@@ -495,19 +527,21 @@ function displayResults(totalFollowing, totalFollowers) {
   followingCountEl.textContent = totalFollowing;
   followerCountEl.textContent = totalFollowers;
   mutualCountEl.textContent = analysisData.mutual.length;
-  notFollowingCountEl.textContent = analysisData.notFollowingBack.length;
+  // Show real total in stat card, even if list is sliced for free users
+  notFollowingCountEl.textContent = fullNotFollowingBackCount || analysisData.notFollowingBack.length;
   if (followerOnlyCountEl) followerOnlyCountEl.textContent = analysisData.followerOnly.length;
   updateRatio(totalFollowing, totalFollowers);
 
   tabFollowingCount.textContent = totalFollowing;
   tabFollowerCount.textContent = totalFollowers;
   tabMutualCount.textContent = analysisData.mutual.length;
-  tabNotFollowingCount.textContent = analysisData.notFollowingBack.length;
+  tabNotFollowingCount.textContent = fullNotFollowingBackCount || analysisData.notFollowingBack.length;
   if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
   if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
 
   show(resultSection);
   switchTab('not-following');
+  showFreeLimitBanner();
 }
 
 async function showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames) {
@@ -763,6 +797,15 @@ userListEl.addEventListener('click', async (e) => {
   const btn = e.target.closest('.btn-unfollow');
   if (!btn || btn.classList.contains('done') || btn.disabled) return;
 
+  // Free user daily limit check
+  if (userTier === 'free') {
+    const { allowed, remaining } = canFreeUserUnfollow();
+    if (!allowed) {
+      showToast(t('freeUnfollowLimitReached'), 'warning');
+      return;
+    }
+  }
+
   const userId = btn.dataset.userId;
   const username = btn.dataset.username;
   btn.textContent = '...';
@@ -775,6 +818,7 @@ userListEl.addEventListener('click', async (e) => {
     });
 
     if (response.success) {
+      if (userTier === 'free') incrementFreeUnfollowCount();
       recordUnfollow(userId, username);
       btn.textContent = t('done');
       btn.classList.add('done');
@@ -819,11 +863,24 @@ unfollowSelectedBtn.addEventListener('click', async () => {
 
   const whitelist = getWhitelist();
   const users = getFiltered();
-  const targets = users
+  let targets = users
     .filter(u => selectedIds.has(u.id) && !whitelist.has(u.id))
     .map(u => ({ userId: u.id, username: u.username }));
 
   if (targets.length === 0) return;
+
+  // Free user: cap targets by remaining daily limit
+  if (userTier === 'free') {
+    const { allowed, remaining } = canFreeUserUnfollow();
+    if (!allowed) {
+      showToast(t('freeUnfollowLimitReached'), 'warning');
+      return;
+    }
+    if (targets.length > remaining) {
+      targets = targets.slice(0, remaining);
+      showToast(t('freeBatchLimited', FREE_UNFOLLOW_DAILY_LIMIT), 'warning');
+    }
+  }
 
   // Safety check (FR-01)
   const safetyCheck = checkSafetyBeforeUnfollow(targets.length);
@@ -837,6 +894,8 @@ unfollowSelectedBtn.addEventListener('click', async () => {
 
   if (!await showConfirm(t('confirmUnfollow', targets.length))) return;
 
+  const onEachUnfollow = userTier === 'free' ? () => incrementFreeUnfollowCount() : null;
+
   await batchUnfollow({
     targets,
     els: {
@@ -844,6 +903,7 @@ unfollowSelectedBtn.addEventListener('click', async () => {
       unfollowBar, unfollowCount: unfollowCountEl, unfollowStopBtn, unfollowEta, userListEl
     },
     selectedIds,
+    onEachUnfollow,
     onComplete: (completed) => {
       updateSelectedCount();
       const remaining = userListEl.querySelectorAll('.btn-unfollow:not(.done)').length;
@@ -943,6 +1003,10 @@ document.getElementById('scheduled-cancel-btn').addEventListener('click', () => 
 });
 
 scheduledUnfollowBtn.addEventListener('click', async () => {
+  if (userTier === 'free') {
+    showToast(t('freeScheduledDisabled'), 'warning');
+    return;
+  }
   if (selectedIds.size === 0) return;
 
   const whitelist = getWhitelist();
@@ -1362,8 +1426,8 @@ function showOnboarding() {
 async function checkAuthState() {
   try {
     const response = await chrome.runtime.sendMessage({ action: 'GET_AUTH_STATUS' });
-    if (response.success && response.data?.authorized) {
-      showMainApp(response.data.email);
+    if (response.success && response.data?.loggedIn) {
+      showMainApp(response.data.email, response.data.premium);
     } else {
       showAuthGate();
     }
@@ -1380,12 +1444,23 @@ function showAuthGate() {
   showOnboarding();
 }
 
-function showMainApp(email) {
+function showMainApp(email, premium) {
   hide(authGate);
   show(mainApp);
+  userTier = premium ? 'premium' : 'free';
   if (email) {
     authEmailEl.textContent = email;
     show(headerAuth);
+  }
+  // Tier badge
+  userTierBadge.textContent = premium ? t('premiumBadge') : t('freeBadge');
+  userTierBadge.className = 'tier-badge ' + (premium ? 'premium' : 'free');
+  show(userTierBadge);
+  // Hide scheduled unfollow for free users
+  if (userTier === 'free') {
+    scheduledUnfollowBtn.classList.add('hidden');
+  } else {
+    scheduledUnfollowBtn.classList.remove('hidden');
   }
   initMainApp();
 }
@@ -1426,12 +1501,7 @@ async function handleGoogleLogin() {
     if (!response.success) {
       throw new Error(response.error || 'GOOGLE_API_ERROR');
     }
-    if (response.data.authorized) {
-      showMainApp(response.data.email);
-    } else {
-      authError.textContent = t('NOT_AUTHORIZED');
-      show(authError);
-    }
+    showMainApp(response.data.email, response.data.premium);
   } catch (err) {
     const msg = err.message || '';
     if (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('The user did not approve')) {
@@ -1450,6 +1520,7 @@ async function handleLogout() {
   try {
     await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' });
   } catch { /* ignore */ }
+  userTier = 'free';
   showAuthGate();
 }
 

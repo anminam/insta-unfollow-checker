@@ -169,6 +169,16 @@ export const I18N = {
     safetyConfirmDanger: '계정 안전 점수가 낮습니다. 계속하시겠습니까?',
     // FR-02: Profile Preview
     previewPosts: '게시물',
+    // Freemium
+    premiumBadge: '프리미엄',
+    freeBadge: '무료',
+    freeAnalysisLimit: (shown, total) => `무료 사용자: ${total}명 중 ${shown}명만 표시됩니다`,
+    freeUnfollowLimit: (used, max) => `오늘 언팔로우: ${used}/${max}`,
+    freeUnfollowLimitReached: '오늘의 무료 언팔로우 한도에 도달했습니다',
+    upgradeToPremium: '프리미엄으로 업그레이드하면 모든 기능을 무제한으로 사용할 수 있습니다',
+    freeScheduledDisabled: '예약 언팔로우는 프리미엄 기능입니다',
+    freeBatchLimited: (max) => `무료 사용자는 하루 ${max}명까지 언팔로우할 수 있습니다`,
+    authGateDesc: '로그인하면 무료로 시작할 수 있습니다',
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -338,6 +348,16 @@ export const I18N = {
     safetyConfirmDanger: 'Your safety score is low. Continue anyway?',
     // FR-02: Profile Preview
     previewPosts: 'Posts',
+    // Freemium
+    premiumBadge: 'Premium',
+    freeBadge: 'Free',
+    freeAnalysisLimit: (shown, total) => `Free user: showing ${shown} of ${total}`,
+    freeUnfollowLimit: (used, max) => `Today's unfollows: ${used}/${max}`,
+    freeUnfollowLimitReached: 'You have reached today\'s free unfollow limit',
+    upgradeToPremium: 'Upgrade to Premium for unlimited access to all features',
+    freeScheduledDisabled: 'Scheduled unfollows are a Premium feature',
+    freeBatchLimited: (max) => `Free users can unfollow up to ${max} per day`,
+    authGateDesc: 'Sign in to get started for free',
   }
 };
 

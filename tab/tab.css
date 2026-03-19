@@ -2228,3 +2228,57 @@ body {
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+
+/* ── Freemium ── */
+
+.tier-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-right: 6px;
+}
+
+.tier-badge.premium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+}
+
+.tier-badge.free {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.free-limit-banner {
+  text-align: center;
+  padding: 12px 16px;
+  margin-top: 8px;
+  background: var(--color-badge-bg);
+  border: 1px solid var(--color-badge-border);
+  border-radius: var(--radius-md);
+  color: var(--color-badge-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.free-limit-banner .upgrade-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.btn-unfollow.locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.auth-gate-desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
