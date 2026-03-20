@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="tab.css">
 </head>
 <body>
+  <!-- Animated background orbs -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
   <div class="container">
     <!-- Header -->
     <header class="header">
@@ -24,13 +31,20 @@
           <button id="dark-mode-btn" class="dark-mode-btn" title="다크모드 전환"></button>
         </div>
       </div>
-      <h1 class="header-title">Insta Unfollow Checker</h1>
+      <h1 class="header-title"><span class="header-mark">IU</span>Insta Unfollow</h1>
       <p class="header-subtitle" data-i18n="subtitle">나만 팔로우할수 없다!</p>
     </header>
 
     <!-- Auth Gate -->
     <div id="auth-gate" class="auth-gate hidden">
-      <div class="auth-gate-icon">🔒</div>
+      <div class="auth-gate-icon">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="url(#lock-grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <defs><linearGradient id="lock-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f09433"/><stop offset="50%" stop-color="#dc2743"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <circle cx="12" cy="16" r="1" fill="url(#lock-grad)" stroke="none"/>
+        </svg>
+      </div>
       <p class="auth-gate-title" data-i18n="authRequired">로그인이 필요합니다</p>
       <p class="auth-gate-desc" data-i18n="authGateDesc">로그인하면 무료로 시작할 수 있습니다</p>
       <button id="google-login-btn" class="btn-google">
@@ -80,7 +94,9 @@
       <!-- Stats Dashboard -->
       <div id="stats-section" class="stats-section hidden">
         <h3 class="history-title" data-i18n="statsTitle">통계 대시보드</h3>
-        <canvas id="stats-chart" class="stats-chart" width="432" height="220"></canvas>
+        <div class="stats-chart-wrapper">
+          <canvas id="stats-chart"></canvas>
+        </div>
       </div>
 
       <div id="snapshot-section" class="snapshot-section hidden">
@@ -140,7 +156,10 @@
     <!-- Result Section -->
     <div id="result-section" class="result-section hidden">
       <div class="result-top-bar">
-        <button id="back-to-start-btn" class="btn btn-secondary btn-sm">&larr; <span data-i18n="backToStart">돌아가기</span></button>
+        <button id="back-to-start-btn" class="btn btn-secondary btn-sm">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>
+        <span data-i18n="backToStart">돌아가기</span>
+      </button>
       </div>
       <div class="result-summary">
         <div class="stat">
@@ -327,6 +346,7 @@
     <div id="toast-container" class="toast-container"></div>
   </div>
 
+  <script src="lib/chart.min.js"></script>
   <script type="module" src="tab.js"></script>
 </body>
 </html>

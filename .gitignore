@@ -5,3 +5,9 @@ docs/.pdca-snapshots/
 docs/.pdca-status.json
 docs/.bkit-memory.json
 docs/01-plan/
+
+# 빌드 산출물 (build.sh로 생성)
+manifest.json
+
+# 로컬 환경 설정 (client_id 포함)
+config/dev.json

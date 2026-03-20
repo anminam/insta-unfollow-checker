@@ -1,8 +1,10 @@
-// ── Chart Module ──
+// ── Chart Module (Chart.js) ──
 
 import { t } from './i18n.js';
 import { getSnapshots } from './storage.js';
 import { show, hide } from './ui.js';
+
+let chartInstance = null;
 
 export function drawStatsChart(canvasEl, sectionEl) {
   const snapshots = getSnapshots();
@@ -16,122 +18,152 @@ export function drawStatsChart(canvasEl, sectionEl) {
 
   show(section);
 
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  ctx.scale(dpr, dpr);
-
   const data = snapshots.slice(0, 10).reverse();
-  const pad = { top: 36, right: 20, bottom: 38, left: 52 };
-  const chartW = w - pad.left - pad.right;
-  const chartH = h - pad.top - pad.bottom;
-
-  let allValues = [];
-  data.forEach(d => allValues.push(d.following, d.followers, d.notFollowingBack));
-  const minVal = Math.min(...allValues);
-  const maxVal = Math.max(...allValues);
-  const range = maxVal - minVal || 1;
-
-  const style = getComputedStyle(document.documentElement);
-  const colorFollowers = style.getPropertyValue('--chart-line-followers').trim();
-  const colorFollowing = style.getPropertyValue('--chart-line-following').trim();
-  const colorNotFollowing = style.getPropertyValue('--chart-line-notfollowing').trim();
-  const colorGrid = style.getPropertyValue('--chart-grid').trim();
-  const colorText = style.getPropertyValue('--chart-text').trim();
-  const bgCard = style.getPropertyValue('--bg-card').trim();
-
-  ctx.fillStyle = bgCard;
-  ctx.fillRect(0, 0, w, h);
-
-  // Grid lines + Y axis values
-  ctx.strokeStyle = colorGrid;
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.top + (chartH / 4) * i;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(w - pad.right, y);
-    ctx.stroke();
-
-    const val = Math.round(maxVal - (range / 4) * i);
-    ctx.fillStyle = colorText;
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(val, pad.left - 8, y + 3);
-  }
-
-  // Y axis label
-  ctx.save();
-  ctx.translate(10, pad.top + chartH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.fillStyle = colorText;
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(t('chartAxisCount'), 0, 0);
-  ctx.restore();
-
-  // X axis dates
-  ctx.fillStyle = colorText;
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
-  data.forEach((d, i) => {
-    const x = pad.left + (chartW / (data.length - 1)) * i;
+  const labels = data.map(d => {
     const date = new Date(d.date);
-    const label = `${date.getMonth() + 1}/${date.getDate()}`;
-    ctx.fillText(label, x, h - 16);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   });
 
-  // X axis label
-  ctx.fillStyle = colorText;
-  ctx.font = '9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(t('chartAxisDate'), pad.left + chartW / 2, h - 4);
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#6b7280' : '#9ca3af';
 
-  // Data lines
-  const drawLine = (key, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    data.forEach((d, i) => {
-      const x = pad.left + (chartW / (data.length - 1)) * i;
-      const y = pad.top + chartH - ((d[key] - minVal) / range) * chartH;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
+  // Destroy previous instance
+  if (chartInstance) {
+    chartInstance.destroy();
+    chartInstance = null;
+  }
 
-    data.forEach((d, i) => {
-      const x = pad.left + (chartW / (data.length - 1)) * i;
-      const y = pad.top + chartH - ((d[key] - minVal) / range) * chartH;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
+  const ctx = canvas.getContext('2d');
+
+  // Gradient fills
+  const makeGradient = (color, alpha) => {
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight);
+    grad.addColorStop(0, color.replace('1)', `${alpha})`).replace(')', `, ${alpha})`));
+    grad.addColorStop(1, 'transparent');
+    return grad;
   };
 
-  drawLine('followers', colorFollowers);
-  drawLine('following', colorFollowing);
-  drawLine('notFollowingBack', colorNotFollowing);
+  const colors = {
+    followers: isDark ? '#60a5fa' : '#3b82f6',
+    following: isDark ? '#fbbf24' : '#f59e0b',
+    notFollowing: isDark ? '#f87171' : '#ef4444'
+  };
 
-  // Legend
-  const legends = [
-    { label: t('chartFollowers'), color: colorFollowers },
-    { label: t('chartFollowing'), color: colorFollowing },
-    { label: t('chartNotFollowing'), color: colorNotFollowing }
-  ];
-  let lx = pad.left;
-  ctx.font = '10px sans-serif';
-  legends.forEach(leg => {
-    ctx.fillStyle = leg.color;
-    ctx.fillRect(lx, 6, 12, 3);
-    ctx.fillStyle = colorText;
-    ctx.textAlign = 'left';
-    ctx.fillText(leg.label, lx + 15, 12);
-    lx += ctx.measureText(leg.label).width + 30;
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: t('chartFollowers'),
+          data: data.map(d => d.followers),
+          borderColor: colors.followers,
+          backgroundColor: `${colors.followers}18`,
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: colors.followers,
+          pointBorderColor: isDark ? '#141418' : '#ffffff',
+          pointBorderWidth: 2
+        },
+        {
+          label: t('chartFollowing'),
+          data: data.map(d => d.following),
+          borderColor: colors.following,
+          backgroundColor: `${colors.following}18`,
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: colors.following,
+          pointBorderColor: isDark ? '#141418' : '#ffffff',
+          pointBorderWidth: 2
+        },
+        {
+          label: t('chartNotFollowing'),
+          data: data.map(d => d.notFollowingBack),
+          borderColor: colors.notFollowing,
+          backgroundColor: `${colors.notFollowing}18`,
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: colors.notFollowing,
+          pointBorderColor: isDark ? '#141418' : '#ffffff',
+          pointBorderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          align: 'center',
+          labels: {
+            color: textColor,
+            font: { size: 11, weight: '600' },
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 16,
+            boxWidth: 8,
+            boxHeight: 8
+          }
+        },
+        tooltip: {
+          backgroundColor: isDark ? 'rgba(30,30,36,0.95)' : 'rgba(255,255,255,0.95)',
+          titleColor: isDark ? '#ececf0' : '#1a1a1a',
+          bodyColor: isDark ? '#8e8e9a' : '#737373',
+          borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+          borderWidth: 1,
+          cornerRadius: 10,
+          padding: 12,
+          titleFont: { size: 12, weight: '700' },
+          bodyFont: { size: 12 },
+          displayColors: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          usePointStyle: true,
+          callbacks: {
+            labelPointStyle: () => ({ pointStyle: 'circle', rotation: 0 })
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: textColor,
+            font: { size: 10, weight: '500' },
+            padding: 8
+          },
+          border: { display: false }
+        },
+        y: {
+          grid: { color: gridColor, drawBorder: false },
+          ticks: {
+            color: textColor,
+            font: { size: 10, weight: '500' },
+            padding: 8,
+            maxTicksLimit: 5
+          },
+          border: { display: false }
+        }
+      },
+      animation: {
+        duration: 800,
+        easing: 'easeOutQuart'
+      }
+    }
   });
 }

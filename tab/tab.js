@@ -170,7 +170,10 @@ function refreshList() {
 // ── Dark Mode ──
 
 initDarkMode(darkModeBtn);
-darkModeBtn.addEventListener('click', () => toggleDarkMode(darkModeBtn));
+darkModeBtn.addEventListener('click', () => {
+  toggleDarkMode(darkModeBtn);
+  drawStatsChart();
+});
 
 // ── Language ──
 
