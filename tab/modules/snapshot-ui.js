@@ -140,8 +140,8 @@ export function initSnapshotUI({ snapshotSection, snapshotList, compareBtn, comp
     rows.forEach(r => {
       const diff = r.new_ - r.old;
       const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
-      const cls = diff > 0 ? 'color:var(--color-up)' : diff < 0 ? 'color:var(--color-danger)' : '';
-      html += `<div class="compare-row"><span class="compare-label">${r.label}</span><div class="compare-values"><span>${r.old}</span><span class="compare-arrow">\u2192</span><span>${r.new_}</span><span style="${cls};font-weight:600">${diffStr}</span></div></div>`;
+      const cls = diff > 0 ? 'compare-diff-up' : diff < 0 ? 'compare-diff-down' : 'compare-diff-neutral';
+      html += `<div class="compare-row"><span class="compare-label">${r.label}</span><div class="compare-values"><span>${r.old}</span><span class="compare-arrow">\u2192</span><span>${r.new_}</span><span class="${cls}">${diffStr}</span></div></div>`;
     });
     html += '</div>';
 

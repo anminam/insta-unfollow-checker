@@ -1164,6 +1164,10 @@
   font-size: 11px;
 }
 
+.compare-diff-up { color: var(--color-up); font-weight: 600; }
+.compare-diff-down { color: var(--color-danger); font-weight: 600; }
+.compare-diff-neutral { font-weight: 600; }
+
 .compare-userlist {
   margin-top: 4px;
   padding-left: 8px;
