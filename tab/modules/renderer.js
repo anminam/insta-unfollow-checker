@@ -52,7 +52,10 @@ export function renderUserList(userListEl, users, showUnfollowControls, selected
   userListEl.onscroll = null;
 
   if (users.length === 0) {
-    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${escapeHtml(t('emptyList'))}</p>`;
+    const p = document.createElement('p');
+    p.className = 'empty-msg';
+    p.textContent = t('emptyList');
+    userListEl.appendChild(p);
     return;
   }
 

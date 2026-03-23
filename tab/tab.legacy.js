@@ -163,7 +163,10 @@ function refreshList() {
   renderUserList(userListEl, users, showControls, selectedIds, { isWideScreen: isWideScreen() });
 
   if (users.length === 0) {
-    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${emptyMsg}</p>`;
+    const p = document.createElement('p');
+    p.className = 'empty-msg';
+    p.textContent = emptyMsg;
+    userListEl.appendChild(p);
   }
   updateSelectedCount();
 }

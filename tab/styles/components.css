@@ -1,5 +1,12 @@
 /* ── Insta Unfollow Checker — components ── */
 
+/* ── Empty message ── */
+.empty-msg {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+}
+
 /* ── Auth Header ── */
 
 .auth-email {

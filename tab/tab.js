@@ -96,7 +96,7 @@ state.refreshList = () => {
     const msg = els.filterSearchInput.value.trim() || state.filterVerified ? t('noSearchResults') : showControls ? t('allMutual') : t('emptyList');
     els.userListEl.textContent = '';
     const p = document.createElement('p');
-    p.style.cssText = 'text-align:center;color:var(--text-secondary);padding:20px;';
+    p.className = 'empty-msg';
     p.textContent = msg;
     els.userListEl.appendChild(p);
   }
