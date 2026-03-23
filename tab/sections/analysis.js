@@ -173,8 +173,8 @@ export function setupAnalysis(els, state) {
 
   function refreshSafetyGauge() {
     if (!safetyGaugeContainer) return;
-    // renderSafetyGauge returns static content from internal data only
-    safetyGaugeContainer.innerHTML = renderSafetyGauge(); // eslint-disable-line
+    safetyGaugeContainer.textContent = '';
+    safetyGaugeContainer.appendChild(renderSafetyGauge());
   }
 
   async function fetchMaliciousUsersList() {

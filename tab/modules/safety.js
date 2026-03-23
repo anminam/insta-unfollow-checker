@@ -75,27 +75,60 @@ export function renderSafetyGauge() {
   const color = levelColors[level];
   const angle = (score / 100) * 180;
 
-  return `
-    <div class="safety-gauge" data-level="${level}">
-      <div class="safety-gauge-header">
-        <span class="safety-gauge-icon">${level === 'safe' ? '🛡️' : level === 'caution' ? '⚠️' : '🚨'}</span>
-        <span class="safety-gauge-title">${t('safetyScore')}</span>
-      </div>
-      <div class="safety-gauge-meter">
-        <svg viewBox="0 0 120 70" class="safety-gauge-svg">
-          <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="var(--border-color)" stroke-width="8" stroke-linecap="round"/>
-          <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
-            stroke-dasharray="${(angle / 180) * 157} 157"/>
-        </svg>
-        <div class="safety-gauge-value" style="color:${color}">${score}</div>
-      </div>
-      <div class="safety-gauge-label" style="color:${color}">${t('safetyLevel_' + level)}</div>
-      <div class="safety-gauge-stats">
-        <span>${t('safetyDaily', daily, THRESHOLDS.daily)}</span>
-        <span>${t('safetyHourly', hourly, THRESHOLDS.hourly)}</span>
-      </div>
-    </div>
-  `;
+  // Build gauge DOM — no inline styles (CSP safe)
+  const gauge = document.createElement('div');
+  gauge.className = `safety-gauge safety-gauge--${level}`;
+  gauge.dataset.level = level;
+
+  const header = document.createElement('div');
+  header.className = 'safety-gauge-header';
+  const icon = document.createElement('span');
+  icon.className = 'safety-gauge-icon';
+  icon.textContent = level === 'safe' ? '🛡️' : level === 'caution' ? '⚠️' : '🚨';
+  const title = document.createElement('span');
+  title.className = 'safety-gauge-title';
+  title.textContent = t('safetyScore');
+  header.append(icon, title);
+
+  const meter = document.createElement('div');
+  meter.className = 'safety-gauge-meter';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 120 70');
+  svg.classList.add('safety-gauge-svg');
+  const bgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  bgPath.setAttribute('d', 'M 10 65 A 50 50 0 0 1 110 65');
+  bgPath.setAttribute('fill', 'none');
+  bgPath.setAttribute('stroke', 'var(--border-color)');
+  bgPath.setAttribute('stroke-width', '8');
+  bgPath.setAttribute('stroke-linecap', 'round');
+  const arcPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  arcPath.setAttribute('d', 'M 10 65 A 50 50 0 0 1 110 65');
+  arcPath.setAttribute('fill', 'none');
+  arcPath.setAttribute('stroke', 'currentColor');
+  arcPath.setAttribute('stroke-width', '8');
+  arcPath.setAttribute('stroke-linecap', 'round');
+  arcPath.setAttribute('stroke-dasharray', `${(angle / 180) * 157} 157`);
+  arcPath.classList.add('safety-gauge-arc');
+  svg.append(bgPath, arcPath);
+  const valueEl = document.createElement('div');
+  valueEl.className = 'safety-gauge-value';
+  valueEl.textContent = score;
+  meter.append(svg, valueEl);
+
+  const label = document.createElement('div');
+  label.className = 'safety-gauge-label';
+  label.textContent = t('safetyLevel_' + level);
+
+  const stats = document.createElement('div');
+  stats.className = 'safety-gauge-stats';
+  const dailyStat = document.createElement('span');
+  dailyStat.textContent = t('safetyDaily', daily, THRESHOLDS.daily);
+  const hourlyStat = document.createElement('span');
+  hourlyStat.textContent = t('safetyHourly', hourly, THRESHOLDS.hourly);
+  stats.append(dailyStat, hourlyStat);
+
+  gauge.append(header, meter, label, stats);
+  return gauge;
 }
 
 /**

@@ -325,14 +325,18 @@
   pointer-events: none;
 }
 
-.safety-gauge[data-level="safe"]::before { color: var(--color-up); opacity: 0.04; }
-.safety-gauge[data-level="caution"]::before { color: #f59e0b; opacity: 0.04; }
-.safety-gauge[data-level="danger"] {
+.safety-gauge--safe { color: var(--color-up); }
+.safety-gauge--safe::before { color: var(--color-up); opacity: 0.04; }
+.safety-gauge--caution { color: #f59e0b; }
+.safety-gauge--caution::before { color: #f59e0b; opacity: 0.04; }
+.safety-gauge--warning { color: #f97316; border-color: rgba(234, 88, 12, 0.25); }
+.safety-gauge--warning::before { color: #f97316; opacity: 0.04; }
+.safety-gauge--danger {
+  color: var(--color-danger);
   border-color: rgba(220, 38, 38, 0.25);
   background: var(--bg-error);
 }
-.safety-gauge[data-level="danger"]::before { color: var(--color-danger); opacity: 0.06; }
-.safety-gauge[data-level="warning"] { border-color: rgba(234, 88, 12, 0.25); }
+.safety-gauge--danger::before { color: var(--color-danger); opacity: 0.06; }
 
 .safety-gauge-header {
   display: flex;
