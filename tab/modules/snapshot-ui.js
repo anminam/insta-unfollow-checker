@@ -1,7 +1,8 @@
 // ── Snapshot UI Module ──
 
 import { t } from './i18n.js';
-import { getSnapshots, deleteSnapshot, getWhitelist } from './storage.js';
+import { getSnapshots, deleteSnapshot } from '../storage/snapshot.js';
+import { getWhitelist } from '../storage/whitelist.js';
 import { show, hide, showToast, formatDate, usernameLink } from './ui.js';
 import { drawStatsChart } from './chart.js';
 

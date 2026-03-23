@@ -13,6 +13,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+const USERID_RE = /^\d{1,20}$/;
+
 async function handleMessage(message, sender) {
   try {
     switch (message.action) {
@@ -44,14 +46,18 @@ async function handleMessage(message, sender) {
       }
 
       case 'UNFOLLOW_USER': {
-        if (!message.data?.userId) return { success: false, error: 'Missing userId' };
+        if (!message.data?.userId || !USERID_RE.test(message.data.userId)) {
+          return { success: false, error: 'Invalid userId' };
+        }
         const csrfToken = await getCsrfToken();
         const result = await unfollowUser(message.data.userId, csrfToken);
         return { success: result };
       }
 
       case 'FOLLOW_USER': {
-        if (!message.data?.userId) return { success: false, error: 'Missing userId' };
+        if (!message.data?.userId || !USERID_RE.test(message.data.userId)) {
+          return { success: false, error: 'Invalid userId' };
+        }
         const csrfToken = await getCsrfToken();
         const result = await followUser(message.data.userId, csrfToken);
         return { success: result };
@@ -95,7 +101,9 @@ async function handleMessage(message, sender) {
 
       case 'REPORT_MALICIOUS_USER': {
         if (!message.data?.username || !message.data?.reason) return { success: false, error: 'Missing data' };
-        await reportMaliciousUser(message.data.username, message.data.reason);
+        const reportUsername = String(message.data.username).slice(0, 30);
+        const reportReason = String(message.data.reason).slice(0, 500);
+        await reportMaliciousUser(reportUsername, reportReason);
         return { success: true };
       }
 

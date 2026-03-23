@@ -24,8 +24,10 @@ export async function googleLogin() {
     const result = await checkAllowlist(token, email);
     premium = result.authorized;
     pending = result.pending;
-  } catch {
-    // fail-open: Sheets API 에러 시 로그인 성공, premium=false
+  } catch (err) {
+    // fail-closed: Sheets API 에러 시 로그인 차단
+    console.error('[InstaUnfollow] Auth check failed:', err.message);
+    throw new Error('AUTH_CHECK_FAILED');
   }
 
   await chrome.storage.local.set({
@@ -118,7 +120,14 @@ export async function fetchMaliciousUsers() {
   })).filter(r => r.username);
 }
 
+const USERNAME_RE = /^[a-zA-Z0-9_.]{1,30}$/;
+const MAX_REASON_LENGTH = 500;
+
 export async function reportMaliciousUser(username, reason) {
+  // Input validation
+  if (!USERNAME_RE.test(username)) throw new Error('INVALID_USERNAME');
+  if (!reason || reason.length > MAX_REASON_LENGTH) throw new Error('INVALID_REASON');
+
   const token = await getFreshToken();
   const authResult = await chrome.storage.local.get(AUTH_STORAGE_KEY);
   const email = authResult[AUTH_STORAGE_KEY]?.email || 'unknown';

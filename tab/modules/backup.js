@@ -1,16 +1,20 @@
 // ── Backup / Restore Module ──
 
-import {
-  SNAPSHOT_KEY, DARK_MODE_KEY, SORT_KEY,
-  AUTO_WHITELIST_KEY, SMART_SCHEDULE_KEY,
-  SCHEDULED_INTERVAL_KEY, SCHEDULED_DAILY_LIMIT_KEY,
-  getUnfollowHistory, saveUnfollowHistory,
-  getSnapshots, getWhitelist, saveWhitelist,
-  getMemos, saveMemos,
-  getScheduledQueue, saveScheduledQueue,
-  getFirstSeen, getSortPreference,
-  validateBackupData
-} from './storage.js';
+import { getUnfollowHistory, saveUnfollowHistory } from '../storage/history.js';
+import { getSnapshots } from '../storage/snapshot.js';
+import { getWhitelist, saveWhitelist } from '../storage/whitelist.js';
+import { getMemos, saveMemos } from '../storage/memo.js';
+import { getScheduledQueue, saveScheduledQueue, getFirstSeen } from '../storage/preferences.js';
+import { validateBackupData } from '../storage/tier.js';
+
+// Storage keys used directly for settings backup/restore
+const SNAPSHOT_KEY = 'insta-analysis-snapshots';
+const DARK_MODE_KEY = 'insta-dark-mode';
+const SORT_KEY = 'insta-sort-preference';
+const AUTO_WHITELIST_KEY = 'insta-auto-whitelist';
+const SMART_SCHEDULE_KEY = 'insta-smart-schedule';
+const SCHEDULED_INTERVAL_KEY = 'insta-scheduled-interval';
+const SCHEDULED_DAILY_LIMIT_KEY = 'insta-scheduled-daily-limit';
 import { showToast } from './ui.js';
 import { t, getLang } from './i18n.js';
 

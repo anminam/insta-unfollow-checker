@@ -1,0 +1,162 @@
+/* ── Insta Unfollow Checker — base ── */
+
+/* ══════════════════════════════════════════
+   Insta Unfollow Checker — Warm Obsidian Theme
+   ══════════════════════════════════════════ */
+
+/* ── Design Tokens ── */
+
+:root {
+  --bg-page: #faf9f7;
+  --bg-container: rgba(255, 255, 255, 0.92);
+  --bg-container-solid: #ffffff;
+  --bg-secondary: #f3f1ee;
+  --bg-card: #f8f7f5;
+  --bg-card-alt: #f0eeeb;
+  --bg-error: #fef2f0;
+  --bg-hover: rgba(0, 0, 0, 0.03);
+  --text-primary: #1c1917;
+  --text-secondary: #78716c;
+  --text-tertiary: #a8a29e;
+  --text-link: #1c1917;
+  --border-color: rgba(0, 0, 0, 0.07);
+  --border-light: rgba(0, 0, 0, 0.04);
+  --border-card: #e7e5e4;
+  --accent: #e67e22;
+  --accent-light: #fef3e2;
+  --accent-hover: #d35400;
+  --accent-glow: rgba(230, 126, 34, 0.15);
+  --color-danger: #dc2626;
+  --color-danger-light: #fef2f2;
+  --color-verified: #2563eb;
+  --color-up: #16a34a;
+  --color-down: #dc2626;
+  --color-mutual: #7c3aed;
+  --color-fan: #0891b2;
+  --color-badge-text: #92400e;
+  --color-badge-bg: #fef3c7;
+  --color-badge-border: #fde68a;
+  --color-whitelist-text: #1d4ed8;
+  --color-whitelist-bg: #eff6ff;
+  --color-whitelist-border: #bfdbfe;
+  --color-old-text: #9ca3af;
+  --color-old-bg: #f9fafb;
+  --color-old-border: #e5e7eb;
+  --color-tag-friend: #16a34a;
+  --color-tag-celeb: #c026d3;
+  --color-tag-brand: #ea580c;
+  --color-tag-work: #2563eb;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-accent: 0 4px 16px rgba(230, 126, 34, 0.2);
+  --modal-overlay: rgba(28, 25, 23, 0.5);
+  --progress-bg: #e7e5e4;
+  --avatar-bg: #f3f1ee;
+  --chart-line-followers: #2563eb;
+  --chart-line-following: #e67e22;
+  --chart-line-notfollowing: #dc2626;
+  --chart-grid: #f3f1ee;
+  --chart-text: #a8a29e;
+  --toast-bg: #1c1917;
+  --toast-text: #fafaf9;
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 24px;
+  --r-pill: 100px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 0.15s ease;
+  --t-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --t-slow: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root.dark {
+  --bg-page: #0c0a09;
+  --bg-container: rgba(28, 25, 23, 0.85);
+  --bg-container-solid: #1c1917;
+  --bg-secondary: #292524;
+  --bg-card: #1c1917;
+  --bg-card-alt: #292524;
+  --bg-error: #2d1a1a;
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --text-primary: #fafaf9;
+  --text-secondary: #a8a29e;
+  --text-tertiary: #78716c;
+  --text-link: #fafaf9;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --border-card: rgba(255, 255, 255, 0.06);
+  --accent: #f59e0b;
+  --accent-light: #292117;
+  --accent-hover: #fbbf24;
+  --accent-glow: rgba(245, 158, 11, 0.12);
+  --color-danger: #f87171;
+  --color-danger-light: #2d1a1a;
+  --color-verified: #60a5fa;
+  --color-up: #4ade80;
+  --color-down: #f87171;
+  --color-mutual: #a78bfa;
+  --color-fan: #22d3ee;
+  --color-badge-text: #fbbf24;
+  --color-badge-bg: #292117;
+  --color-badge-border: #78350f;
+  --color-whitelist-text: #60a5fa;
+  --color-whitelist-bg: #172033;
+  --color-whitelist-border: #1e3a5f;
+  --color-old-text: #6b7280;
+  --color-old-bg: #1f1f1f;
+  --color-old-border: #374151;
+  --color-tag-friend: #4ade80;
+  --color-tag-celeb: #e879f9;
+  --color-tag-brand: #fb923c;
+  --color-tag-work: #60a5fa;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 4px 16px rgba(245, 158, 11, 0.15);
+  --modal-overlay: rgba(0, 0, 0, 0.7);
+  --progress-bg: #292524;
+  --avatar-bg: #292524;
+  --chart-line-followers: #60a5fa;
+  --chart-line-following: #fbbf24;
+  --chart-line-notfollowing: #f87171;
+  --chart-grid: #292524;
+  --chart-text: #78716c;
+  --toast-bg: rgba(68, 64, 60, 0.95);
+  --toast-text: #fafaf9;
+}
+
+/* ── Reset ── */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Body ── */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-page);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+}
+
+.hidden { display: none !important; }

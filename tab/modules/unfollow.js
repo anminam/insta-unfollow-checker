@@ -1,7 +1,8 @@
 // ── Unfollow Module ──
 
 import { t } from './i18n.js';
-import { recordUnfollow, UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from './storage.js';
+import { recordUnfollow } from '../storage/history.js';
+import { UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE } from '../storage/tier.js';
 import { show, hide, showToast, formatEta, estimateEta, randomDelay, countdownDelay } from './ui.js';
 
 export async function batchUnfollow({ targets, els, selectedIds, onEachUnfollow, onComplete }) {

@@ -1,0 +1,394 @@
+/* ── Insta Unfollow Checker — dashboard ── */
+
+/* ── Stats Dashboard ── */
+
+.stats-section {
+  text-align: left;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--chart-line-followers), var(--accent), var(--chart-line-notfollowing));
+  opacity: 0.5;
+}
+
+.stats-section .history-title {
+  margin-bottom: 14px;
+}
+
+.stats-chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
+/* ── Snapshot ── */
+
+.snapshot-section {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.snapshot-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.snapshot-header-row .history-title { margin-bottom: 0; }
+
+.snapshot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.snapshot-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  transition: all var(--t-base);
+}
+
+.snapshot-card:hover {
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.snapshot-card.selected-compare {
+  border-color: var(--color-verified);
+  background: var(--color-whitelist-bg);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
+}
+
+.snapshot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.snapshot-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.snapshot-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.snapshot-view {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.snapshot-compare-check {
+  cursor: pointer;
+  accent-color: var(--color-verified);
+}
+
+.snapshot-delete {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: all var(--t-fast);
+  border-radius: var(--r-xs);
+}
+
+.snapshot-delete:hover {
+  color: var(--color-danger);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.snapshot-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.snapshot-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.snapshot-stat-label { color: var(--text-secondary); }
+.snapshot-stat-value { font-weight: 700; }
+
+.snapshot-delta {
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.snapshot-delta.up { color: var(--color-up); }
+.snapshot-delta.down { color: var(--color-down); }
+.snapshot-delta.neutral { color: var(--text-secondary); }
+
+.snapshot-changes {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.snapshot-changes summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  user-select: none;
+  font-weight: 500;
+  transition: color var(--t-fast);
+}
+
+.snapshot-changes summary:hover { color: var(--text-primary); }
+
+.snapshot-changes-list {
+  margin-top: 4px;
+  padding-left: 16px;
+}
+
+.snapshot-changes-list a {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.snapshot-changes-list a:hover { text-decoration: underline; }
+
+.change-label-lost { color: var(--color-danger); font-weight: 600; }
+.change-label-new { color: var(--color-up); font-weight: 600; }
+
+/* ── Stat Cards ── */
+
+.stat {
+  text-align: center;
+  padding: 12px 6px 10px;
+  border-radius: var(--r-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  transition: all var(--t-base);
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-color);
+}
+
+.stat-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+  display: block;
+}
+
+.stat-delta {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 2px;
+  min-height: 15px;
+  line-height: 1;
+}
+
+.stat-delta.up { color: var(--color-up); }
+.stat-delta.down { color: var(--color-down); }
+
+.stat-highlight .stat-value { color: var(--color-danger); }
+.stat-mutual .stat-value { color: var(--color-mutual); }
+.stat-fan .stat-value { color: var(--color-fan); }
+
+.stat-ratio .stat-value { font-size: 17px; }
+.stat-growth .stat-value,
+.stat-retention .stat-value { font-size: 14px; }
+
+.ratio-good { color: var(--color-up); }
+.ratio-warning { color: var(--accent); }
+.ratio-bad { color: var(--color-danger); }
+
+/* ── Whitelist Stat ── */
+
+.stat-whitelist .stat-value { color: var(--color-whitelist-text); }
+
+/* ── Follower Changes ── */
+
+.follower-changes {
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: var(--r-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  font-size: 13px;
+}
+
+.follower-changes summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+  user-select: none;
+  transition: color var(--t-fast);
+}
+
+.follower-changes summary:hover { color: var(--accent); }
+
+.change-gained {
+  color: var(--color-up);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.change-lost {
+  color: var(--color-danger);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.follower-changes .changes-list {
+  margin-top: 4px;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.follower-changes .changes-list a {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.follower-changes .changes-list a:hover { text-decoration: underline; }
+
+.no-changes {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ── Safety Gauge ── */
+
+.safety-gauge-container {
+  margin-top: 16px;
+  animation: fadeUp 0.5s var(--ease-out) 0.2s both;
+}
+
+.safety-gauge {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-xl);
+  padding: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--t-base);
+}
+
+.safety-gauge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, currentColor 0%, transparent 60%);
+  opacity: 0.02;
+  pointer-events: none;
+}
+
+.safety-gauge[data-level="safe"]::before { color: var(--color-up); opacity: 0.04; }
+.safety-gauge[data-level="caution"]::before { color: #f59e0b; opacity: 0.04; }
+.safety-gauge[data-level="danger"] {
+  border-color: rgba(220, 38, 38, 0.25);
+  background: var(--bg-error);
+}
+.safety-gauge[data-level="danger"]::before { color: var(--color-danger); opacity: 0.06; }
+.safety-gauge[data-level="warning"] { border-color: rgba(234, 88, 12, 0.25); }
+
+.safety-gauge-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.safety-gauge-icon { font-size: 18px; }
+
+.safety-gauge-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.safety-gauge-meter {
+  position: relative;
+  width: 140px;
+  height: 80px;
+  margin: 0 auto 6px;
+}
+
+.safety-gauge-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.safety-gauge-value {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.safety-gauge-label {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.02em;
+}
+
+.safety-gauge-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}

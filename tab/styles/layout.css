@@ -1,0 +1,221 @@
+/* ── Insta Unfollow Checker — layout ── */
+
+/* ── Container ── */
+
+.container {
+  width: 520px;
+  padding: 28px;
+  background: var(--bg-container);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-lg);
+  height: fit-content;
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--border-color);
+  animation: containerIn 0.5s var(--ease-out) both;
+}
+
+/* ── Header ── */
+
+.header {
+  text-align: center;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
+
+.header-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.header-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: var(--r-sm);
+  margin-right: 8px;
+  letter-spacing: 0;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ── Start Section ── */
+
+.start-section {
+  text-align: center;
+  padding: 20px 0;
+  animation: fadeUp 0.5s var(--ease-out) 0.1s both;
+}
+
+.start-section .btn-primary {
+  margin-bottom: 20px;
+}
+
+.backup-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.backup-row .btn-secondary {
+  border-radius: var(--r-md);
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Result Top Bar ── */
+
+.result-top-bar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.result-top-bar .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: all var(--t-base);
+  box-shadow: var(--shadow-xs);
+}
+
+.result-top-bar .btn-secondary:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-alt);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(-3px);
+}
+
+.result-top-bar .btn-secondary:active {
+  transform: translateX(-1px);
+}
+
+/* ── Result Summary — Card Grid ── */
+
+.result-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0;
+  margin-bottom: 16px;
+  animation: fadeUp 0.4s var(--ease-out) 0.05s both;
+}
+
+.compare-export-row {
+  text-align: right;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ── Responsive ── */
+
+@media (min-width: 768px) {
+  .container {
+    width: 700px;
+    padding: 36px;
+  }
+
+  .result-summary {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .user-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    max-height: 600px;
+    padding-bottom: 6px;
+  }
+
+  .user-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-md);
+    padding: 10px;
+    min-height: 62px;
+    align-content: center;
+  }
+
+  .user-card:hover {
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .user-card:last-child {
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .tab-nav { flex-wrap: wrap; }
+  .filter-bar { flex-wrap: wrap; }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    width: 860px;
+    padding: 40px;
+  }
+
+  .user-list { max-height: 700px; }
+}

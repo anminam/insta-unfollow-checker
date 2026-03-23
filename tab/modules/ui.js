@@ -1,7 +1,7 @@
 // ── UI Utilities Module ──
 
 import { t } from './i18n.js';
-import { UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE, getMaliciousInfo } from './storage.js';
+import { UNFOLLOW_DELAY_MIN, UNFOLLOW_DELAY_MAX, UNFOLLOW_BATCH_SIZE, UNFOLLOW_BATCH_PAUSE, getMaliciousInfo } from '../storage/tier.js';
 
 // ── HTML Escape ──
 

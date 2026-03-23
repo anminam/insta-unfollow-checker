@@ -1,7 +1,7 @@
 // ── Safety Score Module (FR-01) ──
 // 24시간 내 언팔 수/속도 기반 계정 안전 점수 계산
 
-import { getUnfollowHistory } from './storage.js';
+import { getUnfollowHistory } from '../storage/history.js';
 import { t } from './i18n.js';
 
 const HOUR_24 = 24 * 60 * 60 * 1000;

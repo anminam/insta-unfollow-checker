@@ -1,0 +1,35 @@
+/* ── Insta Unfollow Checker — theme ── */
+
+/* Dark mode class-specific overrides beyond variable swapping */
+
+:root.dark .bg-orb { opacity: 0.1; }
+
+:root.dark .badge-ghost {
+  color: #6b7280;
+  background: #1f2937;
+  border-color: #374151;
+}
+
+:root.dark .badge-ghost-score {
+  color: #f87171;
+  background: #2d1a1a;
+  border-color: #7f1d1d;
+}
+
+:root.dark .badge-unstable {
+  color: #fbbf24;
+  background: #292117;
+  border-color: #78350f;
+}
+
+:root.dark .badge-long-wait {
+  color: #fbbf24;
+  background: #292117;
+  border-color: #78350f;
+}
+
+:root.dark .badge-malicious {
+  color: #f87171;
+  background: #2d1a1a;
+  border-color: #991b1b;
+}

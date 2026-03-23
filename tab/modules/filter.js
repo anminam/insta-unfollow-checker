@@ -1,7 +1,7 @@
 // ── Filter Module ──
 // Pure function: receives all state as parameters
 
-import { GHOST_AVATAR_PATTERN, calcGhostScore } from './storage.js';
+import { GHOST_AVATAR_PATTERN, calcGhostScore } from '../storage/tier.js';
 
 export function getFilteredUsers({ analysisData, currentTab, searchQuery, filterVerified, filterGhost, filterTag, sortValue, whitelistSet, firstSeen, memos }) {
   if (!analysisData) return [];

@@ -1,0 +1,18 @@
+// ── Message Protocol Constants ──
+// Shared between tab and service worker
+
+export const MSG = {
+  // Tab -> Service Worker
+  ANALYZE: 'ANALYZE',
+  UNFOLLOW_USER: 'UNFOLLOW_USER',
+  FOLLOW_USER: 'FOLLOW_USER',
+  SET_AUTO_ANALYSIS: 'SET_AUTO_ANALYSIS',
+  GET_AUTO_ANALYSIS_STATUS: 'GET_AUTO_ANALYSIS_STATUS',
+  CLEAR_BADGE: 'CLEAR_BADGE',
+  GOOGLE_LOGIN: 'GOOGLE_LOGIN',
+  GOOGLE_LOGOUT: 'GOOGLE_LOGOUT',
+  GET_AUTH_STATUS: 'GET_AUTH_STATUS',
+
+  // Service Worker -> Tab
+  PROGRESS: 'PROGRESS',
+};

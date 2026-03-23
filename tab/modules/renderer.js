@@ -1,7 +1,13 @@
 // ── Renderer Module ──
 
 import { t } from './i18n.js';
-import { isWhitelisted, wasUnfollowed, getUserMemo, OLD_FOLLOWING_THRESHOLD, getFirstSeenDate, getMaliciousInfo, GHOST_AVATAR_PATTERN, isUnstableUser, calcGhostScore, VALID_TAGS } from './storage.js';
+import { isWhitelisted } from '../storage/whitelist.js';
+import { wasUnfollowed } from '../storage/history.js';
+import { getUserMemo } from '../storage/memo.js';
+import { VALID_TAGS } from '../storage/memo.js';
+import { getFirstSeenDate } from '../storage/preferences.js';
+import { getMaliciousInfo, GHOST_AVATAR_PATTERN, calcGhostScore, OLD_FOLLOWING_THRESHOLD } from '../storage/tier.js';
+import { isUnstableUser } from '../storage/snapshot.js';
 import { FALLBACK_AVATAR, loadImageAsBlob, escapeHtml } from './ui.js';
 
 const LONG_WAIT_DAYS = 30;
@@ -137,92 +143,129 @@ function renderAllUsers(userListEl, users, showUnfollowControls, selectedIds) {
   });
 }
 
+function badge(cls, text, title) {
+  const span = document.createElement('span');
+  span.className = cls;
+  span.textContent = text;
+  if (title) span.title = title;
+  return span;
+}
+
+function btn(cls, userId, username, text, opts = {}) {
+  const b = document.createElement('button');
+  b.className = cls;
+  b.dataset.userId = userId;
+  if (username) b.dataset.username = username;
+  b.textContent = text;
+  if (opts.title) b.title = opts.title;
+  if (opts.disabled) b.disabled = true;
+  return b;
+}
+
 export function createUserCard(user, showUnfollowControls, index, selectedIds, totalUsers) {
   const card = document.createElement('div');
   card.className = 'user-card';
   card.dataset.userId = user.id;
   card.dataset.index = index;
 
-  const safeUsername = escapeHtml(user.username);
-  const safeFullName = escapeHtml(user.full_name);
-
-  const verified = user.is_verified ? '<span class="user-verified">&#10003;</span>' : '';
-  const unfollowedBadge = wasUnfollowed(user.id) ? `<span class="badge-unfollowed">${t('prevUnfollowed')}</span>` : '';
   const whitelisted = isWhitelisted(user.id);
-  const whitelistBadge = whitelisted ? `<span class="badge-whitelist">${t('protected')}</span>` : '';
 
-  const isOldFollowing = showUnfollowControls && totalUsers > 0 &&
-    index >= totalUsers * (1 - OLD_FOLLOWING_THRESHOLD);
-  const oldBadge = isOldFollowing ? `<span class="badge-old">${t('oldFollowing')}</span>` : '';
-
-  const privateBadge = user.is_private ? `<span class="badge-private">${t('privateAccount')}</span>` : '';
-  const isGhost = user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN);
-  const ghostBadge = isGhost ? `<span class="badge-ghost">${t('ghost')}</span>` : '';
-
-  // Ghost score
-  const ghostScore = calcGhostScore(user);
-  const ghostScoreBadge = ghostScore >= 60 ? `<span class="badge-ghost-score" title="${t('ghostScoreTooltip', ghostScore)}">${t('ghostScore', ghostScore)}</span>` : '';
-
-  // Unstable follower
-  const unstableBadge = isUnstableUser(user.username) ? `<span class="badge-unstable" title="${escapeHtml(t('unstableTooltip'))}">${t('unstableFollower')}</span>` : '';
-
-  const firstSeenDate = getFirstSeenDate(user.id);
-  const isLongWait = firstSeenDate && (Date.now() - new Date(firstSeenDate).getTime()) > LONG_WAIT_DAYS * 86400000;
-  const longWaitBadge = isLongWait ? `<span class="badge-long-wait">${t('longWait')}</span>` : '';
-
-  const maliciousReason = getMaliciousInfo(user.username);
-  const maliciousBadge = maliciousReason !== null
-    ? `<span class="badge-malicious" title="${escapeHtml(t('maliciousTooltip', maliciousReason))}">${t('malicious')}</span>`
-    : '';
-
-  // Tags from memo
-  const memo = getUserMemo(user.id);
-  const tagBadges = (memo?.tags || []).filter(tag => VALID_TAGS.includes(tag)).map(tag =>
-    `<span class="badge-tag badge-tag-${tag}">${t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))}</span>`
-  ).join('');
-
-  const memoPreview = memo?.text
-    ? `<div class="user-memo-preview"><span class="memo-bubble">${escapeHtml(memo.text.slice(0, 40))}${memo.text.length > 40 ? '...' : ''}</span></div>`
-    : '';
-
-  const isChecked = selectedIds.has(user.id);
-  const checkboxHtml = showUnfollowControls
-    ? `<input type="checkbox" class="user-checkbox" data-user-id="${user.id}"${whitelisted ? ' disabled' : ''}${isChecked && !whitelisted ? ' checked' : ''}>`
-    : '';
-
-  // Verified ring class
-  const avatarClass = user.is_verified ? 'user-avatar verified-ring' : 'user-avatar';
-
-  let actionsHtml = '';
-  const memoClass = memo ? ' has-memo' : '';
-  const reportBtn = `<button class="btn-report" data-user-id="${user.id}" data-username="${safeUsername}" title="${t('reportUser')}">&#9888;</button>`;
+  // Checkbox
   if (showUnfollowControls) {
-    const wlClass = whitelisted ? ' active' : '';
-    actionsHtml = `<div class="user-actions">
-      ${reportBtn}
-      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${safeUsername}" title="메모">\uD83D\uDCDD</button>
-      <button class="btn-whitelist${wlClass}" data-user-id="${user.id}" title="화이트리스트">\uD83D\uDEE1\uFE0F</button>
-      <button class="btn-unfollow" data-user-id="${user.id}" data-username="${safeUsername}"${whitelisted ? ' disabled' : ''}${user.is_private ? ` title="${t('privateWarning')}"` : ''}>${t('unfollow')}</button>
-    </div>`;
-  } else {
-    actionsHtml = `<div class="user-actions">
-      ${reportBtn}
-      <button class="btn-memo${memoClass}" data-user-id="${user.id}" data-username="${safeUsername}" title="메모">\uD83D\uDCDD</button>
-    </div>`;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'user-checkbox';
+    cb.dataset.userId = user.id;
+    if (whitelisted) cb.disabled = true;
+    if (selectedIds.has(user.id) && !whitelisted) cb.checked = true;
+    card.appendChild(cb);
   }
 
-  card.innerHTML = `
-    ${checkboxHtml}
-    <img class="${avatarClass}" src="${FALLBACK_AVATAR}" data-pic-url="${escapeHtml(user.profile_pic_url)}" alt="${safeUsername}">
-    <div class="user-info">
-      <div class="user-username">
-        <a class="username-link" href="https://www.instagram.com/${encodeURIComponent(user.username)}/" target="_blank" rel="noopener">${safeUsername}</a>${verified}${maliciousBadge}${privateBadge}${ghostBadge}${ghostScoreBadge}${unstableBadge}${longWaitBadge}${whitelistBadge}${tagBadges}${oldBadge}${unfollowedBadge}
-      </div>
-      <div class="user-fullname">${safeFullName}</div>
-      ${memoPreview}
-    </div>
-    ${actionsHtml}
-  `;
+  // Avatar
+  const img = document.createElement('img');
+  img.className = user.is_verified ? 'user-avatar verified-ring' : 'user-avatar';
+  img.src = FALLBACK_AVATAR;
+  if (user.profile_pic_url) img.dataset.picUrl = user.profile_pic_url;
+  img.alt = user.username;
+  card.appendChild(img);
 
+  // User Info
+  const info = document.createElement('div');
+  info.className = 'user-info';
+
+  const usernameDiv = document.createElement('div');
+  usernameDiv.className = 'user-username';
+
+  const link = document.createElement('a');
+  link.className = 'username-link';
+  link.href = `https://www.instagram.com/${encodeURIComponent(user.username)}/`;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.textContent = user.username;
+  usernameDiv.appendChild(link);
+
+  // Badges (all using textContent — no innerHTML)
+  if (user.is_verified) usernameDiv.appendChild(badge('user-verified', '\u2713'));
+
+  const maliciousReason = getMaliciousInfo(user.username);
+  if (maliciousReason !== null) usernameDiv.appendChild(badge('badge-malicious', t('malicious'), t('maliciousTooltip', maliciousReason)));
+  if (user.is_private) usernameDiv.appendChild(badge('badge-private', t('privateAccount')));
+
+  const isGhost = user.profile_pic_url && user.profile_pic_url.includes(GHOST_AVATAR_PATTERN);
+  if (isGhost) usernameDiv.appendChild(badge('badge-ghost', t('ghost')));
+
+  const ghostScore = calcGhostScore(user);
+  if (ghostScore >= 60) usernameDiv.appendChild(badge('badge-ghost-score', t('ghostScore', ghostScore), t('ghostScoreTooltip', ghostScore)));
+  if (isUnstableUser(user.username)) usernameDiv.appendChild(badge('badge-unstable', t('unstableFollower'), t('unstableTooltip')));
+
+  const firstSeenDate = getFirstSeenDate(user.id);
+  if (firstSeenDate && (Date.now() - new Date(firstSeenDate).getTime()) > LONG_WAIT_DAYS * 86400000) {
+    usernameDiv.appendChild(badge('badge-long-wait', t('longWait')));
+  }
+  if (whitelisted) usernameDiv.appendChild(badge('badge-whitelist', t('protected')));
+
+  const memo = getUserMemo(user.id);
+  (memo?.tags || []).filter(tag => VALID_TAGS.includes(tag)).forEach(tag => {
+    usernameDiv.appendChild(badge(`badge-tag badge-tag-${tag}`, t('tag' + tag.charAt(0).toUpperCase() + tag.slice(1))));
+  });
+
+  const isOldFollowing = showUnfollowControls && totalUsers > 0 && index >= totalUsers * (1 - OLD_FOLLOWING_THRESHOLD);
+  if (isOldFollowing) usernameDiv.appendChild(badge('badge-old', t('oldFollowing')));
+  if (wasUnfollowed(user.id)) usernameDiv.appendChild(badge('badge-unfollowed', t('prevUnfollowed')));
+
+  info.appendChild(usernameDiv);
+
+  const fullnameDiv = document.createElement('div');
+  fullnameDiv.className = 'user-fullname';
+  fullnameDiv.textContent = user.full_name || '';
+  info.appendChild(fullnameDiv);
+
+  if (memo?.text) {
+    const preview = document.createElement('div');
+    preview.className = 'user-memo-preview';
+    const bubble = document.createElement('span');
+    bubble.className = 'memo-bubble';
+    bubble.textContent = memo.text.length > 40 ? memo.text.slice(0, 40) + '...' : memo.text;
+    preview.appendChild(bubble);
+    info.appendChild(preview);
+  }
+
+  card.appendChild(info);
+
+  // Actions
+  const actions = document.createElement('div');
+  actions.className = 'user-actions';
+  actions.appendChild(btn('btn-report', user.id, user.username, '\u26A0', { title: t('reportUser') }));
+  actions.appendChild(btn('btn-memo' + (memo ? ' has-memo' : ''), user.id, user.username, '\uD83D\uDCDD', { title: '\uBA54\uBAA8' }));
+
+  if (showUnfollowControls) {
+    actions.appendChild(btn('btn-whitelist' + (whitelisted ? ' active' : ''), user.id, null, '\uD83D\uDEE1\uFE0F', { title: '\uD654\uC774\uD2B8\uB9AC\uC2A4\uD2B8' }));
+    const ufBtn = btn('btn-unfollow', user.id, user.username, t('unfollow'));
+    if (whitelisted) ufBtn.disabled = true;
+    if (user.is_private) ufBtn.title = t('privateWarning');
+    actions.appendChild(ufBtn);
+  }
+
+  card.appendChild(actions);
   return card;
 }

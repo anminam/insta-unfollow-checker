@@ -19,14 +19,20 @@ export async function fetchWithRetry(url, options, maxRetries = MAX_RETRIES) {
     } catch (err) {
       console.warn(`[InstaUnfollow] Network error (retry ${i + 1}/${maxRetries}):`, err.message);
       if (i < maxRetries - 1) {
-        await randomDelay(3000, 5000);
+        // Exponential backoff: 3s → 6s → 12s (with jitter)
+        const backoff = Math.min(3000 * Math.pow(2, i), 30000);
+        const jitter = Math.random() * 2000;
+        await new Promise(r => setTimeout(r, backoff + jitter));
         continue;
       }
       throw new Error('NETWORK_ERROR');
     }
     if (response.status === 429) {
-      console.warn(`[InstaUnfollow] Rate limited, waiting 60-90s (retry ${i + 1}/${maxRetries})`);
-      await randomDelay(60000, 90000);
+      // Exponential backoff: 60s → 120s → 240s (max 300s, with jitter)
+      const backoff = Math.min(60000 * Math.pow(2, i), 300000);
+      const jitter = Math.random() * 10000;
+      console.warn(`[InstaUnfollow] Rate limited, backoff ${Math.round((backoff + jitter) / 1000)}s (retry ${i + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, backoff + jitter));
       continue;
     }
     if (response.status === 401) {

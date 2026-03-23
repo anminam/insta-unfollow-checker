@@ -1,7 +1,7 @@
 // ── Chart Module (Chart.js) ──
 
 import { t } from './i18n.js';
-import { getSnapshots } from './storage.js';
+import { getSnapshots } from '../storage/snapshot.js';
 import { show, hide } from './ui.js';
 
 let chartInstance = null;

@@ -1,1553 +1,311 @@
 // ── Tab Entry Point (ES Module) ──
+// v5.0: Slim entry (~200 lines). Logic extracted to sections/
 
 import { t, applyI18n, getLang, setLang } from './modules/i18n.js';
-import {
-  CACHE_KEY,
-  getWhitelist, saveWhitelist, toggleWhitelist,
-  getMemos, getUserMemo, setUserMemo,
-  getUnfollowHistory, recordUnfollow, removeUnfollowRecord,
-  getCachedAnalysis, setCachedAnalysis,
-  getSnapshots, saveSnapshot,
-  getScheduledQueue, saveScheduledQueue,
-  getSortPreference, saveSortPreference,
-  isOnboardingDone, setOnboardingDone,
-  getScheduledInterval, saveScheduledInterval,
-  getScheduledDailyLimit, saveScheduledDailyLimit,
-  getFirstSeen, recordFirstSeen,
-  setMaliciousUsers,
-  getAutoWhitelist, saveAutoWhitelist,
-  getSmartSchedule, saveSmartSchedule,
-  buildUnstableUsers,
-  getScheduledDailyCount, incrementScheduledDailyCount,
-  FREE_ANALYSIS_LIMIT, FREE_UNFOLLOW_DAILY_LIMIT,
-  canFreeUserUnfollow, incrementFreeUnfollowCount
-} from './modules/storage.js';
-import { show, hide, showConfirm, showToast, formatDate, getErrorText, initDarkMode, toggleDarkMode, escapeHtml, usernameLink } from './modules/ui.js';
+import { getSortPreference, saveSortPreference, isOnboardingDone, setOnboardingDone, getScheduledInterval, saveScheduledInterval, getScheduledDailyLimit, saveScheduledDailyLimit, getSmartSchedule, saveSmartSchedule } from './storage/preferences.js';
+import { getAutoWhitelist, saveAutoWhitelist, getWhitelist } from './storage/whitelist.js';
+import { getMemos, getUserMemo } from './storage/memo.js';
+import { getFirstSeen } from './storage/preferences.js';
+import { getCachedAnalysis, CACHE_KEY } from './storage/cache.js';
+import { show, hide, initDarkMode, toggleDarkMode } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
 import { getFilteredUsers } from './modules/filter.js';
 import { renderUserList, cleanupBlobCache } from './modules/renderer.js';
-import { batchUnfollow } from './modules/unfollow.js';
 import { initSnapshotUI, buildSnapshotAnalysis } from './modules/snapshot-ui.js';
 import { exportBackup, importBackup } from './modules/backup.js';
-import { renderSafetyGauge, checkSafetyBeforeUnfollow } from './modules/safety.js';
 import { initProfilePreview } from './modules/preview.js';
+import { setupAnalysis } from './sections/analysis.js';
+import { setupUserActions } from './sections/user-actions.js';
 
-// ── DOM Elements ──
+// ── DOM References ──
 
-const startSection = document.getElementById('start-section');
-const startBtn = document.getElementById('start-btn');
-const progressSection = document.getElementById('progress-section');
-const progressMessage = document.getElementById('progress-message');
-const progressBar = document.getElementById('progress-bar');
-const progressCount = document.getElementById('progress-count');
-const resultSection = document.getElementById('result-section');
-const followingCountEl = document.getElementById('following-count');
-const followerCountEl = document.getElementById('follower-count');
-const mutualCountEl = document.getElementById('mutual-count');
-const notFollowingCountEl = document.getElementById('not-following-count');
-const followerOnlyCountEl = document.getElementById('follower-only-count');
-const ratioValueEl = document.getElementById('ratio-value');
-const selectAllCheckbox = document.getElementById('select-all');
-const unfollowSelectedBtn = document.getElementById('unfollow-selected-btn');
-const scheduledUnfollowBtn = document.getElementById('scheduled-unfollow-btn');
-const selectedCountEl = document.getElementById('selected-count');
-const userListEl = document.getElementById('user-list');
-const errorSection = document.getElementById('error-section');
-const errorMessage = document.getElementById('error-message');
-const retryBtn = document.getElementById('retry-btn');
-const unfollowProgress = document.getElementById('unfollow-progress');
-const unfollowMessage = document.getElementById('unfollow-message');
-const unfollowTarget = document.getElementById('unfollow-target');
-const unfollowBar = document.getElementById('unfollow-bar');
-const unfollowCountEl = document.getElementById('unfollow-count');
-const unfollowStopBtn = document.getElementById('unfollow-stop-btn');
-const unfollowEta = document.getElementById('unfollow-eta');
-const tabNav = document.querySelector('.tab-nav');
-const toolbar = document.querySelector('.toolbar');
-const tabFollowingCount = document.getElementById('tab-following-count');
-const tabFollowerCount = document.getElementById('tab-follower-count');
-const tabMutualCount = document.getElementById('tab-mutual-count');
-const tabNotFollowingCount = document.getElementById('tab-not-following-count');
-const tabFollowerOnlyCount = document.getElementById('tab-follower-only-count');
-const darkModeBtn = document.getElementById('dark-mode-btn');
-const langSelect = document.getElementById('lang-select');
-const filterSearchInput = document.getElementById('filter-search');
-const filterVerifiedBtn = document.getElementById('filter-verified-btn');
-const filterSortSelect = document.getElementById('filter-sort');
-const filterExportBtn = document.getElementById('filter-export-btn');
-const filterGhostBtn = document.getElementById('filter-ghost-btn');
-const followerChangesEl = document.getElementById('follower-changes');
-const tabWhitelistCount = document.getElementById('tab-whitelist-count');
-const autoAnalysisToggle = document.getElementById('auto-analysis-toggle');
-const authGate = document.getElementById('auth-gate');
-const mainApp = document.getElementById('main-app');
-const googleLoginBtn = document.getElementById('google-login-btn');
-const authError = document.getElementById('auth-error');
-const authEmailEl = document.getElementById('auth-email');
-const logoutBtn = document.getElementById('logout-btn');
-const headerAuth = document.getElementById('header-auth');
-const progressStep = document.getElementById('progress-step');
-const progressPercent = document.getElementById('progress-percent');
-const progressEtaEl = document.getElementById('progress-eta');
-const backToStartBtn = document.getElementById('back-to-start-btn');
-const safetyGaugeContainer = document.getElementById('safety-gauge-container');
-const userTierBadge = document.getElementById('user-tier-badge');
-const freeLimitBanner = document.getElementById('free-limit-banner');
+const $ = (id) => document.getElementById(id);
+const els = {
+  startSection: $('start-section'), startBtn: $('start-btn'),
+  progressSection: $('progress-section'), progressMessage: $('progress-message'),
+  progressBar: $('progress-bar'), progressCount: $('progress-count'),
+  progressStep: $('progress-step'), progressPercent: $('progress-percent'),
+  progressEtaEl: $('progress-eta'),
+  resultSection: $('result-section'), errorSection: $('error-section'),
+  errorMessage: $('error-message'), retryBtn: $('retry-btn'),
+  backToStartBtn: $('back-to-start-btn'),
+  followingCountEl: $('following-count'), followerCountEl: $('follower-count'),
+  mutualCountEl: $('mutual-count'), notFollowingCountEl: $('not-following-count'),
+  followerOnlyCountEl: $('follower-only-count'), ratioValueEl: $('ratio-value'),
+  followerChangesEl: $('follower-changes'),
+  tabFollowingCount: $('tab-following-count'), tabFollowerCount: $('tab-follower-count'),
+  tabMutualCount: $('tab-mutual-count'), tabNotFollowingCount: $('tab-not-following-count'),
+  tabFollowerOnlyCount: $('tab-follower-only-count'), tabWhitelistCount: $('tab-whitelist-count'),
+  deltaFollowing: $('delta-following'), deltaFollower: $('delta-follower'),
+  deltaMutual: $('delta-mutual'), deltaNotFollowing: $('delta-not-following'),
+  deltaFollowerOnly: $('delta-follower-only'),
+  growthValueEl: $('growth-value'), retentionValueEl: $('retention-value'),
+  safetyGaugeContainer: $('safety-gauge-container'),
+  freeLimitBanner: $('free-limit-banner'), userTierBadge: $('user-tier-badge'),
+  userListEl: $('user-list'), selectAllCheckbox: $('select-all'),
+  unfollowSelectedBtn: $('unfollow-selected-btn'), scheduledUnfollowBtn: $('scheduled-unfollow-btn'),
+  selectedCountEl: $('selected-count'),
+  unfollowProgress: $('unfollow-progress'), unfollowMessage: $('unfollow-message'),
+  unfollowTarget: $('unfollow-target'), unfollowBar: $('unfollow-bar'),
+  unfollowCountEl: $('unfollow-count'), unfollowStopBtn: $('unfollow-stop-btn'),
+  unfollowEta: $('unfollow-eta'),
+  authGate: $('auth-gate'), mainApp: $('main-app'),
+  googleLoginBtn: $('google-login-btn'), authError: $('auth-error'),
+  authEmailEl: $('auth-email'), headerAuth: $('header-auth'), logoutBtn: $('logout-btn'),
+  darkModeBtn: $('dark-mode-btn'), langSelect: $('lang-select'),
+  filterSearchInput: $('filter-search'), filterVerifiedBtn: $('filter-verified-btn'),
+  filterSortSelect: $('filter-sort'), filterExportBtn: $('filter-export-btn'),
+  filterGhostBtn: $('filter-ghost-btn'), filterTagSelect: $('filter-tag'),
+  tabNav: document.querySelector('.tab-nav'), toolbar: document.querySelector('.toolbar'),
+  autoAnalysisToggle: $('auto-analysis-toggle'), autoWhitelistToggle: $('auto-whitelist-toggle'),
+  smartScheduleToggle: $('smart-schedule-toggle'),
+  scheduledIntervalSlider: $('scheduled-interval-slider'),
+  scheduledIntervalValue: $('scheduled-interval-value'),
+  scheduledDailyLimitInput: $('scheduled-daily-limit-input'),
+};
 
-// ── Stat delta elements ──
-const deltaFollowing = document.getElementById('delta-following');
-const deltaFollower = document.getElementById('delta-follower');
-const deltaMutual = document.getElementById('delta-mutual');
-const deltaNotFollowing = document.getElementById('delta-not-following');
-const deltaFollowerOnly = document.getElementById('delta-follower-only');
+// ── Shared State ──
 
-// ── Scheduled settings ──
-const scheduledIntervalSlider = document.getElementById('scheduled-interval-slider');
-const scheduledIntervalValue = document.getElementById('scheduled-interval-value');
-const scheduledDailyLimitInput = document.getElementById('scheduled-daily-limit-input');
-const filterTagSelect = document.getElementById('filter-tag');
-const autoWhitelistToggle = document.getElementById('auto-whitelist-toggle');
-const smartScheduleToggle = document.getElementById('smart-schedule-toggle');
-const growthValueEl = document.getElementById('growth-value');
-const retentionValueEl = document.getElementById('retention-value');
+const state = {
+  currentTab: 'not-following',
+  userTier: 'free',
+  analysisData: null,
+  fullNotFollowingBackCount: 0,
+  selectedIds: new Set(),
+  filterVerified: false,
+  filterGhost: false,
+  filterTag: '',
+  compareSelected: new Set(),
+};
 
-// ── State ──
+const isWideScreen = () => window.innerWidth >= 768;
 
-let currentTab = 'not-following';
-let userTier = 'free';
-let fullNotFollowingBackCount = 0;
-let analysisData = null;
-let filterVerified = false;
-let filterGhost = false;
-let filterTag = '';
-let scheduledTimer = null;
-const selectedIds = new Set();
-let lastClickedIndex = -1;
-const compareSelected = new Set();
-let progressStartTime = 0;
-let currentPhase = '';
+state.getFiltered = () => getFilteredUsers({
+  analysisData: state.analysisData, currentTab: state.currentTab,
+  searchQuery: els.filterSearchInput.value, filterVerified: state.filterVerified,
+  filterGhost: state.filterGhost, filterTag: state.filterTag,
+  sortValue: els.filterSortSelect.value, whitelistSet: getWhitelist(),
+  firstSeen: getFirstSeen(), memos: getMemos()
+});
 
-// ── Helper: check wide screen ──
-
-function isWideScreen() {
-  return window.innerWidth >= 768;
-}
-
-// ── Filtered users wrapper ──
-
-function getFiltered() {
-  return getFilteredUsers({
-    analysisData,
-    currentTab,
-    searchQuery: filterSearchInput.value,
-    filterVerified,
-    filterGhost,
-    filterTag,
-    sortValue: filterSortSelect.value,
-    whitelistSet: getWhitelist(),
-    firstSeen: getFirstSeen(),
-    memos: getMemos()
-  });
-}
-
-function refreshList() {
-  const showControls = currentTab === 'not-following';
-  const users = getFiltered();
-  const emptyMsg = filterSearchInput.value.trim() || filterVerified
-    ? t('noSearchResults')
-    : showControls
-      ? t('allMutual')
-      : t('emptyList');
-
-  renderUserList(userListEl, users, showControls, selectedIds, { isWideScreen: isWideScreen() });
-
+state.refreshList = () => {
+  const showControls = state.currentTab === 'not-following';
+  const users = state.getFiltered();
+  renderUserList(els.userListEl, users, showControls, state.selectedIds, { isWideScreen: isWideScreen() });
   if (users.length === 0) {
-    userListEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${emptyMsg}</p>`;
+    const msg = els.filterSearchInput.value.trim() || state.filterVerified ? t('noSearchResults') : showControls ? t('allMutual') : t('emptyList');
+    els.userListEl.textContent = '';
+    const p = document.createElement('p');
+    p.style.cssText = 'text-align:center;color:var(--text-secondary);padding:20px;';
+    p.textContent = msg;
+    els.userListEl.appendChild(p);
   }
-  updateSelectedCount();
-}
+  userActions.updateSelectedCount();
+};
 
-// ── Dark Mode ──
+state.switchTab = (tabName) => {
+  state.currentTab = tabName;
+  els.tabNav.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+  tabName === 'not-following' ? show(els.toolbar) : hide(els.toolbar);
+  els.filterSearchInput.value = '';
+  state.filterVerified = false; state.filterGhost = false; state.filterTag = '';
+  els.filterVerifiedBtn.classList.remove('active');
+  els.filterGhostBtn.classList.remove('active');
+  els.filterTagSelect.value = '';
+  state.selectedIds.clear(); els.selectAllCheckbox.checked = false;
+  state.refreshList();
+};
 
-initDarkMode(darkModeBtn);
-darkModeBtn.addEventListener('click', () => {
-  toggleDarkMode(darkModeBtn);
-  drawStatsChart();
+state.buildSnapshotAnalysis = buildSnapshotAnalysis;
+
+// ── Setup Sections ──
+
+const analysis = setupAnalysis(els, state);
+const userActions = setupUserActions(els, state);
+
+state.refreshSafetyGauge = analysis.refreshSafetyGauge;
+state.showSnapshots = null; // set below after initSnapshotUI
+state.showHistory = userActions.showHistory;
+state.showScheduledStatus = userActions.showScheduledStatus;
+
+// ── Dark Mode + Language ──
+
+initDarkMode(els.darkModeBtn);
+els.darkModeBtn.addEventListener('click', () => { toggleDarkMode(els.darkModeBtn); drawStatsChart(); });
+els.langSelect.value = getLang();
+els.langSelect.addEventListener('change', () => {
+  setLang(els.langSelect.value); applyI18n(els.filterSortSelect);
+  if (state.analysisData) state.refreshList();
+  state.showSnapshots?.(); userActions.showHistory(); userActions.showScheduledStatus();
 });
 
-// ── Language ──
+// ── Tab Nav ──
 
-langSelect.value = getLang();
-langSelect.addEventListener('change', () => {
-  setLang(langSelect.value);
-  applyI18n(filterSortSelect);
-  if (analysisData) refreshList();
-  showSnapshots();
-  showHistory();
-  showScheduledStatus();
-});
+els.tabNav.addEventListener('click', (e) => { const btn = e.target.closest('.tab-btn'); if (btn) state.switchTab(btn.dataset.tab); });
 
-// ── Progress Listener ──
+// ── Filter Bar ──
 
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.action === 'PROGRESS') {
-    const { phase, current, total } = message.data;
-    const phaseText = phase === 'following' ? t('collectingFollowing') : t('collectingFollowers');
-    const percent = total > 0 ? Math.round((current / total) * 100) : 0;
-
-    if (phase !== currentPhase) {
-      currentPhase = phase;
-      progressStartTime = Date.now();
-    }
-
-    const stepNum = phase === 'following' ? 1 : 2;
-    progressStep.textContent = `${stepNum} / 2`;
-    progressMessage.textContent = `${phaseText}...`;
-    progressBar.style.width = `${percent}%`;
-    progressPercent.textContent = `${percent}%`;
-    progressCount.textContent = `${current} / ${total}`;
-
-    if (current > 0 && total > 0 && current < total) {
-      const elapsed = (Date.now() - progressStartTime) / 1000;
-      const rate = current / elapsed;
-      const remaining = Math.round((total - current) / rate);
-      progressEtaEl.textContent = remaining >= 60
-        ? t('etaRemaining', Math.floor(remaining / 60), remaining % 60)
-        : t('etaRemainingSeconds', remaining);
-    } else {
-      progressEtaEl.textContent = '';
-    }
-  }
-});
-
-// ── Tab Switching ──
-
-function switchTab(tabName) {
-  currentTab = tabName;
-
-  tabNav.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === tabName);
-  });
-
-  if (tabName === 'not-following') {
-    show(toolbar);
-  } else {
-    hide(toolbar);
-  }
-
-  filterSearchInput.value = '';
-  filterVerified = false;
-  filterGhost = false;
-  filterTag = '';
-  filterVerifiedBtn.classList.remove('active');
-  filterGhostBtn.classList.remove('active');
-  filterTagSelect.value = '';
-  selectedIds.clear();
-  selectAllCheckbox.checked = false;
-  lastClickedIndex = -1;
-
-  refreshList();
-}
-
-tabNav.addEventListener('click', (e) => {
-  const btn = e.target.closest('.tab-btn');
-  if (!btn) return;
-  switchTab(btn.dataset.tab);
-});
-
-// ── Filter Bar Events ──
-
-let searchDebounceTimer;
-filterSearchInput.addEventListener('input', () => {
-  clearTimeout(searchDebounceTimer);
-  searchDebounceTimer = setTimeout(refreshList, 150);
-});
-
-filterVerifiedBtn.addEventListener('click', () => {
-  filterVerified = !filterVerified;
-  filterVerifiedBtn.classList.toggle('active', filterVerified);
-  refreshList();
-});
-
-filterGhostBtn.addEventListener('click', () => {
-  filterGhost = !filterGhost;
-  filterGhostBtn.classList.toggle('active', filterGhost);
-  refreshList();
-});
-
-filterTagSelect.addEventListener('change', () => {
-  filterTag = filterTagSelect.value;
-  refreshList();
-});
-
-filterSortSelect.value = getSortPreference();
-filterSortSelect.addEventListener('change', () => {
-  saveSortPreference(filterSortSelect.value);
-  refreshList();
-});
+let searchTimer;
+els.filterSearchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(state.refreshList, 150); });
+els.filterVerifiedBtn.addEventListener('click', () => { state.filterVerified = !state.filterVerified; els.filterVerifiedBtn.classList.toggle('active', state.filterVerified); state.refreshList(); });
+els.filterGhostBtn.addEventListener('click', () => { state.filterGhost = !state.filterGhost; els.filterGhostBtn.classList.toggle('active', state.filterGhost); state.refreshList(); });
+els.filterTagSelect.addEventListener('change', () => { state.filterTag = els.filterTagSelect.value; state.refreshList(); });
+els.filterSortSelect.value = getSortPreference();
+els.filterSortSelect.addEventListener('change', () => { saveSortPreference(els.filterSortSelect.value); state.refreshList(); });
 
 // ── CSV Export ──
 
-filterExportBtn.addEventListener('click', () => {
-  const users = getFiltered();
-  if (users.length === 0) return;
-
-  const tabNames = {
-    'following': t('following'), 'followers': t('followers'),
-    'mutual': t('mutual'), 'not-following': t('notFollowing'),
-    'follower-only': t('followerOnly')
-  };
-  const bom = '\uFEFF';
-  const header = 'username,full_name,is_verified,memo,tags';
+els.filterExportBtn.addEventListener('click', () => {
+  const users = state.getFiltered(); if (users.length === 0) return;
+  const tabNames = { following: t('following'), followers: t('followers'), mutual: t('mutual'), 'not-following': t('notFollowing'), 'follower-only': t('followerOnly') };
+  const bom = '\uFEFF'; const header = 'username,full_name,is_verified,memo,tags';
   const memos = getMemos();
-  const rows = users.map(u => {
-    const memo = memos[u.id];
-    const memoText = (memo?.text || '').replace(/"/g, '""');
-    const tags = (memo?.tags || []).join(';');
-    return `${u.username},"${(u.full_name || '').replace(/"/g, '""')}",${u.is_verified ? 'Y' : 'N'},"${memoText}","${tags}"`;
-  });
-  const csv = bom + header + '\n' + rows.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `insta-${tabNames[currentTab] || currentTab}-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const rows = users.map(u => { const m = memos[u.id]; return `${u.username},"${(u.full_name || '').replace(/"/g, '""')}",${u.is_verified ? 'Y' : 'N'},"${(m?.text || '').replace(/"/g, '""')}","${(m?.tags || []).join(';')}"`; });
+  const blob = new Blob([bom + header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = `insta-${tabNames[state.currentTab] || state.currentTab}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
 });
 
-// ── Follower Ratio ──
+// ── Snapshot UI ──
 
-function updateRatio(totalFollowing, totalFollowers) {
-  if (totalFollowing === 0) {
-    ratioValueEl.textContent = '-';
-    ratioValueEl.className = 'stat-value';
-    return;
-  }
-  const ratio = totalFollowers / totalFollowing;
-  ratioValueEl.textContent = ratio.toFixed(2);
+const { showSnapshots } = initSnapshotUI({
+  snapshotSection: $('snapshot-section'), snapshotList: $('snapshot-list'),
+  compareBtn: $('snapshot-compare-btn'), compareModal: $('compare-modal'),
+  compareContent: $('compare-content'), compareCloseBtn: $('compare-close'),
+  compareSelected: state.compareSelected
+});
+state.showSnapshots = showSnapshots;
 
-  let cls = 'ratio-good';
-  if (ratio < 0.5) cls = 'ratio-bad';
-  else if (ratio < 1) cls = 'ratio-warning';
-  ratioValueEl.className = `stat-value ${cls}`;
-}
-
-// ── Stat Delta Badges ──
-
-function updateStatDeltas(totalFollowing, totalFollowers, mutualCount, notFollowingCount, followerOnlyCount) {
-  const snapshots = getSnapshots();
-  if (snapshots.length < 1) {
-    // No previous snapshot to compare
-    clearDeltas();
-    return;
-  }
-
-  // Compare with the most recent snapshot (before current one is saved)
-  const prev = snapshots[0];
-  setDelta(deltaFollowing, totalFollowing - prev.following);
-  setDelta(deltaFollower, totalFollowers - prev.followers);
-  setDelta(deltaMutual, mutualCount - (prev.following - prev.notFollowingBack));
-  setDelta(deltaNotFollowing, notFollowingCount - prev.notFollowingBack, true);
-  if (deltaFollowerOnly) {
-    const prevFollowerOnly = prev.followers - (prev.following - prev.notFollowingBack);
-    setDelta(deltaFollowerOnly, followerOnlyCount - prevFollowerOnly);
-  }
-}
-
-function setDelta(el, diff, invertColor = false) {
-  if (!el) return;
-  if (diff === 0 || isNaN(diff)) {
-    el.textContent = '';
-    return;
-  }
-  const sign = diff > 0 ? '+' : '';
-  el.textContent = `${sign}${diff}`;
-  if (invertColor) {
-    el.className = `stat-delta ${diff > 0 ? 'down' : 'up'}`;
-  } else {
-    el.className = `stat-delta ${diff > 0 ? 'up' : 'down'}`;
-  }
-}
-
-function clearDeltas() {
-  [deltaFollowing, deltaFollower, deltaMutual, deltaNotFollowing, deltaFollowerOnly].forEach(el => {
-    if (el) el.textContent = '';
-  });
-}
-
-// ── Follower Changes (Feature 4) ──
-
-function showFollowerChanges(currentFollowers) {
-  const snapshots = getSnapshots();
-  if (snapshots.length === 0 || !currentFollowers) {
-    hide(followerChangesEl);
-    return;
-  }
-
-  const prev = snapshots[0];
-  if (!prev.followerUsernames) {
-    hide(followerChangesEl);
-    return;
-  }
-
-  const prevSet = new Set(prev.followerUsernames);
-  const currUsernames = currentFollowers.map(u => u.username);
-  const currSet = new Set(currUsernames);
-  const lost = prev.followerUsernames.filter(u => !currSet.has(u));
-  const gained = currUsernames.filter(u => !prevSet.has(u));
-
-  if (lost.length === 0 && gained.length === 0) {
-    followerChangesEl.innerHTML = `<span class="no-changes">${t('noChanges')}</span>`;
-    show(followerChangesEl);
-    return;
-  }
-
-  let html = '<details open>';
-  html += `<summary>${t('followerChanges')}</summary>`;
-  if (gained.length > 0) {
-    html += `<div class="change-gained">${t('newFollowers', gained.length)}</div>`;
-    html += `<div class="changes-list">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div>`;
-  }
-  if (lost.length > 0) {
-    html += `<div class="change-lost">${t('lostFollowers', lost.length)}</div>`;
-    html += `<div class="changes-list">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div>`;
-  }
-  html += '</details>';
-
-  followerChangesEl.innerHTML = html;
-  show(followerChangesEl);
-}
-
-// ── Analysis ──
-
-function applyFreeLimit(data) {
-  if (userTier === 'free' && data.notFollowingBack.length > FREE_ANALYSIS_LIMIT) {
-    fullNotFollowingBackCount = data.notFollowingBack.length;
-    data.notFollowingBack = data.notFollowingBack.slice(0, FREE_ANALYSIS_LIMIT);
-  } else {
-    fullNotFollowingBackCount = data.notFollowingBack.length;
-  }
-}
-
-function showFreeLimitBanner() {
-  if (userTier === 'free' && fullNotFollowingBackCount > FREE_ANALYSIS_LIMIT) {
-    freeLimitBanner.textContent = '';
-    const msg = document.createTextNode(t('freeAnalysisLimit', FREE_ANALYSIS_LIMIT, fullNotFollowingBackCount));
-    freeLimitBanner.appendChild(msg);
-    const hint = document.createElement('span');
-    hint.className = 'upgrade-hint';
-    hint.textContent = t('upgradeToPremium');
-    freeLimitBanner.appendChild(hint);
-    show(freeLimitBanner);
-  } else {
-    hide(freeLimitBanner);
-  }
-}
-
-function hydrateFromCache(cached) {
-  analysisData = {
-    following: cached.following,
-    followers: cached.followers,
-    notFollowingBack: cached.notFollowingBack,
-    mutual: cached.mutual,
-    followerOnly: cached.followerOnly || []
-  };
-  applyFreeLimit(analysisData);
-}
-
-async function startAnalysis() {
-  const cached = getCachedAnalysis();
-  if (cached) {
-    hydrateFromCache(cached);
-    hide(startSection);
-    hide(errorSection);
-    showResultsFromCache(cached);
-    return;
-  }
-
-  hide(startSection);
-  hide(errorSection);
-  hide(resultSection);
-  show(progressSection);
-
-  progressMessage.textContent = t('startingAnalysis');
-  progressBar.style.width = '0%';
-  progressPercent.textContent = '0%';
-  progressCount.textContent = '';
-  progressStep.textContent = '1 / 2';
-  progressEtaEl.textContent = '';
-  progressStartTime = Date.now();
-  currentPhase = '';
-
-  try {
-    const response = await chrome.runtime.sendMessage({ action: 'ANALYZE' });
-
-    if (!response.success) {
-      throw new Error(response.error);
-    }
-
-    const { following, followers, notFollowingBack, totalFollowing, totalFollowers } = response.data;
-
-    const followerIds = new Set(followers.map(u => u.id));
-    const followingIds = new Set(following.map(u => u.id));
-    const mutual = following.filter(u => followerIds.has(u.id));
-    const followerOnly = followers.filter(u => !followingIds.has(u.id));
-
-    analysisData = { following, followers, notFollowingBack, mutual, followerOnly };
-    applyFreeLimit(analysisData);
-
-    const followerUsernames = followers.map(u => u.username);
-    const followingUsernames = following.map(u => u.username);
-
-    // Record first seen dates
-    recordFirstSeen([...following, ...followers]);
-
-    // Show follower changes before saving new snapshot
-    showFollowerChanges(followers);
-
-    // Calculate deltas before saving new snapshot
-    updateStatDeltas(totalFollowing, totalFollowers, mutual.length, notFollowingBack.length, followerOnly.length);
-
-    setCachedAnalysis(following, followers, notFollowingBack, mutual, followerOnly, totalFollowing, totalFollowers);
-
-    hide(progressSection);
-    showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames);
-    buildUnstableUsers();
-    autoWhitelistMutuals();
-    updateGrowthAndRetention(totalFollowers);
-
-    chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
-  } catch (error) {
-    hide(progressSection);
-    showError(error.message);
-  }
-}
-
-// ── Results ──
-
-function displayResults(totalFollowing, totalFollowers) {
-  followingCountEl.textContent = totalFollowing;
-  followerCountEl.textContent = totalFollowers;
-  mutualCountEl.textContent = analysisData.mutual.length;
-  // Show real total in stat card, even if list is sliced for free users
-  notFollowingCountEl.textContent = fullNotFollowingBackCount || analysisData.notFollowingBack.length;
-  if (followerOnlyCountEl) followerOnlyCountEl.textContent = analysisData.followerOnly.length;
-  updateRatio(totalFollowing, totalFollowers);
-
-  tabFollowingCount.textContent = totalFollowing;
-  tabFollowerCount.textContent = totalFollowers;
-  tabMutualCount.textContent = analysisData.mutual.length;
-  tabNotFollowingCount.textContent = fullNotFollowingBackCount || analysisData.notFollowingBack.length;
-  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = analysisData.followerOnly.length;
-  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
-
-  show(resultSection);
-  switchTab('not-following');
-  showFreeLimitBanner();
-}
-
-async function showResults(totalFollowing, totalFollowers, followerUsernames, followingUsernames) {
-  fetchMaliciousUsersList();
-  saveSnapshot(
-    totalFollowing,
-    totalFollowers,
-    analysisData.notFollowingBack.length,
-    followerUsernames,
-    followingUsernames
-  );
-  displayResults(totalFollowing, totalFollowers);
-}
-
-function showResultsFromCache(cached) {
-  buildUnstableUsers();
-  displayResults(cached.totalFollowing, cached.totalFollowers);
-}
-
-// ── Selection ──
-
-function updateSelectedCount() {
-  selectedCountEl.textContent = selectedIds.size;
-  unfollowSelectedBtn.disabled = selectedIds.size === 0;
-  scheduledUnfollowBtn.disabled = selectedIds.size === 0;
-}
-
-function syncCheckboxesToSet() {
-  userListEl.querySelectorAll('.user-checkbox').forEach(cb => {
-    cb.checked = selectedIds.has(cb.dataset.userId);
-  });
-}
-
-selectAllCheckbox.addEventListener('change', () => {
-  const whitelist = getWhitelist();
-  if (selectAllCheckbox.checked) {
-    const users = getFiltered();
-    users.forEach(u => {
-      if (!whitelist.has(u.id)) selectedIds.add(u.id);
-    });
-  } else {
-    selectedIds.clear();
-  }
-  syncCheckboxesToSet();
-  updateSelectedCount();
+$('snapshot-list').addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('.snapshot-view');
+  if (viewBtn) analysis.loadSnapshotView(parseInt(viewBtn.dataset.index, 10));
 });
 
-// ── Shift+Click ──
+// ── Settings ──
 
-userListEl.addEventListener('click', (e) => {
-  const cb = e.target.closest('.user-checkbox');
-  if (!cb) return;
-
-  const currentIndex = parseInt(cb.closest('.user-card').dataset.index, 10);
-
-  if (e.shiftKey && lastClickedIndex >= 0) {
-    const users = getFiltered();
-    const whitelist = getWhitelist();
-    const start = Math.min(lastClickedIndex, currentIndex);
-    const end = Math.max(lastClickedIndex, currentIndex);
-    const shouldCheck = cb.checked;
-
-    for (let i = start; i <= end; i++) {
-      if (i < users.length && !whitelist.has(users[i].id)) {
-        if (shouldCheck) selectedIds.add(users[i].id);
-        else selectedIds.delete(users[i].id);
-      }
-    }
-    syncCheckboxesToSet();
-    updateSelectedCount();
-
-    const selectableCount = users.filter(u => !whitelist.has(u.id)).length;
-    selectAllCheckbox.checked = selectableCount > 0 && selectedIds.size >= selectableCount;
-  }
-
-  lastClickedIndex = currentIndex;
-});
-
-userListEl.addEventListener('change', (e) => {
-  if (e.target.classList.contains('user-checkbox')) {
-    const uid = e.target.dataset.userId;
-    if (e.target.checked) selectedIds.add(uid);
-    else selectedIds.delete(uid);
-    updateSelectedCount();
-    const whitelist = getWhitelist();
-    const users = getFiltered();
-    const selectableCount = users.filter(u => !whitelist.has(u.id)).length;
-    selectAllCheckbox.checked = selectableCount > 0 && selectedIds.size >= selectableCount;
-  }
-});
-
-// ── Whitelist Toggle ──
-
-userListEl.addEventListener('click', (e) => {
-  const wlBtn = e.target.closest('.btn-whitelist');
-  if (!wlBtn) return;
-
-  const userId = wlBtn.dataset.userId;
-  const nowWhitelisted = toggleWhitelist(userId);
-  wlBtn.classList.toggle('active', nowWhitelisted);
-
-  const card = wlBtn.closest('.user-card');
-  const checkbox = card.querySelector('.user-checkbox');
-  const unfollowBtn = card.querySelector('.btn-unfollow');
-  const usernameDiv = card.querySelector('.user-username');
-
-  if (nowWhitelisted) {
-    if (checkbox) { checkbox.checked = false; checkbox.disabled = true; }
-    if (unfollowBtn) unfollowBtn.disabled = true;
-    selectedIds.delete(userId);
-    if (!usernameDiv.querySelector('.badge-whitelist')) {
-      const verifiedEl = usernameDiv.querySelector('.user-verified');
-      const badge = document.createElement('span');
-      badge.className = 'badge-whitelist';
-      badge.textContent = t('protected');
-      if (verifiedEl) verifiedEl.insertAdjacentElement('afterend', badge);
-      else usernameDiv.querySelector('.username-link').insertAdjacentElement('afterend', badge);
-    }
-  } else {
-    if (checkbox) checkbox.disabled = false;
-    if (unfollowBtn) unfollowBtn.disabled = false;
-    const badge = usernameDiv.querySelector('.badge-whitelist');
-    if (badge) badge.remove();
-  }
-
-  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
-  updateSelectedCount();
-});
-
-// ── Memo Modal ──
-
-let memoTargetUserId = null;
-let memoTargetTags = [];
-
-userListEl.addEventListener('click', (e) => {
-  const memoBtn = e.target.closest('.btn-memo');
-  if (!memoBtn) return;
-
-  memoTargetUserId = memoBtn.dataset.userId;
-  const username = memoBtn.dataset.username;
-  const modal = document.getElementById('memo-modal');
-  const usernameEl = document.getElementById('memo-username');
-  const input = document.getElementById('memo-input');
-
-  usernameEl.textContent = `@${username}`;
-  const existing = getUserMemo(memoTargetUserId);
-  input.value = existing?.text || '';
-  memoTargetTags = existing?.tags ? [...existing.tags] : [];
-
-  modal.querySelectorAll('.tag-btn').forEach(btn => {
-    btn.classList.toggle('active', memoTargetTags.includes(btn.dataset.tag));
-  });
-
-  show(modal);
-  input.focus();
-});
-
-// ── Report Malicious User ──
-
-userListEl.addEventListener('click', (e) => {
-  const reportBtn = e.target.closest('.btn-report');
-  if (!reportBtn) return;
-
-  const username = reportBtn.dataset.username;
-  const userId = reportBtn.dataset.userId;
-
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal-box">
-      <div class="modal-title">${t('reportTitle')}</div>
-      <div class="memo-username">@${escapeHtml(username)}</div>
-      <textarea class="memo-input" rows="3" placeholder="${escapeHtml(t('reportPlaceholder'))}"></textarea>
-      <div class="modal-buttons">
-        <button class="btn btn-secondary report-cancel">${t('no')}</button>
-        <button class="btn btn-danger report-submit">${t('reportSubmit')}</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  const textarea = overlay.querySelector('.memo-input');
-  textarea.focus();
-
-  overlay.querySelector('.report-cancel').addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', (ev) => { if (ev.target === overlay) overlay.remove(); });
-
-  overlay.querySelector('.report-submit').addEventListener('click', async () => {
-    const reason = textarea.value.trim();
-    if (!reason) return;
-    try {
-      const res = await chrome.runtime.sendMessage({
-        action: 'REPORT_MALICIOUS_USER',
-        data: { username, reason }
-      });
-      if (res.success) {
-        showToast(t('reportSuccess'), 'success');
-      } else {
-        showToast(t('reportFail'), 'error');
-      }
-    } catch {
-      showToast(t('reportFail'), 'error');
-    }
-    overlay.remove();
-  });
-});
-
-async function fetchMaliciousUsersList() {
-  try {
-    const res = await chrome.runtime.sendMessage({ action: 'FETCH_MALICIOUS_USERS' });
-    if (res.success && res.data) {
-      setMaliciousUsers(res.data);
-      if (analysisData) refreshList();
-      showSnapshots();
-    }
-  } catch { /* ignore */ }
+if (els.scheduledIntervalSlider) {
+  els.scheduledIntervalSlider.value = getScheduledInterval();
+  els.scheduledIntervalValue.textContent = `${getScheduledInterval()}`;
+  els.scheduledIntervalSlider.addEventListener('input', () => { const v = parseInt(els.scheduledIntervalSlider.value, 10); els.scheduledIntervalValue.textContent = `${v}`; saveScheduledInterval(v); });
 }
-
-document.getElementById('memo-modal').addEventListener('click', (e) => {
-  const tagBtn = e.target.closest('.tag-btn');
-  if (tagBtn) {
-    const tag = tagBtn.dataset.tag;
-    if (memoTargetTags.includes(tag)) {
-      memoTargetTags = memoTargetTags.filter(tg => tg !== tag);
-      tagBtn.classList.remove('active');
-    } else {
-      memoTargetTags.push(tag);
-      tagBtn.classList.add('active');
-    }
-  }
-});
-
-document.getElementById('memo-save').addEventListener('click', () => {
-  if (!memoTargetUserId) return;
-  const input = document.getElementById('memo-input');
-  setUserMemo(memoTargetUserId, input.value.trim(), memoTargetTags);
-  hide(document.getElementById('memo-modal'));
-  showToast(t('memoSaved'), 'success');
-  if (analysisData) refreshList();
-  memoTargetUserId = null;
-  memoTargetTags = [];
-});
-
-document.getElementById('memo-cancel').addEventListener('click', () => {
-  hide(document.getElementById('memo-modal'));
-  memoTargetUserId = null;
-  memoTargetTags = [];
-});
-
-// ── Individual Unfollow ──
-
-userListEl.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.btn-unfollow');
-  if (!btn || btn.classList.contains('done') || btn.disabled) return;
-
-  // Free user daily limit check
-  if (userTier === 'free') {
-    const { allowed, remaining } = canFreeUserUnfollow();
-    if (!allowed) {
-      showToast(t('freeUnfollowLimitReached'), 'warning');
-      return;
-    }
-  }
-
-  const userId = btn.dataset.userId;
-  const username = btn.dataset.username;
-  btn.textContent = '...';
-  btn.disabled = true;
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'UNFOLLOW_USER',
-      data: { userId }
-    });
-
-    if (response.success) {
-      if (userTier === 'free') incrementFreeUnfollowCount();
-      recordUnfollow(userId, username);
-      btn.textContent = t('done');
-      btn.classList.add('done');
-      const card = btn.closest('.user-card');
-      const checkbox = card.querySelector('.user-checkbox');
-      if (checkbox) checkbox.checked = false;
-      selectedIds.delete(userId);
-      updateSelectedCount();
-      refreshSafetyGauge();
-      showToast(t('toastUnfollowed', username), 'success', {
-        label: t('undoUnfollow'),
-        callback: async () => {
-          try {
-            const refollowResp = await chrome.runtime.sendMessage({
-              action: 'FOLLOW_USER',
-              data: { userId }
-            });
-            if (refollowResp.success) {
-              removeUnfollowRecord(userId);
-              btn.textContent = t('unfollow');
-              btn.classList.remove('done');
-              btn.disabled = false;
-              showToast(t('toastRefollowed', username), 'success');
-            }
-          } catch { /* ignore */ }
-        }
-      });
-    } else {
-      btn.textContent = t('fail');
-      setTimeout(() => { btn.textContent = t('unfollow'); btn.disabled = false; }, 2000);
-    }
-  } catch {
-    btn.textContent = t('error');
-    setTimeout(() => { btn.textContent = t('unfollow'); btn.disabled = false; }, 2000);
-  }
-});
-
-// ── Batch Unfollow ──
-
-unfollowSelectedBtn.addEventListener('click', async () => {
-  if (selectedIds.size === 0) return;
-
-  const whitelist = getWhitelist();
-  const users = getFiltered();
-  let targets = users
-    .filter(u => selectedIds.has(u.id) && !whitelist.has(u.id))
-    .map(u => ({ userId: u.id, username: u.username }));
-
-  if (targets.length === 0) return;
-
-  // Free user: cap targets by remaining daily limit
-  if (userTier === 'free') {
-    const { allowed, remaining } = canFreeUserUnfollow();
-    if (!allowed) {
-      showToast(t('freeUnfollowLimitReached'), 'warning');
-      return;
-    }
-    if (targets.length > remaining) {
-      targets = targets.slice(0, remaining);
-      showToast(t('freeBatchLimited', FREE_UNFOLLOW_DAILY_LIMIT), 'warning');
-    }
-  }
-
-  // Safety check (FR-01)
-  const safetyCheck = checkSafetyBeforeUnfollow(targets.length);
-  if (!safetyCheck.safe) {
-    showToast(safetyCheck.message, 'warning');
-    return;
-  }
-  if (safetyCheck.message) {
-    showToast(safetyCheck.message, 'warning');
-  }
-
-  if (!await showConfirm(t('confirmUnfollow', targets.length))) return;
-
-  const onEachUnfollow = userTier === 'free' ? () => incrementFreeUnfollowCount() : null;
-
-  await batchUnfollow({
-    targets,
-    els: {
-      resultSection, unfollowProgress, unfollowMessage, unfollowTarget,
-      unfollowBar, unfollowCount: unfollowCountEl, unfollowStopBtn, unfollowEta, userListEl
-    },
-    selectedIds,
-    onEachUnfollow,
-    onComplete: (completed) => {
-      updateSelectedCount();
-      const remaining = userListEl.querySelectorAll('.btn-unfollow:not(.done)').length;
-      notFollowingCountEl.textContent = remaining;
-      tabNotFollowingCount.textContent = remaining;
-      refreshSafetyGauge();
-    }
-  });
-});
-
-// ── Scheduled Unfollow ──
-
-function showScheduledStatus() {
-  const queue = getScheduledQueue();
-  const section = document.getElementById('scheduled-section');
-  const statusEl = document.getElementById('scheduled-status');
-  const listEl = document.getElementById('scheduled-list');
-
-  if (queue.length === 0) {
-    hide(section);
-    return;
-  }
-
-  statusEl.textContent = t('scheduledRemaining', queue.length);
-  listEl.innerHTML = '';
-  queue.slice(0, 10).forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'scheduled-item';
-    div.textContent = `@${item.username}`;
-    listEl.appendChild(div);
-  });
-  if (queue.length > 10) {
-    const more = document.createElement('div');
-    more.className = 'scheduled-item';
-    more.textContent = `...+${queue.length - 10}`;
-    listEl.appendChild(more);
-  }
-  show(section);
+if (els.scheduledDailyLimitInput) {
+  els.scheduledDailyLimitInput.value = getScheduledDailyLimit();
+  els.scheduledDailyLimitInput.addEventListener('change', () => saveScheduledDailyLimit(parseInt(els.scheduledDailyLimitInput.value, 10) || 50));
 }
+els.autoWhitelistToggle.checked = getAutoWhitelist();
+els.autoWhitelistToggle.addEventListener('change', () => saveAutoWhitelist(els.autoWhitelistToggle.checked));
+els.smartScheduleToggle.checked = getSmartSchedule();
+els.smartScheduleToggle.addEventListener('change', () => saveSmartSchedule(els.smartScheduleToggle.checked));
 
-async function processScheduledQueueLoop() {
-  const queue = getScheduledQueue();
-  if (queue.length === 0) return;
+// ── Backup ──
 
-  // Smart schedule: skip night hours
-  if (getSmartSchedule() && isNightTime()) {
-    showToast(t('nightPause'), 'warning');
-    const msUntil6am = (() => {
-      const now = new Date();
-      const sixAm = new Date(now);
-      sixAm.setHours(6, 0, 0, 0);
-      if (sixAm <= now) sixAm.setDate(sixAm.getDate() + 1);
-      return sixAm - now;
-    })();
-    scheduledTimer = setTimeout(processScheduledQueueLoop, msUntil6am + 60000);
-    return;
-  }
-
-  // Check daily limit (persistent across refreshes)
-  const dailyLimit = getScheduledDailyLimit();
-  if (getScheduledDailyCount() >= dailyLimit) {
-    showToast(t('dailyLimitReached', dailyLimit), 'warning');
-    return;
-  }
-
-  const item = queue.shift();
-  saveScheduledQueue(queue);
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'UNFOLLOW_USER',
-      data: { userId: item.userId }
-    });
-    if (response.success) {
-      recordUnfollow(item.userId, item.username);
-      incrementScheduledDailyCount();
-      showToast(t('toastUnfollowed', item.username), 'success');
-    }
-  } catch {
-    // Skip failed
-  }
-
-  showScheduledStatus();
-
-  if (getScheduledQueue().length > 0) {
-    const intervalMin = getScheduledInterval();
-    const delay = intervalMin * 60000 + Math.random() * 60000;
-    scheduledTimer = setTimeout(processScheduledQueueLoop, delay);
-  }
-}
-
-document.getElementById('scheduled-cancel-btn').addEventListener('click', () => {
-  saveScheduledQueue([]);
-  if (scheduledTimer) clearTimeout(scheduledTimer);
-  scheduledTimer = null;
-  showScheduledStatus();
-});
-
-scheduledUnfollowBtn.addEventListener('click', async () => {
-  if (userTier === 'free') {
-    showToast(t('freeScheduledDisabled'), 'warning');
-    return;
-  }
-  if (selectedIds.size === 0) return;
-
-  const whitelist = getWhitelist();
-  const users = getFiltered();
-  const targets = users
-    .filter(u => selectedIds.has(u.id) && !whitelist.has(u.id))
-    .map(u => ({ userId: u.id, username: u.username }));
-
-  if (targets.length === 0) return;
-  if (!await showConfirm(t('confirmSchedule', targets.length))) return;
-
-  const queue = getScheduledQueue();
-  queue.push(...targets);
-  saveScheduledQueue(queue);
-
-  selectedIds.clear();
-  selectAllCheckbox.checked = false;
-  syncCheckboxesToSet();
-  updateSelectedCount();
-
-  showScheduledStatus();
-
-  if (!scheduledTimer) {
-    scheduledTimer = setTimeout(processScheduledQueueLoop, 5000);
-  }
-});
-
-// ── Scheduled Unfollow Settings ──
-
-if (scheduledIntervalSlider) {
-  scheduledIntervalSlider.value = getScheduledInterval();
-  scheduledIntervalValue.textContent = `${getScheduledInterval()}`;
-  scheduledIntervalSlider.addEventListener('input', () => {
-    const val = parseInt(scheduledIntervalSlider.value, 10);
-    scheduledIntervalValue.textContent = `${val}`;
-    saveScheduledInterval(val);
-  });
-}
-
-if (scheduledDailyLimitInput) {
-  scheduledDailyLimitInput.value = getScheduledDailyLimit();
-  scheduledDailyLimitInput.addEventListener('change', () => {
-    const val = parseInt(scheduledDailyLimitInput.value, 10) || 50;
-    saveScheduledDailyLimit(val);
-  });
-}
-
-// ── Auto Whitelist ──
-
-autoWhitelistToggle.checked = getAutoWhitelist();
-autoWhitelistToggle.addEventListener('change', () => {
-  saveAutoWhitelist(autoWhitelistToggle.checked);
-});
-
-function autoWhitelistMutuals() {
-  if (!getAutoWhitelist() || !analysisData?.mutual) return;
-  const wl = getWhitelist();
-  let added = 0;
-  analysisData.mutual.forEach(u => {
-    if (!wl.has(u.id)) { wl.add(u.id); added++; }
-  });
-  if (added > 0) {
-    saveWhitelist(wl);
-    if (tabWhitelistCount) tabWhitelistCount.textContent = wl.size;
-    showToast(t('autoWhitelistDone', added), 'success');
-  }
-}
-
-// ── Smart Schedule ──
-
-smartScheduleToggle.checked = getSmartSchedule();
-smartScheduleToggle.addEventListener('change', () => {
-  saveSmartSchedule(smartScheduleToggle.checked);
-});
-
-function isNightTime() {
-  const hour = new Date().getHours();
-  return hour >= 0 && hour < 6;
-}
-
-// ── Safety Gauge (FR-01) ──
-
-function refreshSafetyGauge() {
-  if (!safetyGaugeContainer) return;
-  // renderSafetyGauge returns static HTML from internal data only (no user input)
-  safetyGaugeContainer.innerHTML = renderSafetyGauge(); // eslint-disable-line no-unsanitized/property
-}
-
-// ── Growth Rate & Retention ──
-
-function updateGrowthAndRetention(totalFollowers) {
-  const snapshots = getSnapshots();
-
-  // Growth rate
-  if (snapshots.length >= 2) {
-    const latest = snapshots[0];
-    const oldest = snapshots[Math.min(snapshots.length - 1, 6)];
-    const daysDiff = (new Date(latest.date) - new Date(oldest.date)) / 86400000;
-    if (daysDiff > 0) {
-      const daily = (totalFollowers - oldest.followers) / daysDiff;
-      growthValueEl.textContent = t('growthDaily', daily);
-      growthValueEl.className = `stat-value ${daily >= 0 ? 'ratio-good' : 'ratio-bad'}`;
-    }
-  }
-
-  // Retention
-  if (snapshots.length >= 2 && snapshots[0].followerUsernames) {
-    const prev = snapshots.find((s, i) => i > 0 && s.followerUsernames);
-    if (prev && prev.followerUsernames) {
-      const prevSet = new Set(prev.followerUsernames);
-      const currentFollowers = analysisData?.followers?.map(u => u.username) || [];
-      const currSet = new Set(currentFollowers);
-      const retained = prev.followerUsernames.filter(u => currSet.has(u)).length;
-      const rate = prevSet.size > 0 ? Math.round((retained / prevSet.size) * 100) : 100;
-      retentionValueEl.textContent = `${rate}%`;
-      retentionValueEl.className = `stat-value ${rate >= 95 ? 'ratio-good' : rate >= 85 ? 'ratio-warning' : 'ratio-bad'}`;
-    }
-  }
-}
-
-// ── Error ──
-
-function showError(errorCode) {
-  errorMessage.textContent = getErrorText(errorCode);
-  show(errorSection);
-  show(startSection);
-}
-
-// ── Start / Retry ──
-
-startBtn.addEventListener('click', () => {
-  sessionStorage.removeItem(CACHE_KEY);
-  startAnalysis();
-});
-
-retryBtn.addEventListener('click', () => {
-  hide(errorSection);
-  sessionStorage.removeItem(CACHE_KEY);
-  startAnalysis();
-});
-
-backToStartBtn.addEventListener('click', () => {
-  hide(resultSection);
-  hide(followerChangesEl);
-  analysisData = null;
-  show(startSection);
-  drawStatsChart();
-  showSnapshots();
-  showHistory();
-  showScheduledStatus();
-  refreshSafetyGauge();
+$('backup-btn').addEventListener('click', () => exportBackup());
+$('restore-btn').addEventListener('click', () => $('restore-file').click());
+$('restore-file').addEventListener('change', (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  importBackup(file, () => { initDarkMode(els.darkModeBtn); els.langSelect.value = getLang(); els.filterSortSelect.value = getSortPreference(); applyI18n(els.filterSortSelect); drawStatsChart(); showSnapshots(); userActions.showHistory(); userActions.showScheduledStatus(); });
+  e.target.value = '';
 });
 
 // ── Keyboard Shortcuts ──
 
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !resultSection.classList.contains('hidden') && currentTab === 'not-following') {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !els.resultSection.classList.contains('hidden') && state.currentTab === 'not-following') {
     if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-      e.preventDefault();
-      selectAllCheckbox.checked = !selectAllCheckbox.checked;
-      selectAllCheckbox.dispatchEvent(new Event('change'));
+      e.preventDefault(); els.selectAllCheckbox.checked = !els.selectAllCheckbox.checked; els.selectAllCheckbox.dispatchEvent(new Event('change'));
     }
   }
-
   if (e.key === 'Escape') {
-    const reportOverlay = document.querySelector('.modal-overlay:not(.hidden):not(#confirm-modal):not(#memo-modal):not(#compare-modal)');
-    if (reportOverlay && !reportOverlay.id) {
-      reportOverlay.remove();
-      return;
-    }
-    const confirmModal = document.getElementById('confirm-modal');
-    const memoModal = document.getElementById('memo-modal');
-    const compareModal = document.getElementById('compare-modal');
-    const onboardingOverlay = document.getElementById('onboarding-overlay');
-    if (!confirmModal.classList.contains('hidden')) {
-      document.getElementById('confirm-no').click();
-    } else if (!memoModal.classList.contains('hidden')) {
-      document.getElementById('memo-cancel').click();
-    } else if (!compareModal.classList.contains('hidden')) {
-      document.getElementById('compare-close').click();
-    } else if (onboardingOverlay && !onboardingOverlay.classList.contains('hidden')) {
-      hide(onboardingOverlay);
-      setOnboardingDone();
-    }
+    const dynOverlay = document.querySelector('.modal-overlay:not(.hidden):not(#confirm-modal):not(#memo-modal):not(#compare-modal)');
+    if (dynOverlay && !dynOverlay.id) { dynOverlay.remove(); return; }
+    if (!$('confirm-modal').classList.contains('hidden')) $('confirm-no').click();
+    else if (!$('memo-modal').classList.contains('hidden')) $('memo-cancel').click();
+    else if (!$('compare-modal').classList.contains('hidden')) $('compare-close').click();
+    else if ($('onboarding-overlay') && !$('onboarding-overlay').classList.contains('hidden')) { hide($('onboarding-overlay')); setOnboardingDone(); }
   }
-
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !resultSection.classList.contains('hidden')) {
-    if (document.activeElement !== filterSearchInput) {
-      e.preventDefault();
-      filterSearchInput.focus();
-      filterSearchInput.select();
-    }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !els.resultSection.classList.contains('hidden')) {
+    if (document.activeElement !== els.filterSearchInput) { e.preventDefault(); els.filterSearchInput.focus(); els.filterSearchInput.select(); }
   }
 });
-
-// ── Snapshot UI (module) ──
-
-const snapshotList = document.getElementById('snapshot-list');
-const { showSnapshots } = initSnapshotUI({
-  snapshotSection: document.getElementById('snapshot-section'),
-  snapshotList,
-  compareBtn: document.getElementById('snapshot-compare-btn'),
-  compareModal: document.getElementById('compare-modal'),
-  compareContent: document.getElementById('compare-content'),
-  compareCloseBtn: document.getElementById('compare-close'),
-  compareSelected
-});
-
-snapshotList.addEventListener('click', (e) => {
-  const viewBtn = e.target.closest('.snapshot-view');
-  if (viewBtn) {
-    const index = parseInt(viewBtn.dataset.index, 10);
-    loadSnapshotView(index);
-  }
-});
-
-function loadSnapshotView(index) {
-  const result = buildSnapshotAnalysis(index);
-  if (!result) return;
-
-  analysisData = result.analysisData;
-  const s = result.stats;
-
-  followingCountEl.textContent = s.following;
-  followerCountEl.textContent = s.followers;
-  mutualCountEl.textContent = s.mutual;
-  notFollowingCountEl.textContent = s.notFollowingBack;
-  if (followerOnlyCountEl) followerOnlyCountEl.textContent = s.followerOnly;
-  if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
-  updateRatio(s.following, s.followers);
-  clearDeltas();
-
-  tabFollowingCount.textContent = s.following;
-  tabFollowerCount.textContent = s.followers;
-  tabMutualCount.textContent = s.mutual;
-  tabNotFollowingCount.textContent = s.notFollowingBack;
-  if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = s.followerOnly;
-
-  hide(startSection);
-  hide(errorSection);
-  hide(progressSection);
-  hide(followerChangesEl);
-  show(resultSection);
-  switchTab('not-following');
-}
-
-// ── History Display (with Refollow) ──
-
-function showHistory() {
-  const history = getUnfollowHistory();
-  const entries = Object.entries(history);
-  const historySection = document.getElementById('history-section');
-  const historyList = document.getElementById('history-list');
-
-  if (entries.length === 0) {
-    hide(historySection);
-    return;
-  }
-
-  entries.sort((a, b) => new Date(b[1].date) - new Date(a[1].date));
-
-  historyList.innerHTML = '';
-  entries.forEach(([userId, { username, date }]) => {
-    const item = document.createElement('div');
-    item.className = 'history-item';
-
-    const link = document.createElement('a');
-    link.className = 'history-username';
-    link.href = `https://www.instagram.com/${encodeURIComponent(username)}/`;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.textContent = `@${username}`;
-
-    const rightDiv = document.createElement('div');
-    rightDiv.className = 'history-right';
-
-    const btn = document.createElement('button');
-    btn.className = 'btn-refollow';
-    btn.dataset.userId = userId;
-    btn.dataset.username = username;
-    btn.textContent = t('refollow');
-
-    const dateSpan = document.createElement('span');
-    dateSpan.className = 'history-date';
-    dateSpan.textContent = formatDate(date);
-
-    rightDiv.appendChild(btn);
-    rightDiv.appendChild(dateSpan);
-    item.appendChild(link);
-    item.appendChild(rightDiv);
-    historyList.appendChild(item);
-  });
-
-  show(historySection);
-}
-
-// ── Refollow Handler ──
-
-document.getElementById('history-list').addEventListener('click', async (e) => {
-  const btn = e.target.closest('.btn-refollow');
-  if (!btn || btn.disabled) return;
-
-  const userId = btn.dataset.userId;
-  const username = btn.dataset.username;
-  btn.textContent = '...';
-  btn.disabled = true;
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'FOLLOW_USER',
-      data: { userId }
-    });
-
-    if (response.success) {
-      removeUnfollowRecord(userId);
-      btn.textContent = t('refollowed');
-      showToast(t('toastRefollowed', username), 'success');
-      setTimeout(() => showHistory(), 1500);
-    } else {
-      btn.textContent = t('fail');
-      setTimeout(() => { btn.textContent = t('refollow'); btn.disabled = false; }, 2000);
-    }
-  } catch {
-    btn.textContent = t('error');
-    setTimeout(() => { btn.textContent = t('refollow'); btn.disabled = false; }, 2000);
-  }
-});
-
-// ── Backup / Restore (module) ──
-
-document.getElementById('backup-btn').addEventListener('click', () => exportBackup());
-
-document.getElementById('restore-btn').addEventListener('click', () => {
-  document.getElementById('restore-file').click();
-});
-
-document.getElementById('restore-file').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  importBackup(file, () => {
-    initDarkMode(darkModeBtn);
-    langSelect.value = getLang();
-    filterSortSelect.value = getSortPreference();
-    applyI18n(filterSortSelect);
-    drawStatsChart();
-    showSnapshots();
-    showHistory();
-    showScheduledStatus();
-  });
-  e.target.value = '';
-});
-
-// ── Auto Analysis ──
-
-async function initAutoAnalysis() {
-  try {
-    const response = await chrome.runtime.sendMessage({ action: 'GET_AUTO_ANALYSIS_STATUS' });
-    autoAnalysisToggle.checked = response.data?.enabled || false;
-  } catch {
-    autoAnalysisToggle.checked = false;
-  }
-}
-
-autoAnalysisToggle.addEventListener('change', async () => {
-  try {
-    await chrome.runtime.sendMessage({
-      action: 'SET_AUTO_ANALYSIS',
-      data: { enabled: autoAnalysisToggle.checked, periodMinutes: 1440 }
-    });
-  } catch {
-    autoAnalysisToggle.checked = !autoAnalysisToggle.checked;
-  }
-});
-
-// ── Onboarding Guide ──
-
-function showOnboarding() {
-  if (isOnboardingDone()) return;
-
-  const overlay = document.getElementById('onboarding-overlay');
-  if (!overlay) return;
-
-  let currentStep = 0;
-  const steps = overlay.querySelectorAll('.onboarding-step');
-  const dots = overlay.querySelectorAll('.onboarding-dot');
-  const prevBtn = document.getElementById('onboarding-prev');
-  const nextBtn = document.getElementById('onboarding-next');
-
-  function updateStep() {
-    steps.forEach((s, i) => s.classList.toggle('hidden', i !== currentStep));
-    dots.forEach((d, i) => d.classList.toggle('active', i === currentStep));
-    prevBtn.classList.toggle('hidden', currentStep === 0);
-    nextBtn.textContent = currentStep === steps.length - 1 ? t('onboardingDone') : t('onboardingNext');
-  }
-
-  prevBtn.addEventListener('click', () => {
-    if (currentStep > 0) { currentStep--; updateStep(); }
-  });
-
-  nextBtn.addEventListener('click', () => {
-    if (currentStep < steps.length - 1) {
-      currentStep++;
-      updateStep();
-    } else {
-      hide(overlay);
-      setOnboardingDone();
-    }
-  });
-
-  updateStep();
-  show(overlay);
-}
 
 // ── Auth ──
 
 async function checkAuthState() {
   try {
     const response = await chrome.runtime.sendMessage({ action: 'GET_AUTH_STATUS' });
-    if (response.success && response.data?.loggedIn) {
-      showMainApp(response.data.email, response.data.premium);
-    } else {
-      showAuthGate();
-    }
-  } catch {
-    showAuthGate();
-  }
+    if (response.success && response.data?.loggedIn) showMainApp(response.data.email, response.data.premium);
+    else showAuthGate();
+  } catch { showAuthGate(); }
 }
 
 function showAuthGate() {
-  show(authGate);
-  hide(mainApp);
-  hide(headerAuth);
-  hide(authError);
-  showOnboarding();
+  show(els.authGate); hide(els.mainApp); hide(els.headerAuth); hide(els.authError);
+  if (!isOnboardingDone()) showOnboarding();
 }
 
 function showMainApp(email, premium) {
-  hide(authGate);
-  show(mainApp);
-  userTier = premium ? 'premium' : 'free';
-  if (email) {
-    authEmailEl.textContent = email;
-    show(headerAuth);
-  }
-  // Tier badge
-  userTierBadge.textContent = premium ? t('premiumBadge') : t('freeBadge');
-  userTierBadge.className = 'tier-badge ' + (premium ? 'premium' : 'free');
-  show(userTierBadge);
-  // Hide scheduled unfollow for free users
-  if (userTier === 'free') {
-    scheduledUnfollowBtn.classList.add('hidden');
-  } else {
-    scheduledUnfollowBtn.classList.remove('hidden');
-  }
+  hide(els.authGate); show(els.mainApp);
+  state.userTier = premium ? 'premium' : 'free';
+  if (email) { els.authEmailEl.textContent = email; show(els.headerAuth); }
+  els.userTierBadge.textContent = premium ? t('premiumBadge') : t('freeBadge');
+  els.userTierBadge.className = 'tier-badge ' + (premium ? 'premium' : 'free');
+  show(els.userTierBadge);
+  premium ? els.scheduledUnfollowBtn.classList.remove('hidden') : els.scheduledUnfollowBtn.classList.add('hidden');
   initMainApp();
 }
 
 function initMainApp() {
-  drawStatsChart();
-  showSnapshots();
-  showHistory();
-  showScheduledStatus();
-  initAutoAnalysis();
-  refreshSafetyGauge();
-  initProfilePreview(userListEl);
-
+  drawStatsChart(); showSnapshots(); userActions.showHistory(); userActions.showScheduledStatus();
+  (async () => { try { const r = await chrome.runtime.sendMessage({ action: 'GET_AUTO_ANALYSIS_STATUS' }); els.autoAnalysisToggle.checked = r.data?.enabled || false; } catch { els.autoAnalysisToggle.checked = false; } })();
+  analysis.refreshSafetyGauge(); initProfilePreview(els.userListEl);
   chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
-
-  if (getScheduledQueue().length > 0 && !scheduledTimer) {
-    scheduledTimer = setTimeout(processScheduledQueueLoop, 10000);
-  }
-
+  userActions.resumeScheduled();
   const cached = getCachedAnalysis();
-  if (cached) {
-    hydrateFromCache(cached);
-    hide(startSection);
-    showResultsFromCache(cached);
-  }
+  if (cached) { analysis.hydrateFromCache(cached); hide(els.startSection); analysis.displayResults(cached.totalFollowing, cached.totalFollowers); }
 }
 
-async function handleGoogleLogin() {
-  googleLoginBtn.disabled = true;
-  googleLoginBtn.querySelector('span').textContent = t('loggingIn');
-  hide(authError);
+els.autoAnalysisToggle.addEventListener('change', async () => {
+  try { await chrome.runtime.sendMessage({ action: 'SET_AUTO_ANALYSIS', data: { enabled: els.autoAnalysisToggle.checked, periodMinutes: 1440 } }); }
+  catch { els.autoAnalysisToggle.checked = !els.autoAnalysisToggle.checked; }
+});
 
+function showOnboarding() {
+  const overlay = $('onboarding-overlay'); if (!overlay) return;
+  let step = 0; const steps = overlay.querySelectorAll('.onboarding-step'); const dots = overlay.querySelectorAll('.onboarding-dot');
+  const prevBtn = $('onboarding-prev'); const nextBtn = $('onboarding-next');
+  function update() { steps.forEach((s, i) => s.classList.toggle('hidden', i !== step)); dots.forEach((d, i) => d.classList.toggle('active', i === step)); prevBtn.classList.toggle('hidden', step === 0); nextBtn.textContent = step === steps.length - 1 ? t('onboardingDone') : t('onboardingNext'); }
+  prevBtn.addEventListener('click', () => { if (step > 0) { step--; update(); } });
+  nextBtn.addEventListener('click', () => { if (step < steps.length - 1) { step++; update(); } else { hide(overlay); setOnboardingDone(); } });
+  update(); show(overlay);
+}
+
+els.googleLoginBtn.addEventListener('click', async () => {
+  els.googleLoginBtn.disabled = true; els.googleLoginBtn.querySelector('span').textContent = t('loggingIn'); hide(els.authError);
   try {
-    const response = await Promise.race([
-      chrome.runtime.sendMessage({ action: 'GOOGLE_LOGIN' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 30000))
-    ]);
-    if (!response.success) {
-      throw new Error(response.error || 'GOOGLE_API_ERROR');
-    }
+    const response = await Promise.race([chrome.runtime.sendMessage({ action: 'GOOGLE_LOGIN' }), new Promise((_, rej) => setTimeout(() => rej(new Error('LOGIN_TIMEOUT')), 30000))]);
+    if (!response.success) throw new Error(response.error || 'GOOGLE_API_ERROR');
     showMainApp(response.data.email, response.data.premium);
   } catch (err) {
     const msg = err.message || '';
-    if (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('The user did not approve')) {
-      authError.textContent = t('GOOGLE_LOGIN_CANCELLED');
-    } else {
-      authError.textContent = t(msg) || t('GOOGLE_API_ERROR');
-    }
-    show(authError);
-  } finally {
-    googleLoginBtn.disabled = false;
-    googleLoginBtn.querySelector('span').textContent = t('googleLogin');
-  }
-}
+    els.authError.textContent = (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('The user did not approve')) ? t('GOOGLE_LOGIN_CANCELLED') : (t(msg) || t('GOOGLE_API_ERROR'));
+    show(els.authError);
+  } finally { els.googleLoginBtn.disabled = false; els.googleLoginBtn.querySelector('span').textContent = t('googleLogin'); }
+});
 
-async function handleLogout() {
-  try {
-    await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' });
-  } catch { /* ignore */ }
-  userTier = 'free';
-  showAuthGate();
-}
+els.logoutBtn.addEventListener('click', async () => {
+  try { await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' }); } catch { /* ignore */ }
+  state.userTier = 'free'; showAuthGate();
+});
 
-googleLoginBtn.addEventListener('click', handleGoogleLogin);
-logoutBtn.addEventListener('click', handleLogout);
-
-// ── Responsive: re-render on resize ──
+// ── Resize + Cleanup ──
 
 let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (analysisData) refreshList();
-  }, 200);
-});
-
-// ── Cleanup ──
-
-window.addEventListener('beforeunload', () => {
-  cleanupBlobCache();
-});
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (state.analysisData) state.refreshList(); }, 200); });
+window.addEventListener('beforeunload', () => cleanupBlobCache());
 
 // ── Init ──
 
-applyI18n(filterSortSelect);
-fetchMaliciousUsersList();
+applyI18n(els.filterSortSelect);
+analysis.fetchMaliciousUsersList();
 checkAuthState();
