@@ -150,7 +150,7 @@ function badge(cls, text, title) {
   const span = document.createElement('span');
   span.className = cls;
   span.textContent = text;
-  if (title) span.title = title;
+  if (title) span.dataset.tooltip = title;
   return span;
 }
 

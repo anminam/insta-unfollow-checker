@@ -60,7 +60,7 @@ export function createUserCard(user, showUnfollowControls, index, selectedIds, t
 
   const maliciousReason = getMaliciousInfo(user.username);
   const maliciousBadge = maliciousReason !== null
-    ? `<span class="badge-malicious" title="${escapeHtml(t('maliciousTooltip', maliciousReason))}">${escapeHtml(t('malicious'))}</span>`
+    ? `<span class="badge-malicious" data-tooltip="${escapeHtml(t('maliciousTooltip', maliciousReason))}">${escapeHtml(t('malicious'))}</span>`
     : '';
 
   const memo = getUserMemo(user.id);

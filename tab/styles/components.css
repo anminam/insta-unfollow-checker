@@ -919,6 +919,34 @@
   background: #fef2f2;
   border-color: #fca5a5;
   animation: maliciousPulse 2s ease-in-out infinite;
+  position: relative;
+  cursor: help;
+}
+
+.badge-malicious[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  z-index: 100;
+}
+
+.badge-malicious[data-tooltip]:hover::after {
+  opacity: 1;
 }
 
 /* ── Tag Badges ── */

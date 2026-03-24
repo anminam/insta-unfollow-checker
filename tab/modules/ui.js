@@ -17,7 +17,7 @@ export function usernameLink(u) {
   const reason = getMaliciousInfo(u);
   if (reason !== null) {
     const tooltip = escapeHtml(t('maliciousTooltip', reason));
-    return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a><span class="badge-malicious" title="${tooltip}">${t('malicious')}</span>`;
+    return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a><span class="badge-malicious" data-tooltip="${tooltip}">${t('malicious')}</span>`;
   }
   return `<a href="https://www.instagram.com/${encodeURIComponent(u)}/" target="_blank" rel="noopener">@${safe}</a>`;
 }
