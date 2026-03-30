@@ -9,6 +9,12 @@
 
 /* ── Auth Header ── */
 
+.header-guest {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .auth-email {
   font-size: 11px;
   color: var(--text-secondary);
@@ -34,6 +40,23 @@
   background: var(--bg-hover);
   color: var(--text-primary);
   border-color: var(--text-tertiary);
+}
+
+.btn-header-login {
+  padding: 4px 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  font-weight: 500;
+}
+
+.btn-header-login:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ── Lang & Dark Mode ── */
@@ -273,6 +296,25 @@
   font-size: 13px;
   white-space: pre-line;
   font-weight: 500;
+}
+
+.btn-instagram {
+  display: inline-block;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #f09433, #dc2743, #bc1888);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  margin-bottom: 8px;
+  transition: opacity var(--t-fast);
+}
+
+.btn-instagram:hover {
+  opacity: 0.85;
 }
 
 /* ── Auto Analysis ── */

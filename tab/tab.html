@@ -26,6 +26,10 @@
     <!-- Header -->
     <header class="header">
       <div class="header-top">
+        <div id="header-guest" class="header-guest hidden">
+          <span class="tier-badge free" data-i18n="freeBadge">무료</span>
+          <button id="header-login-btn" class="btn-header-login" data-i18n="loginForPremium">로그인 (프리미엄)</button>
+        </div>
         <div class="header-auth hidden" id="header-auth">
           <span id="user-tier-badge" class="tier-badge hidden"></span>
           <span id="auth-email" class="auth-email"></span>
@@ -68,6 +72,7 @@
     <!-- Error Section -->
     <div id="error-section" class="error-section hidden">
       <p id="error-message"></p>
+      <a id="instagram-link" href="https://www.instagram.com/" target="_blank" rel="noopener" class="btn btn-instagram hidden" data-i18n="goToInstagram">Instagram 열기</a>
       <button id="retry-btn" class="btn btn-secondary" data-i18n="retry">다시 시도</button>
     </div>
 

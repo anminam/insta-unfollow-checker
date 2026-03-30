@@ -4,7 +4,7 @@ import { getDailyCount, incrementDailyCount } from './_base.js';
 
 export const TIER = { FREE: 'free', PREMIUM: 'premium' };
 
-export const FREE_ANALYSIS_LIMIT = 50;
+export const FREE_ANALYSIS_LIMIT = 20;
 export const FREE_UNFOLLOW_DAILY_LIMIT = 10;
 
 const FREE_UNFOLLOW_COUNT_KEY = 'insta-free-unfollow-count';

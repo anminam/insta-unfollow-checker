@@ -51,7 +51,7 @@ const els = {
   unfollowEta: $('unfollow-eta'),
   authGate: $('auth-gate'), mainApp: $('main-app'),
   googleLoginBtn: $('google-login-btn'), authError: $('auth-error'),
-  authEmailEl: $('auth-email'), headerAuth: $('header-auth'), logoutBtn: $('logout-btn'),
+  authEmailEl: $('auth-email'), headerAuth: $('header-auth'), logoutBtn: $('logout-btn'), headerLoginBtn: $('header-login-btn'), headerGuest: $('header-guest'),
   darkModeBtn: $('dark-mode-btn'), langSelect: $('lang-select'),
   filterSearchInput: $('filter-search'), filterVerifiedBtn: $('filter-verified-btn'),
   filterSortSelect: $('filter-sort'), filterExportBtn: $('filter-export-btn'),
@@ -235,8 +235,8 @@ async function checkAuthState() {
   try {
     const response = await chrome.runtime.sendMessage({ action: 'GET_AUTH_STATUS' });
     if (response.success && response.data?.loggedIn) showMainApp(response.data.email, response.data.premium);
-    else showAuthGate();
-  } catch { showAuthGate(); }
+    else showMainApp(null, false);
+  } catch { showMainApp(null, false); }
 }
 
 function showAuthGate() {
@@ -247,15 +247,21 @@ function showAuthGate() {
 function showMainApp(email, premium) {
   hide(els.authGate); show(els.mainApp);
   state.userTier = premium ? 'premium' : 'free';
-  if (email) { els.authEmailEl.textContent = email; show(els.headerAuth); }
-  els.userTierBadge.textContent = premium ? t('premiumBadge') : t('freeBadge');
-  els.userTierBadge.className = 'tier-badge ' + (premium ? 'premium' : 'free');
-  show(els.userTierBadge);
+  if (email) {
+    els.authEmailEl.textContent = email;
+    show(els.headerAuth); hide(els.headerGuest);
+    els.userTierBadge.textContent = premium ? t('premiumBadge') : t('freeBadge');
+    els.userTierBadge.className = 'tier-badge ' + (premium ? 'premium' : 'free');
+    show(els.userTierBadge);
+  } else {
+    hide(els.headerAuth); show(els.headerGuest);
+  }
   premium ? els.scheduledUnfollowBtn.classList.remove('hidden') : els.scheduledUnfollowBtn.classList.add('hidden');
   initMainApp();
 }
 
 function initMainApp() {
+  if (!isOnboardingDone()) showOnboarding();
   drawStatsChart(); showSnapshots(); userActions.showHistory(); userActions.showScheduledStatus();
   (async () => { try { const r = await chrome.runtime.sendMessage({ action: 'GET_AUTO_ANALYSIS_STATUS' }); els.autoAnalysisToggle.checked = r.data?.enabled || false; } catch { els.autoAnalysisToggle.checked = false; } })();
   analysis.refreshSafetyGauge(); initProfilePreview(els.userListEl);
@@ -280,22 +286,36 @@ function showOnboarding() {
   update(); show(overlay);
 }
 
-els.googleLoginBtn.addEventListener('click', async () => {
-  els.googleLoginBtn.disabled = true; els.googleLoginBtn.querySelector('span').textContent = t('loggingIn'); hide(els.authError);
+async function doGoogleLogin() {
   try {
     const response = await Promise.race([chrome.runtime.sendMessage({ action: 'GOOGLE_LOGIN' }), new Promise((_, rej) => setTimeout(() => rej(new Error('LOGIN_TIMEOUT')), 30000))]);
     if (!response.success) throw new Error(response.error || 'GOOGLE_API_ERROR');
     showMainApp(response.data.email, response.data.premium);
   } catch (err) {
     const msg = err.message || '';
-    els.authError.textContent = (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('The user did not approve')) ? t('GOOGLE_LOGIN_CANCELLED') : (t(msg) || t('GOOGLE_API_ERROR'));
+    const errorText = (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('The user did not approve')) ? t('GOOGLE_LOGIN_CANCELLED') : (t(msg) || t('GOOGLE_API_ERROR'));
+    els.authError.textContent = errorText;
     show(els.authError);
-  } finally { els.googleLoginBtn.disabled = false; els.googleLoginBtn.querySelector('span').textContent = t('googleLogin'); }
+  }
+}
+
+els.googleLoginBtn.addEventListener('click', async () => {
+  els.googleLoginBtn.disabled = true; els.googleLoginBtn.querySelector('span').textContent = t('loggingIn'); hide(els.authError);
+  await doGoogleLogin();
+  els.googleLoginBtn.disabled = false; els.googleLoginBtn.querySelector('span').textContent = t('googleLogin');
 });
+
+if (els.headerLoginBtn) {
+  els.headerLoginBtn.addEventListener('click', async () => {
+    els.headerLoginBtn.disabled = true;
+    await doGoogleLogin();
+    els.headerLoginBtn.disabled = false;
+  });
+}
 
 els.logoutBtn.addEventListener('click', async () => {
   try { await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' }); } catch { /* ignore */ }
-  state.userTier = 'free'; showAuthGate();
+  state.userTier = 'free'; showMainApp(null, false);
 });
 
 // ── Resize + Cleanup ──

@@ -214,7 +214,13 @@ export function setupAnalysis(els, state) {
       displayResults(totalFollowing, totalFollowers); buildUnstableUsers(); autoWhitelistMutuals();
       updateGrowthAndRetention(totalFollowers);
       chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
-    } catch (error) { hide(progressSection); errorMessage.textContent = getErrorText(error.message); show(errorSection); show(startSection); }
+    } catch (error) {
+      hide(progressSection);
+      errorMessage.textContent = getErrorText(error.message);
+      const instaLink = document.getElementById('instagram-link');
+      if (instaLink) { error.message === 'NOT_LOGGED_IN' ? show(instaLink) : hide(instaLink); }
+      show(errorSection); show(startSection);
+    }
   }
 
   startBtn.addEventListener('click', () => { sessionStorage.removeItem(CACHE_KEY); startAnalysis(); });

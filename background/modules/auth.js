@@ -25,9 +25,8 @@ export async function googleLogin() {
     premium = result.authorized;
     pending = result.pending;
   } catch (err) {
-    // fail-closed: Sheets API 에러 시 로그인 차단
-    console.error('[InstaUnfollow] Auth check failed:', err.message);
-    throw new Error('AUTH_CHECK_FAILED');
+    // fail-open: Sheets API 에러 시 비프리미엄으로 로그인 허용
+    console.warn('[InstaUnfollow] Auth check failed (non-blocking):', err.message);
   }
 
   await chrome.storage.local.set({

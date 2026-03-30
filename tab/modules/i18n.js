@@ -89,6 +89,7 @@ export const I18N = {
     toastRefollowed: (u) => `@${u} 다시 팔로우 완료`,
     toastCopied: '클립보드에 복사되었습니다.',
     NOT_LOGGED_IN: '인스타그램에 먼저 로그인해주세요.\ninstagram.com에 접속하여 로그인 후 다시 시도하세요.',
+    goToInstagram: 'Instagram 열기',
     RATE_LIMITED: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
     API_CHANGED: 'Instagram API가 변경되었을 수 있습니다.\n익스텐션 업데이트를 확인해주세요.',
     UNFOLLOW_FAILED: '언팔로우에 실패했습니다. 잠시 후 다시 시도해주세요.',
@@ -172,6 +173,7 @@ export const I18N = {
     // Freemium
     premiumBadge: '프리미엄',
     freeBadge: '무료',
+    loginForPremium: '로그인 (프리미엄)',
     freeAnalysisLimit: (shown, total) => `무료 사용자: ${total}명 중 ${shown}명만 표시됩니다`,
     freeUnfollowLimit: (used, max) => `오늘 언팔로우: ${used}/${max}`,
     freeUnfollowLimitReached: '오늘의 무료 언팔로우 한도에 도달했습니다',
@@ -268,6 +270,7 @@ export const I18N = {
     toastRefollowed: (u) => `@${u} re-followed`,
     toastCopied: 'Copied to clipboard.',
     NOT_LOGGED_IN: 'Please log in to Instagram first.\nGo to instagram.com and sign in.',
+    goToInstagram: 'Open Instagram',
     RATE_LIMITED: 'Too many requests. Please try again later.',
     API_CHANGED: 'Instagram API may have changed.\nPlease check for extension updates.',
     UNFOLLOW_FAILED: 'Unfollow failed. Please try again later.',
@@ -351,6 +354,7 @@ export const I18N = {
     // Freemium
     premiumBadge: 'Premium',
     freeBadge: 'Free',
+    loginForPremium: 'Login (Premium)',
     freeAnalysisLimit: (shown, total) => `Free user: showing ${shown} of ${total}`,
     freeUnfollowLimit: (used, max) => `Today's unfollows: ${used}/${max}`,
     freeUnfollowLimitReached: 'You have reached today\'s free unfollow limit',
