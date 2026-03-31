@@ -1,12 +1,11 @@
 // ── Tab Entry Point (ES Module) ──
-// v5.0: Slim entry (~200 lines). Logic extracted to sections/
+// v5.0: Slim entry. Logic extracted to sections/ and modules/
 
 import { t, applyI18n, getLang, setLang } from './modules/i18n.js';
-import { getSortPreference, saveSortPreference, isOnboardingDone, setOnboardingDone, getScheduledInterval, saveScheduledInterval, getScheduledDailyLimit, saveScheduledDailyLimit, getSmartSchedule, saveSmartSchedule } from './storage/preferences.js';
-import { getAutoWhitelist, saveAutoWhitelist, getWhitelist } from './storage/whitelist.js';
-import { getMemos, getUserMemo } from './storage/memo.js';
+import { getSortPreference, saveSortPreference } from './storage/preferences.js';
+import { getWhitelist } from './storage/whitelist.js';
+import { getMemos } from './storage/memo.js';
 import { getFirstSeen } from './storage/preferences.js';
-import { getCachedAnalysis, CACHE_KEY } from './storage/cache.js';
 import { show, hide, initDarkMode, toggleDarkMode } from './modules/ui.js';
 import { drawStatsChart } from './modules/chart.js';
 import { getFilteredUsers } from './modules/filter.js';
@@ -14,8 +13,11 @@ import { renderUserList, cleanupBlobCache } from './modules/renderer.js';
 import { initSnapshotUI, buildSnapshotAnalysis } from './modules/snapshot-ui.js';
 import { exportBackup, importBackup } from './modules/backup.js';
 import { initProfilePreview } from './modules/preview.js';
+import { initShortcuts } from './modules/shortcuts.js';
 import { setupAnalysis } from './sections/analysis.js';
 import { setupUserActions } from './sections/user-actions.js';
+import { setupAuth } from './sections/auth.js';
+import { setupSettings } from './sections/settings.js';
 
 // ── DOM References ──
 
@@ -182,22 +184,6 @@ $('snapshot-list').addEventListener('click', (e) => {
   if (viewBtn) analysis.loadSnapshotView(parseInt(viewBtn.dataset.index, 10));
 });
 
-// ── Settings ──
-
-if (els.scheduledIntervalSlider) {
-  els.scheduledIntervalSlider.value = getScheduledInterval();
-  els.scheduledIntervalValue.textContent = `${getScheduledInterval()}`;
-  els.scheduledIntervalSlider.addEventListener('input', () => { const v = parseInt(els.scheduledIntervalSlider.value, 10); els.scheduledIntervalValue.textContent = `${v}`; saveScheduledInterval(v); });
-}
-if (els.scheduledDailyLimitInput) {
-  els.scheduledDailyLimitInput.value = getScheduledDailyLimit();
-  els.scheduledDailyLimitInput.addEventListener('change', () => saveScheduledDailyLimit(parseInt(els.scheduledDailyLimitInput.value, 10) || 50));
-}
-els.autoWhitelistToggle.checked = getAutoWhitelist();
-els.autoWhitelistToggle.addEventListener('change', () => saveAutoWhitelist(els.autoWhitelistToggle.checked));
-els.smartScheduleToggle.checked = getSmartSchedule();
-els.smartScheduleToggle.addEventListener('change', () => saveSmartSchedule(els.smartScheduleToggle.checked));
-
 // ── Backup ──
 
 $('backup-btn').addEventListener('click', () => exportBackup());
@@ -208,115 +194,12 @@ $('restore-file').addEventListener('change', (e) => {
   e.target.value = '';
 });
 
-// ── Keyboard Shortcuts ──
+// ── Setup: Settings, Shortcuts, Auth ──
 
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !els.resultSection.classList.contains('hidden') && state.currentTab === 'not-following') {
-    if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-      e.preventDefault(); els.selectAllCheckbox.checked = !els.selectAllCheckbox.checked; els.selectAllCheckbox.dispatchEvent(new Event('change'));
-    }
-  }
-  if (e.key === 'Escape') {
-    const dynOverlay = document.querySelector('.modal-overlay:not(.hidden):not(#confirm-modal):not(#memo-modal):not(#compare-modal)');
-    if (dynOverlay && !dynOverlay.id) { dynOverlay.remove(); return; }
-    if (!$('confirm-modal').classList.contains('hidden')) $('confirm-no').click();
-    else if (!$('memo-modal').classList.contains('hidden')) $('memo-cancel').click();
-    else if (!$('compare-modal').classList.contains('hidden')) $('compare-close').click();
-    else if ($('onboarding-overlay') && !$('onboarding-overlay').classList.contains('hidden')) { hide($('onboarding-overlay')); setOnboardingDone(); }
-  }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !els.resultSection.classList.contains('hidden')) {
-    if (document.activeElement !== els.filterSearchInput) { e.preventDefault(); els.filterSearchInput.focus(); els.filterSearchInput.select(); }
-  }
-});
+setupSettings(els);
+initShortcuts(els, state);
 
-// ── Auth ──
-
-async function checkAuthState() {
-  try {
-    const response = await chrome.runtime.sendMessage({ action: 'GET_AUTH_STATUS' });
-    if (response.success && response.data?.loggedIn) showMainApp(response.data.email, response.data.premium);
-    else showMainApp(null, false);
-  } catch { showMainApp(null, false); }
-}
-
-function showAuthGate() {
-  show(els.authGate); hide(els.mainApp); hide(els.headerAuth); hide(els.authError);
-  if (!isOnboardingDone()) showOnboarding();
-}
-
-function showMainApp(email, premium) {
-  hide(els.authGate); show(els.mainApp);
-  state.userTier = premium ? 'premium' : 'free';
-  if (email) {
-    els.authEmailEl.textContent = email;
-    show(els.headerAuth); hide(els.headerGuest);
-    els.userTierBadge.textContent = premium ? t('premiumBadge') : t('freeBadge');
-    els.userTierBadge.className = 'tier-badge ' + (premium ? 'premium' : 'free');
-    show(els.userTierBadge);
-  } else {
-    hide(els.headerAuth); show(els.headerGuest);
-  }
-  premium ? els.scheduledUnfollowBtn.classList.remove('hidden') : els.scheduledUnfollowBtn.classList.add('hidden');
-  initMainApp();
-}
-
-function initMainApp() {
-  if (!isOnboardingDone()) showOnboarding();
-  drawStatsChart(); showSnapshots(); userActions.showHistory(); userActions.showScheduledStatus();
-  (async () => { try { const r = await chrome.runtime.sendMessage({ action: 'GET_AUTO_ANALYSIS_STATUS' }); els.autoAnalysisToggle.checked = r.data?.enabled || false; } catch { els.autoAnalysisToggle.checked = false; } })();
-  analysis.refreshSafetyGauge(); initProfilePreview(els.userListEl);
-  chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
-  userActions.resumeScheduled();
-  const cached = getCachedAnalysis();
-  if (cached) { analysis.hydrateFromCache(cached); hide(els.startSection); analysis.displayResults(cached.totalFollowing, cached.totalFollowers); }
-}
-
-els.autoAnalysisToggle.addEventListener('change', async () => {
-  try { await chrome.runtime.sendMessage({ action: 'SET_AUTO_ANALYSIS', data: { enabled: els.autoAnalysisToggle.checked, periodMinutes: 1440 } }); }
-  catch { els.autoAnalysisToggle.checked = !els.autoAnalysisToggle.checked; }
-});
-
-function showOnboarding() {
-  const overlay = $('onboarding-overlay'); if (!overlay) return;
-  let step = 0; const steps = overlay.querySelectorAll('.onboarding-step'); const dots = overlay.querySelectorAll('.onboarding-dot');
-  const prevBtn = $('onboarding-prev'); const nextBtn = $('onboarding-next');
-  function update() { steps.forEach((s, i) => s.classList.toggle('hidden', i !== step)); dots.forEach((d, i) => d.classList.toggle('active', i === step)); prevBtn.classList.toggle('hidden', step === 0); nextBtn.textContent = step === steps.length - 1 ? t('onboardingDone') : t('onboardingNext'); }
-  prevBtn.addEventListener('click', () => { if (step > 0) { step--; update(); } });
-  nextBtn.addEventListener('click', () => { if (step < steps.length - 1) { step++; update(); } else { hide(overlay); setOnboardingDone(); } });
-  update(); show(overlay);
-}
-
-async function doGoogleLogin() {
-  try {
-    const response = await Promise.race([chrome.runtime.sendMessage({ action: 'GOOGLE_LOGIN' }), new Promise((_, rej) => setTimeout(() => rej(new Error('LOGIN_TIMEOUT')), 30000))]);
-    if (!response.success) throw new Error(response.error || 'GOOGLE_API_ERROR');
-    showMainApp(response.data.email, response.data.premium);
-  } catch (err) {
-    const msg = err.message || '';
-    const errorText = (msg.includes('canceled') || msg.includes('cancelled') || msg.includes('The user did not approve')) ? t('GOOGLE_LOGIN_CANCELLED') : (t(msg) || t('GOOGLE_API_ERROR'));
-    els.authError.textContent = errorText;
-    show(els.authError);
-  }
-}
-
-els.googleLoginBtn.addEventListener('click', async () => {
-  els.googleLoginBtn.disabled = true; els.googleLoginBtn.querySelector('span').textContent = t('loggingIn'); hide(els.authError);
-  await doGoogleLogin();
-  els.googleLoginBtn.disabled = false; els.googleLoginBtn.querySelector('span').textContent = t('googleLogin');
-});
-
-if (els.headerLoginBtn) {
-  els.headerLoginBtn.addEventListener('click', async () => {
-    els.headerLoginBtn.disabled = true;
-    await doGoogleLogin();
-    els.headerLoginBtn.disabled = false;
-  });
-}
-
-els.logoutBtn.addEventListener('click', async () => {
-  try { await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' }); } catch { /* ignore */ }
-  state.userTier = 'free'; showMainApp(null, false);
-});
+const { checkAuthState } = setupAuth(els, state, { analysis, userActions, showSnapshots, initProfilePreview });
 
 // ── Resize + Cleanup ──
 
