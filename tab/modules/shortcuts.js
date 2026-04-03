@@ -1,16 +1,16 @@
 // ── Keyboard Shortcuts ──
+// v5.0: Uses view system instead of resultSection
 
-import { t } from './i18n.js';
 import { isOnboardingDone, setOnboardingDone } from '../storage/preferences.js';
-import { show, hide } from './ui.js';
+import { hide } from './ui.js';
 
 export function initShortcuts(els, state) {
-  const { resultSection, selectAllCheckbox, filterSearchInput } = els;
+  const { selectAllCheckbox, filterSearchInput } = els;
   const $ = (id) => document.getElementById(id);
 
   document.addEventListener('keydown', (e) => {
-    // Ctrl+A: select all (not-following tab only)
-    if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !resultSection.classList.contains('hidden') && state.currentTab === 'not-following') {
+    // Ctrl+A: select all (not-following tab, users view only)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a' && state.currentView === 'users' && state.currentTab === 'not-following') {
       if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
         e.preventDefault(); selectAllCheckbox.checked = !selectAllCheckbox.checked; selectAllCheckbox.dispatchEvent(new Event('change'));
       }
@@ -24,9 +24,11 @@ export function initShortcuts(els, state) {
       else if (!$('compare-modal').classList.contains('hidden')) $('compare-close').click();
       else if ($('onboarding-overlay') && !$('onboarding-overlay').classList.contains('hidden')) { hide($('onboarding-overlay')); setOnboardingDone(); }
     }
-    // Ctrl+F: focus search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f' && !resultSection.classList.contains('hidden')) {
-      if (document.activeElement !== filterSearchInput) { e.preventDefault(); filterSearchInput.focus(); filterSearchInput.select(); }
+    // Ctrl+F: focus search (switch to users view if needed)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f' && state.analysisData) {
+      e.preventDefault();
+      if (state.currentView !== 'users') state.switchView('users');
+      filterSearchInput.focus(); filterSearchInput.select();
     }
   });
 }

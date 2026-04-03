@@ -1,4 +1,5 @@
 // ── Auth (Google Login, Tier, Auth Gate) ──
+// v5.0: No more start-section toggle, uses view system
 
 import { t } from '../modules/i18n.js';
 import { isOnboardingDone } from '../storage/preferences.js';
@@ -11,8 +12,10 @@ export function setupAuth(els, state, { analysis, userActions, showSnapshots, in
   const {
     authGate, mainApp, googleLoginBtn, authError, authEmailEl,
     headerAuth, logoutBtn, headerLoginBtn, headerGuest,
-    userTierBadge, scheduledUnfollowBtn, startSection,
-    autoAnalysisToggle, darkModeBtn, userListEl
+    userTierBadge, scheduledUnfollowBtn,
+    autoAnalysisToggle, userListEl,
+    settingsAccountEmail, settingsAccountTier, settingsAccountInfo,
+    settingsAccountGuest, settingsLoginBtn, settingsLogoutBtn
   } = els;
 
   async function checkAuthState() {
@@ -36,6 +39,17 @@ export function setupAuth(els, state, { analysis, userActions, showSnapshots, in
       hide(headerAuth); show(headerGuest);
     }
     premium ? scheduledUnfollowBtn.classList.remove('hidden') : scheduledUnfollowBtn.classList.add('hidden');
+    // Settings account card
+    if (email) {
+      settingsAccountEmail.textContent = email;
+      settingsAccountTier.textContent = premium ? t('premiumBadge') : t('freeBadge');
+      settingsAccountTier.className = 'tier-badge ' + (premium ? 'premium' : 'free');
+      show(settingsAccountInfo); hide(settingsAccountGuest);
+      hide(settingsLoginBtn); show(settingsLogoutBtn);
+    } else {
+      hide(settingsAccountInfo); show(settingsAccountGuest);
+      show(settingsLoginBtn); hide(settingsLogoutBtn);
+    }
     initMainApp();
   }
 
@@ -46,8 +60,12 @@ export function setupAuth(els, state, { analysis, userActions, showSnapshots, in
     analysis.refreshSafetyGauge(); initProfilePreview(userListEl);
     chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
     userActions.resumeScheduled();
+    // If cached analysis exists, hydrate and display on dashboard
     const cached = getCachedAnalysis();
-    if (cached) { analysis.hydrateFromCache(cached); hide(startSection); analysis.displayResults(cached.totalFollowing, cached.totalFollowers); }
+    if (cached) {
+      analysis.hydrateFromCache(cached);
+      analysis.displayResults(cached.totalFollowing, cached.totalFollowers);
+    }
   }
 
   async function doGoogleLogin() {
@@ -83,6 +101,21 @@ export function setupAuth(els, state, { analysis, userActions, showSnapshots, in
     try { await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' }); } catch { /* ignore */ }
     state.userTier = 'free'; showMainApp(null, false);
   });
+
+  // Settings view login/logout
+  if (settingsLoginBtn) {
+    settingsLoginBtn.addEventListener('click', async () => {
+      settingsLoginBtn.disabled = true;
+      await doGoogleLogin();
+      settingsLoginBtn.disabled = false;
+    });
+  }
+  if (settingsLogoutBtn) {
+    settingsLogoutBtn.addEventListener('click', async () => {
+      try { await chrome.runtime.sendMessage({ action: 'GOOGLE_LOGOUT' }); } catch { /* ignore */ }
+      state.userTier = 'free'; showMainApp(null, false);
+    });
+  }
 
   autoAnalysisToggle.addEventListener('change', async () => {
     try { await chrome.runtime.sendMessage({ action: 'SET_AUTO_ANALYSIS', data: { enabled: autoAnalysisToggle.checked, periodMinutes: 1440 } }); }

@@ -14,7 +14,7 @@ import { checkSafetyBeforeUnfollow } from '../modules/safety.js';
 export function setupUserActions(els, state) {
   const {
     userListEl, selectAllCheckbox, unfollowSelectedBtn, scheduledUnfollowBtn,
-    selectedCountEl, resultSection, unfollowProgress, unfollowMessage,
+    selectedCountEl, viewUsers, unfollowProgress, unfollowMessage,
     unfollowTarget, unfollowBar, unfollowCountEl, unfollowStopBtn, unfollowEta,
     notFollowingCountEl, tabNotFollowingCount, tabWhitelistCount
   } = els;
@@ -157,7 +157,7 @@ export function setupUserActions(els, state) {
     if (!await showConfirm(t('confirmUnfollow', targets.length))) return;
     const onEach = state.userTier === 'free' ? () => incrementFreeUnfollowCount() : null;
     await batchUnfollow({
-      targets, els: { resultSection, unfollowProgress, unfollowMessage, unfollowTarget, unfollowBar, unfollowCount: unfollowCountEl, unfollowStopBtn, unfollowEta, userListEl },
+      targets, els: { viewUsers, unfollowProgress, unfollowMessage, unfollowTarget, unfollowBar, unfollowCount: unfollowCountEl, unfollowStopBtn, unfollowEta, userListEl },
       selectedIds: state.selectedIds, onEachUnfollow: onEach,
       onComplete: () => { updateSelectedCount(); state.refreshSafetyGauge?.(); }
     });

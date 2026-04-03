@@ -1,5 +1,5 @@
 // ── Tab Entry Point (ES Module) ──
-// v5.0: Slim entry. Logic extracted to sections/ and modules/
+// v5.0: 3-view layout (Dashboard / Users / Settings)
 
 import { t, applyI18n, getLang, setLang } from './modules/i18n.js';
 import { getSortPreference, saveSortPreference } from './storage/preferences.js';
@@ -23,26 +23,42 @@ import { setupSettings } from './sections/settings.js';
 
 const $ = (id) => document.getElementById(id);
 const els = {
-  startSection: $('start-section'), startBtn: $('start-btn'),
+  // Views
+  mainNav: $('main-nav'),
+  viewDashboard: $('view-dashboard'),
+  viewUsers: $('view-users'),
+  viewSettings: $('view-settings'),
+  navUsersBtn: $('nav-users-btn'),
+  dashboardPlaceholder: $('dashboard-placeholder'),
+  dashboardSummary: $('dashboard-summary'),
+
+  // Analysis / Progress
+  startBtn: $('start-btn'),
   progressSection: $('progress-section'), progressMessage: $('progress-message'),
   progressBar: $('progress-bar'), progressCount: $('progress-count'),
   progressStep: $('progress-step'), progressPercent: $('progress-percent'),
   progressEtaEl: $('progress-eta'),
-  resultSection: $('result-section'), errorSection: $('error-section'),
+  errorSection: $('error-section'),
   errorMessage: $('error-message'), retryBtn: $('retry-btn'),
-  backToStartBtn: $('back-to-start-btn'),
+
+  // Summary stats (dashboard)
   followingCountEl: $('following-count'), followerCountEl: $('follower-count'),
   mutualCountEl: $('mutual-count'), notFollowingCountEl: $('not-following-count'),
   followerOnlyCountEl: $('follower-only-count'), ratioValueEl: $('ratio-value'),
   followerChangesEl: $('follower-changes'),
-  tabFollowingCount: $('tab-following-count'), tabFollowerCount: $('tab-follower-count'),
-  tabMutualCount: $('tab-mutual-count'), tabNotFollowingCount: $('tab-not-following-count'),
-  tabFollowerOnlyCount: $('tab-follower-only-count'), tabWhitelistCount: $('tab-whitelist-count'),
   deltaFollowing: $('delta-following'), deltaFollower: $('delta-follower'),
   deltaMutual: $('delta-mutual'), deltaNotFollowing: $('delta-not-following'),
   deltaFollowerOnly: $('delta-follower-only'),
   growthValueEl: $('growth-value'), retentionValueEl: $('retention-value'),
   safetyGaugeContainer: $('safety-gauge-container'),
+
+  // Sub-filter counts
+  tabFollowingCount: $('tab-following-count'), tabFollowerCount: $('tab-follower-count'),
+  tabMutualCount: $('tab-mutual-count'), tabNotFollowingCount: $('tab-not-following-count'),
+  tabFollowerOnlyCount: $('tab-follower-only-count'), tabWhitelistCount: $('tab-whitelist-count'),
+
+  // Users view
+  subFilter: $('sub-filter'),
   freeLimitBanner: $('free-limit-banner'), userTierBadge: $('user-tier-badge'),
   userListEl: $('user-list'), selectAllCheckbox: $('select-all'),
   unfollowSelectedBtn: $('unfollow-selected-btn'), scheduledUnfollowBtn: $('scheduled-unfollow-btn'),
@@ -51,24 +67,39 @@ const els = {
   unfollowTarget: $('unfollow-target'), unfollowBar: $('unfollow-bar'),
   unfollowCountEl: $('unfollow-count'), unfollowStopBtn: $('unfollow-stop-btn'),
   unfollowEta: $('unfollow-eta'),
+
+  // Auth
   authGate: $('auth-gate'), mainApp: $('main-app'),
   googleLoginBtn: $('google-login-btn'), authError: $('auth-error'),
   authEmailEl: $('auth-email'), headerAuth: $('header-auth'), logoutBtn: $('logout-btn'), headerLoginBtn: $('header-login-btn'), headerGuest: $('header-guest'),
+
+  // Controls
   darkModeBtn: $('dark-mode-btn'), langSelect: $('lang-select'),
   filterSearchInput: $('filter-search'), filterVerifiedBtn: $('filter-verified-btn'),
   filterSortSelect: $('filter-sort'), filterExportBtn: $('filter-export-btn'),
   filterGhostBtn: $('filter-ghost-btn'), filterTagSelect: $('filter-tag'),
-  tabNav: document.querySelector('.tab-nav'), toolbar: document.querySelector('.toolbar'),
+  toolbar: document.querySelector('.toolbar'),
+
+  // Settings
   autoAnalysisToggle: $('auto-analysis-toggle'), autoWhitelistToggle: $('auto-whitelist-toggle'),
   smartScheduleToggle: $('smart-schedule-toggle'),
   scheduledIntervalSlider: $('scheduled-interval-slider'),
   scheduledIntervalValue: $('scheduled-interval-value'),
   scheduledDailyLimitInput: $('scheduled-daily-limit-input'),
+
+  // Settings account card
+  settingsAccountEmail: $('settings-account-email'),
+  settingsAccountTier: $('settings-account-tier'),
+  settingsAccountInfo: $('settings-account-info'),
+  settingsAccountGuest: $('settings-account-guest'),
+  settingsLoginBtn: $('settings-login-btn'),
+  settingsLogoutBtn: $('settings-logout-btn'),
 };
 
 // ── Shared State ──
 
 const state = {
+  currentView: 'dashboard',
   currentTab: 'not-following',
   userTier: 'free',
   analysisData: null,
@@ -105,9 +136,31 @@ state.refreshList = () => {
   userActions.updateSelectedCount();
 };
 
+// ── View Switching ──
+
+state.switchView = (viewName) => {
+  state.currentView = viewName;
+  // Toggle view panels
+  [els.viewDashboard, els.viewUsers, els.viewSettings].forEach(v => v.classList.remove('active'));
+  const viewMap = { dashboard: els.viewDashboard, users: els.viewUsers, settings: els.viewSettings };
+  viewMap[viewName]?.classList.add('active');
+  // Toggle nav buttons
+  els.mainNav.querySelectorAll('.main-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewName));
+  // Refresh user list when switching to users
+  if (viewName === 'users' && state.analysisData) state.refreshList();
+};
+
+state.enableUsersView = () => {
+  els.navUsersBtn.disabled = false;
+  show(els.dashboardSummary);
+  hide(els.dashboardPlaceholder);
+};
+
+// ── Tab (Sub-filter) Switching ──
+
 state.switchTab = (tabName) => {
   state.currentTab = tabName;
-  els.tabNav.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+  els.subFilter.querySelectorAll('.sub-filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
   tabName === 'not-following' ? show(els.toolbar) : hide(els.toolbar);
   els.filterSearchInput.value = '';
   state.filterVerified = false; state.filterGhost = false; state.filterTag = '';
@@ -141,9 +194,28 @@ els.langSelect.addEventListener('change', () => {
   state.showSnapshots?.(); userActions.showHistory(); userActions.showScheduledStatus();
 });
 
-// ── Tab Nav ──
+// ── Main Nav ──
 
-els.tabNav.addEventListener('click', (e) => { const btn = e.target.closest('.tab-btn'); if (btn) state.switchTab(btn.dataset.tab); });
+els.mainNav.addEventListener('click', (e) => {
+  const btn = e.target.closest('.main-nav-btn');
+  if (btn && !btn.disabled) state.switchView(btn.dataset.view);
+});
+
+// ── Dashboard stat card click → navigate to users view ──
+
+els.dashboardSummary.addEventListener('click', (e) => {
+  const card = e.target.closest('.stat.clickable');
+  if (!card || !state.analysisData) return;
+  const filter = card.dataset.filter;
+  if (filter) {
+    state.switchView('users');
+    state.switchTab(filter);
+  }
+});
+
+// ── Sub-filter Nav ──
+
+els.subFilter.addEventListener('click', (e) => { const btn = e.target.closest('.sub-filter-btn'); if (btn) state.switchTab(btn.dataset.tab); });
 
 // ── Filter Bar ──
 
@@ -181,7 +253,12 @@ state.showSnapshots = showSnapshots;
 
 $('snapshot-list').addEventListener('click', (e) => {
   const viewBtn = e.target.closest('.snapshot-view');
-  if (viewBtn) analysis.loadSnapshotView(parseInt(viewBtn.dataset.index, 10));
+  if (viewBtn) {
+    analysis.loadSnapshotView(parseInt(viewBtn.dataset.index, 10));
+    // After loading snapshot, switch to users view
+    state.enableUsersView();
+    state.switchView('users');
+  }
 });
 
 // ── Backup ──

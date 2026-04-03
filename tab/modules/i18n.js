@@ -181,6 +181,24 @@ export const I18N = {
     freeScheduledDisabled: '예약 언팔로우는 프리미엄 기능입니다',
     freeBatchLimited: (max) => `무료 사용자는 하루 ${max}명까지 언팔로우할 수 있습니다`,
     authGateDesc: '로그인하면 무료로 시작할 수 있습니다',
+    // v5.0: Navigation
+    dashboard: '대시보드',
+    userList: '유저 목록',
+    settings: '설정',
+    allFollowing: '전체',
+    noDataYet: '분석을 실행하면 여기에 결과가 표시됩니다',
+    runAnalysisFirst: '분석을 먼저 실행하세요',
+    settingsAutomation: '자동화',
+    settingsData: '데이터 관리',
+    settingsAccount: '계정',
+    settingsNotLoggedIn: '로그인되지 않음',
+    // v5.0: Updated onboarding
+    onboardingStep1Title: '분석',
+    onboardingStep1Desc: '대시보드에서 분석 시작 버튼을 눌러 팔로잉/팔로워를 수집합니다.',
+    onboardingStep2Title: '유저 목록',
+    onboardingStep2Desc: '맞팔하지 않는 사람을 확인하고 언팔로우하세요.',
+    onboardingStep3Title: '설정',
+    onboardingStep3Desc: '자동 분석, 예약 언팔로우 등을 설정하세요.',
   },
   en: {
     subtitle: 'Find non-mutual followers',
@@ -362,6 +380,24 @@ export const I18N = {
     freeScheduledDisabled: 'Scheduled unfollows are a Premium feature',
     freeBatchLimited: (max) => `Free users can unfollow up to ${max} per day`,
     authGateDesc: 'Sign in to get started for free',
+    // v5.0: Navigation
+    dashboard: 'Dashboard',
+    userList: 'Users',
+    settings: 'Settings',
+    allFollowing: 'All',
+    noDataYet: 'Run analysis to see results here',
+    runAnalysisFirst: 'Run analysis first',
+    settingsAutomation: 'Automation',
+    settingsData: 'Data Management',
+    settingsAccount: 'Account',
+    settingsNotLoggedIn: 'Not logged in',
+    // v5.0: Updated onboarding
+    onboardingStep1Title: 'Analyze',
+    onboardingStep1Desc: 'Press Start Analysis on the dashboard to collect following/followers.',
+    onboardingStep2Title: 'Users',
+    onboardingStep2Desc: 'Check non-mutual followers and unfollow them.',
+    onboardingStep3Title: 'Settings',
+    onboardingStep3Desc: 'Configure auto analysis, scheduled unfollows, and more.',
   }
 };
 

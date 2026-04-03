@@ -1,4 +1,5 @@
 // ── Analysis, Results, Stats ──
+// v5.0: Results displayed in dashboard view, no more start-section/result-section toggle
 
 import { t } from '../modules/i18n.js';
 import { getCachedAnalysis, setCachedAnalysis, CACHE_KEY } from '../storage/cache.js';
@@ -6,21 +7,22 @@ import { getSnapshots, saveSnapshot, buildUnstableUsers } from '../storage/snaps
 import { getWhitelist, saveWhitelist, getAutoWhitelist } from '../storage/whitelist.js';
 import { recordFirstSeen } from '../storage/preferences.js';
 import { setMaliciousUsers, FREE_ANALYSIS_LIMIT } from '../storage/tier.js';
-import { show, hide, getErrorText, usernameLink } from '../modules/ui.js';
+import { show, hide, getErrorText } from '../modules/ui.js';
 import { drawStatsChart } from '../modules/chart.js';
 import { renderSafetyGauge } from '../modules/safety.js';
 
 export function setupAnalysis(els, state) {
   const {
-    startSection, startBtn, progressSection, progressMessage, progressBar,
+    startBtn, progressSection, progressMessage, progressBar,
     progressCount, progressStep, progressPercent, progressEtaEl,
-    resultSection, errorSection, errorMessage, retryBtn, backToStartBtn,
+    errorSection, errorMessage,
     followingCountEl, followerCountEl, mutualCountEl, notFollowingCountEl,
     followerOnlyCountEl, ratioValueEl, followerChangesEl,
     tabFollowingCount, tabFollowerCount, tabMutualCount, tabNotFollowingCount,
     tabFollowerOnlyCount, tabWhitelistCount,
     deltaFollowing, deltaFollower, deltaMutual, deltaNotFollowing, deltaFollowerOnly,
-    growthValueEl, retentionValueEl, safetyGaugeContainer, freeLimitBanner
+    growthValueEl, retentionValueEl, safetyGaugeContainer, freeLimitBanner,
+    retryBtn, mainNav
   } = els;
 
   let progressStartTime = 0;
@@ -92,7 +94,6 @@ export function setupAnalysis(els, state) {
       span.className = 'no-changes'; span.textContent = t('noChanges');
       followerChangesEl.appendChild(span); show(followerChangesEl); return;
     }
-    // Build follower changes using DOM (usernameLink produces sanitized HTML)
     const details = document.createElement('details'); details.open = true;
     const summary = document.createElement('summary'); summary.textContent = t('followerChanges');
     details.appendChild(summary);
@@ -133,12 +134,16 @@ export function setupAnalysis(els, state) {
     notFollowingCountEl.textContent = state.fullNotFollowingBackCount || state.analysisData.notFollowingBack.length;
     if (followerOnlyCountEl) followerOnlyCountEl.textContent = state.analysisData.followerOnly.length;
     updateRatio(totalFollowing, totalFollowers);
-    tabFollowingCount.textContent = totalFollowing; tabFollowerCount.textContent = totalFollowers;
-    tabMutualCount.textContent = state.analysisData.mutual.length;
-    tabNotFollowingCount.textContent = state.fullNotFollowingBackCount || state.analysisData.notFollowingBack.length;
+    if (tabFollowingCount) tabFollowingCount.textContent = totalFollowing;
+    if (tabFollowerCount) tabFollowerCount.textContent = totalFollowers;
+    if (tabMutualCount) tabMutualCount.textContent = state.analysisData.mutual.length;
+    if (tabNotFollowingCount) tabNotFollowingCount.textContent = state.fullNotFollowingBackCount || state.analysisData.notFollowingBack.length;
     if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = state.analysisData.followerOnly.length;
     if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
-    show(resultSection); state.switchTab('not-following'); showFreeLimitBanner();
+    // Enable users view and show results on dashboard
+    state.enableUsersView();
+    state.switchTab('not-following');
+    showFreeLimitBanner();
   }
 
   function updateGrowthAndRetention(totalFollowers) {
@@ -191,8 +196,8 @@ export function setupAnalysis(els, state) {
 
   async function startAnalysis() {
     const cached = getCachedAnalysis();
-    if (cached) { hydrateFromCache(cached); hide(startSection); hide(errorSection); buildUnstableUsers(); displayResults(cached.totalFollowing, cached.totalFollowers); return; }
-    hide(startSection); hide(errorSection); hide(resultSection); show(progressSection);
+    if (cached) { hydrateFromCache(cached); hide(errorSection); buildUnstableUsers(); displayResults(cached.totalFollowing, cached.totalFollowers); return; }
+    hide(errorSection); show(progressSection); hide(mainNav);
     progressMessage.textContent = t('startingAnalysis'); progressBar.style.width = '0%'; progressPercent.textContent = '0%';
     progressCount.textContent = ''; progressStep.textContent = '1 / 2'; progressEtaEl.textContent = '';
     progressStartTime = Date.now(); currentPhase = '';
@@ -209,26 +214,22 @@ export function setupAnalysis(els, state) {
       showFollowerChanges(followers);
       updateStatDeltas(totalFollowing, totalFollowers, mutual.length, notFollowingBack.length, followerOnly.length);
       setCachedAnalysis(following, followers, notFollowingBack, mutual, followerOnly, totalFollowing, totalFollowers);
-      hide(progressSection); fetchMaliciousUsersList();
+      hide(progressSection); show(mainNav); fetchMaliciousUsersList();
       saveSnapshot(totalFollowing, totalFollowers, notFollowingBack.length, followers.map(u => u.username), following.map(u => u.username));
       displayResults(totalFollowing, totalFollowers); buildUnstableUsers(); autoWhitelistMutuals();
       updateGrowthAndRetention(totalFollowers);
       chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
     } catch (error) {
-      hide(progressSection);
+      hide(progressSection); show(mainNav);
       errorMessage.textContent = getErrorText(error.message);
       const instaLink = document.getElementById('instagram-link');
       if (instaLink) { error.message === 'NOT_LOGGED_IN' ? show(instaLink) : hide(instaLink); }
-      show(errorSection); show(startSection);
+      show(errorSection);
     }
   }
 
   startBtn.addEventListener('click', () => { sessionStorage.removeItem(CACHE_KEY); startAnalysis(); });
   retryBtn.addEventListener('click', () => { hide(errorSection); sessionStorage.removeItem(CACHE_KEY); startAnalysis(); });
-  backToStartBtn.addEventListener('click', () => {
-    hide(resultSection); hide(followerChangesEl); state.analysisData = null; show(startSection);
-    drawStatsChart(); state.showSnapshots?.(); state.showHistory?.(); state.showScheduledStatus?.(); refreshSafetyGauge();
-  });
 
   function loadSnapshotView(index) {
     const result = state.buildSnapshotAnalysis?.(index);
@@ -239,11 +240,14 @@ export function setupAnalysis(els, state) {
     if (followerOnlyCountEl) followerOnlyCountEl.textContent = s.followerOnly;
     if (tabWhitelistCount) tabWhitelistCount.textContent = getWhitelist().size;
     updateRatio(s.following, s.followers); clearDeltas();
-    tabFollowingCount.textContent = s.following; tabFollowerCount.textContent = s.followers;
-    tabMutualCount.textContent = s.mutual; tabNotFollowingCount.textContent = s.notFollowingBack;
+    if (tabFollowingCount) tabFollowingCount.textContent = s.following;
+    if (tabFollowerCount) tabFollowerCount.textContent = s.followers;
+    if (tabMutualCount) tabMutualCount.textContent = s.mutual;
+    if (tabNotFollowingCount) tabNotFollowingCount.textContent = s.notFollowingBack;
     if (tabFollowerOnlyCount) tabFollowerOnlyCount.textContent = s.followerOnly;
-    hide(startSection); hide(errorSection); hide(progressSection); hide(followerChangesEl);
-    show(resultSection); state.switchTab('not-following');
+    hide(errorSection); hide(progressSection); hide(followerChangesEl);
+    state.enableUsersView();
+    state.switchTab('not-following');
   }
 
   return { startAnalysis, refreshSafetyGauge, fetchMaliciousUsersList, hydrateFromCache, displayResults, clearDeltas, updateRatio, loadSnapshotView };

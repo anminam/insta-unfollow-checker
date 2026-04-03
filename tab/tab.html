@@ -4,15 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Insta Unfollow Checker</title>
-  <!-- CSS (split from tab.css for maintainability) -->
   <link rel="stylesheet" href="styles/base.css">
   <link rel="stylesheet" href="styles/layout.css">
   <link rel="stylesheet" href="styles/components.css">
   <link rel="stylesheet" href="styles/dashboard.css">
+  <link rel="stylesheet" href="styles/navigation.css">
   <link rel="stylesheet" href="styles/animation.css">
   <link rel="stylesheet" href="styles/theme.css">
-  <!-- Legacy fallback (kept for backward compat, can be removed after full migration) -->
-  <!-- <link rel="stylesheet" href="tab.css"> -->
 </head>
 <body>
   <!-- Animated background orbs -->
@@ -76,82 +74,6 @@
       <button id="retry-btn" class="btn btn-secondary" data-i18n="retry">다시 시도</button>
     </div>
 
-    <!-- Start Section -->
-    <div id="start-section" class="start-section">
-      <button id="start-btn" class="btn btn-primary" data-i18n="startAnalysis">분석 시작</button>
-
-      <!-- Safety Score Gauge (FR-01) -->
-      <div id="safety-gauge-container" class="safety-gauge-container"></div>
-
-      <!-- Auto Analysis Toggle -->
-      <div class="auto-analysis-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="auto-analysis-toggle">
-          <span data-i18n="autoAnalysis">자동 분석 (24시간마다)</span>
-        </label>
-      </div>
-      <div class="auto-analysis-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="auto-whitelist-toggle">
-          <span data-i18n="autoWhitelist">맞팔 자동 보호</span>
-        </label>
-      </div>
-
-      <!-- Backup / Restore -->
-      <div class="backup-row">
-        <button id="backup-btn" class="btn btn-secondary btn-sm" data-i18n="backup">백업</button>
-        <button id="restore-btn" class="btn btn-secondary btn-sm" data-i18n="restore">복원</button>
-        <input type="file" id="restore-file" accept=".json" class="hidden">
-      </div>
-
-      <!-- Stats Dashboard -->
-      <div id="stats-section" class="stats-section hidden">
-        <h3 class="history-title" data-i18n="statsTitle">통계 대시보드</h3>
-        <div class="stats-chart-wrapper">
-          <canvas id="stats-chart"></canvas>
-        </div>
-      </div>
-
-      <div id="snapshot-section" class="snapshot-section hidden">
-        <div class="snapshot-header-row">
-          <h3 class="history-title" data-i18n="snapshotTitle">분석 이력</h3>
-          <button id="snapshot-compare-btn" class="btn btn-secondary btn-sm hidden" data-i18n="compareSnapshots">비교</button>
-        </div>
-        <div id="snapshot-list" class="snapshot-list"></div>
-      </div>
-      <div id="history-section" class="history-section hidden">
-        <h3 class="history-title" data-i18n="historyTitle">언팔로우 기록</h3>
-        <div id="history-list" class="history-list"></div>
-      </div>
-
-      <!-- Scheduled Unfollow Status -->
-      <div id="scheduled-section" class="scheduled-section hidden">
-        <h3 class="history-title" data-i18n="scheduledTitle">예약 언팔로우</h3>
-        <div class="scheduled-info">
-          <span id="scheduled-status" data-i18n="scheduledRemaining">대기 중: 0명</span>
-          <button id="scheduled-cancel-btn" class="btn btn-secondary btn-sm" data-i18n="scheduledCancel">취소</button>
-        </div>
-        <div class="scheduled-settings">
-          <label class="scheduled-setting-label">
-            <span data-i18n="scheduledIntervalLabel">언팔 간격 (분)</span>
-            <input type="range" id="scheduled-interval-slider" min="1" max="10" value="4" class="scheduled-slider">
-            <span id="scheduled-interval-value" class="scheduled-setting-value">4</span>
-          </label>
-          <label class="scheduled-setting-label">
-            <span data-i18n="scheduledDailyLimitLabel">일일 최대</span>
-            <input type="number" id="scheduled-daily-limit-input" min="1" max="200" value="50" class="scheduled-number-input">
-          </label>
-        </div>
-        <div class="auto-analysis-row mt-4">
-          <label class="checkbox-label">
-            <input type="checkbox" id="smart-schedule-toggle">
-            <span data-i18n="smartSchedule">야간 회피 (0-6시)</span>
-          </label>
-        </div>
-        <div id="scheduled-list" class="scheduled-list"></div>
-      </div>
-    </div>
-
     <!-- Progress Section -->
     <div id="progress-section" class="progress-section hidden">
       <div class="progress-phase">
@@ -166,42 +88,60 @@
       <p id="progress-eta" class="progress-eta"></p>
     </div>
 
-    <!-- Result Section -->
-    <div id="result-section" class="result-section hidden">
-      <div class="result-top-bar">
-        <button id="back-to-start-btn" class="btn btn-secondary btn-sm">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg>
-        <span data-i18n="backToStart">돌아가기</span>
+    <!-- ══════ Main Navigation ══════ -->
+    <nav class="main-nav" id="main-nav">
+      <button class="main-nav-btn active" data-view="dashboard">
+        <span class="main-nav-icon">📊</span>
+        <span class="main-nav-label" data-i18n="dashboard">대시보드</span>
       </button>
+      <button class="main-nav-btn" data-view="users" id="nav-users-btn" disabled>
+        <span class="main-nav-icon">👥</span>
+        <span class="main-nav-label" data-i18n="userList">유저 목록</span>
+      </button>
+      <button class="main-nav-btn" data-view="settings">
+        <span class="main-nav-icon">⚙️</span>
+        <span class="main-nav-label" data-i18n="settings">설정</span>
+      </button>
+    </nav>
+
+    <!-- ══════ View: Dashboard ══════ -->
+    <div id="view-dashboard" class="view-panel active">
+
+      <!-- Action Bar -->
+      <div class="dashboard-action-bar">
+        <button id="start-btn" class="btn btn-primary" data-i18n="startAnalysis">분석 시작</button>
+        <div id="safety-gauge-container" class="safety-gauge-container"></div>
       </div>
-      <div class="result-summary">
+
+      <!-- Summary Cards (hidden until analysis completes) -->
+      <div id="dashboard-summary" class="result-summary hidden">
         <div class="stat">
-          <span class="stat-value" id="following-count">0</span>
+          <span class="stat-value" id="following-count">-</span>
           <span class="stat-delta" id="delta-following"></span>
           <span class="stat-label" data-i18n="following">팔로잉</span>
         </div>
         <div class="stat">
-          <span class="stat-value" id="follower-count">0</span>
+          <span class="stat-value" id="follower-count">-</span>
           <span class="stat-delta" id="delta-follower"></span>
           <span class="stat-label" data-i18n="followers">팔로워</span>
         </div>
         <div class="stat stat-mutual">
-          <span class="stat-value" id="mutual-count">0</span>
+          <span class="stat-value" id="mutual-count">-</span>
           <span class="stat-delta" id="delta-mutual"></span>
           <span class="stat-label" data-i18n="mutual">맞팔</span>
         </div>
-        <div class="stat stat-highlight">
-          <span class="stat-value" id="not-following-count">0</span>
+        <div class="stat stat-highlight clickable" data-navigate="users" data-filter="not-following">
+          <span class="stat-value" id="not-following-count">-</span>
           <span class="stat-delta" id="delta-not-following"></span>
           <span class="stat-label" data-i18n="notFollowing">맞팔 안함</span>
         </div>
-        <div class="stat stat-fan">
-          <span class="stat-value" id="follower-only-count">0</span>
+        <div class="stat stat-fan clickable" data-navigate="users" data-filter="follower-only">
+          <span class="stat-value" id="follower-only-count">-</span>
           <span class="stat-delta" id="delta-follower-only"></span>
           <span class="stat-label" data-i18n="followerOnly">팬</span>
         </div>
         <div class="stat stat-ratio">
-          <span class="stat-value" id="ratio-value">0</span>
+          <span class="stat-value" id="ratio-value">-</span>
           <span class="stat-label" data-i18n="ratio">비율</span>
         </div>
         <div class="stat stat-growth">
@@ -214,17 +154,33 @@
         </div>
       </div>
 
+      <!-- No Data Placeholder -->
+      <div id="dashboard-placeholder" class="dashboard-placeholder">
+        <p data-i18n="noDataYet">분석을 실행하면 여기에 결과가 표시됩니다</p>
+      </div>
+
       <!-- Follower Changes -->
       <div id="follower-changes" class="follower-changes hidden"></div>
 
-      <!-- Tab Navigation -->
-      <nav class="tab-nav">
-        <button class="tab-btn" data-tab="following"><span data-i18n="following">팔로잉</span> <span id="tab-following-count">0</span></button>
-        <button class="tab-btn" data-tab="followers"><span data-i18n="followers">팔로워</span> <span id="tab-follower-count">0</span></button>
-        <button class="tab-btn" data-tab="mutual"><span data-i18n="mutual">맞팔</span> <span id="tab-mutual-count">0</span></button>
-        <button class="tab-btn active" data-tab="not-following"><span data-i18n="notFollowing">맞팔안함</span> <span id="tab-not-following-count">0</span></button>
-        <button class="tab-btn" data-tab="follower-only"><span data-i18n="followerOnly">팬</span> <span id="tab-follower-only-count">0</span></button>
-        <button class="tab-btn" data-tab="whitelist"><span data-i18n="whitelist">보호</span> <span id="tab-whitelist-count">0</span></button>
+      <!-- Stats Chart -->
+      <div id="stats-section" class="stats-section hidden">
+        <h3 class="history-title" data-i18n="statsTitle">통계 대시보드</h3>
+        <div class="stats-chart-wrapper">
+          <canvas id="stats-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ View: Users ══════ -->
+    <div id="view-users" class="view-panel">
+
+      <!-- Sub Filter (replaces old 6-tab nav) -->
+      <nav class="sub-filter" id="sub-filter">
+        <button class="sub-filter-btn active" data-tab="not-following"><span data-i18n="notFollowing">맞팔안함</span> <span id="tab-not-following-count" class="sub-filter-count">0</span></button>
+        <button class="sub-filter-btn" data-tab="mutual"><span data-i18n="mutual">맞팔</span> <span id="tab-mutual-count" class="sub-filter-count">0</span></button>
+        <button class="sub-filter-btn" data-tab="follower-only"><span data-i18n="followerOnly">팬</span> <span id="tab-follower-only-count" class="sub-filter-count">0</span></button>
+        <button class="sub-filter-btn" data-tab="following"><span data-i18n="allFollowing">전체</span> <span id="tab-following-count" class="sub-filter-count">0</span></button>
+        <button class="sub-filter-btn" data-tab="whitelist"><span data-i18n="whitelist">보호</span> <span id="tab-whitelist-count" class="sub-filter-count">0</span></button>
       </nav>
 
       <!-- Filter Bar -->
@@ -268,6 +224,91 @@
       <!-- User List -->
       <div id="user-list" class="user-list"></div>
       <div id="free-limit-banner" class="free-limit-banner hidden"></div>
+    </div>
+
+    <!-- ══════ View: Settings ══════ -->
+    <div id="view-settings" class="view-panel">
+
+      <!-- Automation -->
+      <div class="settings-card">
+        <h3 class="settings-card-title" data-i18n="settingsAutomation">자동화</h3>
+        <div class="settings-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="auto-analysis-toggle">
+            <span data-i18n="autoAnalysis">자동 분석 (24시간마다)</span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="auto-whitelist-toggle">
+            <span data-i18n="autoWhitelist">맞팔 자동 보호</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Scheduled Unfollow -->
+      <div id="scheduled-section" class="settings-card hidden">
+        <h3 class="settings-card-title" data-i18n="scheduledTitle">예약 언팔로우</h3>
+        <div class="scheduled-info">
+          <span id="scheduled-status" data-i18n="scheduledRemaining">대기 중: 0명</span>
+          <button id="scheduled-cancel-btn" class="btn btn-secondary btn-sm" data-i18n="scheduledCancel">취소</button>
+        </div>
+        <div class="scheduled-settings">
+          <label class="scheduled-setting-label">
+            <span data-i18n="scheduledIntervalLabel">언팔 간격 (분)</span>
+            <input type="range" id="scheduled-interval-slider" min="1" max="10" value="4" class="scheduled-slider">
+            <span id="scheduled-interval-value" class="scheduled-setting-value">4</span>
+          </label>
+          <label class="scheduled-setting-label">
+            <span data-i18n="scheduledDailyLimitLabel">일일 최대</span>
+            <input type="number" id="scheduled-daily-limit-input" min="1" max="200" value="50" class="scheduled-number-input">
+          </label>
+        </div>
+        <div class="settings-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="smart-schedule-toggle">
+            <span data-i18n="smartSchedule">야간 회피 (0-6시)</span>
+          </label>
+        </div>
+        <div id="scheduled-list" class="scheduled-list"></div>
+      </div>
+
+      <!-- Data Management -->
+      <div class="settings-card">
+        <h3 class="settings-card-title" data-i18n="settingsData">데이터 관리</h3>
+        <div class="settings-row settings-row-buttons">
+          <button id="backup-btn" class="btn btn-secondary btn-sm" data-i18n="backup">백업</button>
+          <button id="restore-btn" class="btn btn-secondary btn-sm" data-i18n="restore">복원</button>
+          <input type="file" id="restore-file" accept=".json" class="hidden">
+        </div>
+        <div id="snapshot-section" class="snapshot-section hidden">
+          <div class="snapshot-header-row">
+            <h4 class="history-title" data-i18n="snapshotTitle">분석 이력</h4>
+            <button id="snapshot-compare-btn" class="btn btn-secondary btn-sm hidden" data-i18n="compareSnapshots">비교</button>
+          </div>
+          <div id="snapshot-list" class="snapshot-list"></div>
+        </div>
+        <div id="history-section" class="history-section hidden">
+          <h4 class="history-title" data-i18n="historyTitle">언팔로우 기록</h4>
+          <div id="history-list" class="history-list"></div>
+        </div>
+      </div>
+
+      <!-- Account -->
+      <div class="settings-card">
+        <h3 class="settings-card-title" data-i18n="settingsAccount">계정</h3>
+        <div id="settings-account-info" class="settings-account-info">
+          <span id="settings-account-email" class="settings-account-email"></span>
+          <span id="settings-account-tier" class="tier-badge"></span>
+        </div>
+        <div id="settings-account-guest" class="settings-account-guest hidden">
+          <span data-i18n="settingsNotLoggedIn">로그인되지 않음</span>
+        </div>
+        <div class="settings-row settings-row-buttons">
+          <button id="settings-login-btn" class="btn btn-primary btn-sm hidden" data-i18n="googleLogin">Google로 로그인</button>
+          <button id="settings-logout-btn" class="btn btn-secondary btn-sm hidden" data-i18n="logout">로그아웃</button>
+        </div>
+      </div>
     </div>
 
     <!-- Unfollow Progress -->
@@ -329,19 +370,19 @@
     <div id="onboarding-overlay" class="onboarding-overlay hidden">
       <div class="onboarding-card">
         <div class="onboarding-step" data-step="0">
-          <div class="onboarding-icon">🔑</div>
-          <h3 data-i18n="onboardingStep1Title">로그인</h3>
-          <p data-i18n="onboardingStep1Desc">Google 계정으로 로그인하세요.</p>
+          <div class="onboarding-icon">🔍</div>
+          <h3 data-i18n="onboardingStep1Title">분석</h3>
+          <p data-i18n="onboardingStep1Desc">대시보드에서 분석 시작 버튼을 눌러 팔로잉/팔로워를 수집합니다.</p>
         </div>
         <div class="onboarding-step hidden" data-step="1">
-          <div class="onboarding-icon">🔍</div>
-          <h3 data-i18n="onboardingStep2Title">분석</h3>
-          <p data-i18n="onboardingStep2Desc">분석 시작 버튼을 눌러 팔로잉/팔로워를 수집합니다.</p>
+          <div class="onboarding-icon">👥</div>
+          <h3 data-i18n="onboardingStep2Title">유저 목록</h3>
+          <p data-i18n="onboardingStep2Desc">맞팔하지 않는 사람을 확인하고 언팔로우하세요.</p>
         </div>
         <div class="onboarding-step hidden" data-step="2">
-          <div class="onboarding-icon">✅</div>
-          <h3 data-i18n="onboardingStep3Title">결과 확인</h3>
-          <p data-i18n="onboardingStep3Desc">맞팔하지 않는 사람을 확인하고 언팔로우하세요.</p>
+          <div class="onboarding-icon">⚙️</div>
+          <h3 data-i18n="onboardingStep3Title">설정</h3>
+          <p data-i18n="onboardingStep3Desc">자동 분석, 예약 언팔로우 등을 설정하세요.</p>
         </div>
         <div class="onboarding-dots">
           <span class="onboarding-dot active"></span>

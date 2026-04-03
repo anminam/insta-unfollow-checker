@@ -1,0 +1,221 @@
+/* ── Main Navigation (3-tab: Dashboard / Users / Settings) ── */
+
+.main-nav {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.main-nav-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  position: relative;
+}
+
+.main-nav-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.main-nav-btn.active {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.main-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.main-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.main-nav-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── View Panels ── */
+
+.view-panel {
+  display: none;
+}
+
+.view-panel.active {
+  display: block;
+}
+
+/* ── Dashboard ── */
+
+.dashboard-action-bar {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.dashboard-action-bar .btn-primary {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.dashboard-placeholder {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+
+/* ── Sub Filter (pill tabs in Users view) ── */
+
+.sub-filter {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0 12px;
+  flex-wrap: wrap;
+}
+
+.sub-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.sub-filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.sub-filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.sub-filter-count {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.sub-filter-btn.active .sub-filter-count {
+  opacity: 1;
+}
+
+/* ── Settings View ── */
+
+.settings-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.settings-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.settings-row {
+  padding: 6px 0;
+}
+
+.settings-row-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Settings Account Card ── */
+
+.settings-account-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.settings-account-email {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.settings-account-guest {
+  padding: 8px 0;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+/* ── Clickable stat cards ── */
+
+.stat.clickable {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 480px) {
+  .main-nav-label {
+    display: none;
+  }
+
+  .main-nav-icon {
+    font-size: 20px;
+  }
+
+  .main-nav-btn {
+    padding: 14px 8px;
+  }
+
+  .sub-filter {
+    gap: 6px;
+  }
+
+  .sub-filter-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}

@@ -7,7 +7,7 @@ import { show, hide, showToast, formatEta, estimateEta, randomDelay, countdownDe
 
 export async function batchUnfollow({ targets, els, selectedIds, onEachUnfollow, onComplete }) {
   const {
-    resultSection, unfollowProgress, unfollowMessage, unfollowTarget,
+    viewUsers, unfollowProgress, unfollowMessage, unfollowTarget,
     unfollowBar, unfollowCount, unfollowStopBtn, unfollowEta, userListEl
   } = els;
 
@@ -15,7 +15,7 @@ export async function batchUnfollow({ targets, els, selectedIds, onEachUnfollow,
 
   unfollowStopBtn.disabled = false;
   unfollowStopBtn.textContent = t('stop');
-  hide(resultSection);
+  hide(viewUsers);
   show(unfollowProgress);
 
   const stopHandler = () => {
@@ -98,7 +98,7 @@ export async function batchUnfollow({ targets, els, selectedIds, onEachUnfollow,
 
   setTimeout(() => {
     hide(unfollowProgress);
-    show(resultSection);
+    show(viewUsers);
     onComplete(completed);
   }, 2000);
 }
