@@ -5,6 +5,7 @@ import { t } from '../modules/i18n.js';
 import { getCachedAnalysis, setCachedAnalysis, CACHE_KEY } from '../storage/cache.js';
 import { getSnapshots, saveSnapshot, buildUnstableUsers } from '../storage/snapshot.js';
 import { getWhitelist, saveWhitelist, getAutoWhitelist } from '../storage/whitelist.js';
+import { createUserEntry } from '../modules/change-entry.js';
 import { recordFirstSeen } from '../storage/preferences.js';
 import { setMaliciousUsers, FREE_ANALYSIS_LIMIT } from '../storage/tier.js';
 import { show, hide, getErrorText } from '../modules/ui.js';
@@ -83,32 +84,77 @@ export function setupAnalysis(els, state) {
     if (snapshots.length === 0 || !currentFollowers) { hide(followerChangesEl); return; }
     const prev = snapshots[0];
     if (!prev.followerUsernames) { hide(followerChangesEl); return; }
-    const prevSet = new Set(prev.followerUsernames);
-    const currUsernames = currentFollowers.map(u => u.username);
-    const currSet = new Set(currUsernames);
-    const lost = prev.followerUsernames.filter(u => !currSet.has(u));
-    const gained = currUsernames.filter(u => !prevSet.has(u));
-    if (lost.length === 0 && gained.length === 0) {
+
+    // Build current ID→username map
+    const currIdMap = new Map(currentFollowers.map(u => [u.id, u.username]));
+    const currUsernameToId = new Map(currentFollowers.map(u => [u.username, u.id]));
+
+    // If previous snapshot has ID map, use ID-based comparison
+    const prevIdMap = prev.followerIdMap ? new Map(Object.entries(prev.followerIdMap)) : null;
+
+    let gained = [];   // { username, userId }
+    let lost = [];     // { username, userId }
+    let renamed = [];  // { oldUsername, newUsername, userId }
+
+    if (prevIdMap) {
+      // ID-based comparison
+      const prevIds = new Set(prevIdMap.keys());
+      const currIds = new Set(currIdMap.keys());
+      for (const [id, username] of currIdMap) {
+        if (!prevIds.has(id)) gained.push({ username, userId: id });
+        else if (prevIdMap.get(id) !== username) renamed.push({ oldUsername: prevIdMap.get(id), newUsername: username, userId: id });
+      }
+      for (const [id, username] of prevIdMap) {
+        if (!currIds.has(id)) lost.push({ username, userId: id });
+      }
+    } else {
+      // Fallback: username-based comparison (old snapshots)
+      const prevSet = new Set(prev.followerUsernames);
+      const currSet = new Set(currentFollowers.map(u => u.username));
+      for (const u of currentFollowers) { if (!prevSet.has(u.username)) gained.push({ username: u.username, userId: u.id }); }
+      for (const u of prev.followerUsernames) { if (!currSet.has(u)) lost.push({ username: u, userId: null }); }
+    }
+
+    if (gained.length === 0 && lost.length === 0 && renamed.length === 0) {
       followerChangesEl.textContent = '';
       const span = document.createElement('span');
       span.className = 'no-changes'; span.textContent = t('noChanges');
       followerChangesEl.appendChild(span); show(followerChangesEl); return;
     }
+
     const details = document.createElement('details'); details.open = true;
     const summary = document.createElement('summary'); summary.textContent = t('followerChanges');
     details.appendChild(summary);
+
     if (gained.length > 0) {
       const gainDiv = document.createElement('div'); gainDiv.className = 'change-gained'; gainDiv.textContent = t('newFollowers', gained.length); details.appendChild(gainDiv);
       const gainList = document.createElement('div'); gainList.className = 'changes-list';
-      gained.forEach((u, i) => { if (i > 0) gainList.appendChild(document.createTextNode(', ')); const a = document.createElement('a'); a.href = `https://www.instagram.com/${encodeURIComponent(u)}/`; a.target = '_blank'; a.rel = 'noopener'; a.textContent = `@${u}`; gainList.appendChild(a); });
+      gained.forEach(u => { gainList.appendChild(createUserEntry(u.username, u.userId, { tabWhitelistCount })); });
       details.appendChild(gainList);
     }
     if (lost.length > 0) {
       const lostDiv = document.createElement('div'); lostDiv.className = 'change-lost'; lostDiv.textContent = t('lostFollowers', lost.length); details.appendChild(lostDiv);
       const lostList = document.createElement('div'); lostList.className = 'changes-list';
-      lost.forEach((u, i) => { if (i > 0) lostList.appendChild(document.createTextNode(', ')); const a = document.createElement('a'); a.href = `https://www.instagram.com/${encodeURIComponent(u)}/`; a.target = '_blank'; a.rel = 'noopener'; a.textContent = `@${u}`; lostList.appendChild(a); });
+      lost.forEach(u => { lostList.appendChild(createUserEntry(u.username, u.userId, { isLost: true, tabWhitelistCount })); });
       details.appendChild(lostList);
     }
+    if (renamed.length > 0) {
+      const renDiv = document.createElement('div'); renDiv.className = 'change-renamed'; renDiv.textContent = t('renamedFollowers', renamed.length); details.appendChild(renDiv);
+      const renList = document.createElement('div'); renList.className = 'changes-list';
+      renamed.forEach(u => {
+        const entry = document.createElement('span');
+        entry.className = 'change-entry';
+        const oldSpan = document.createElement('span'); oldSpan.className = 'renamed-old'; oldSpan.textContent = `@${u.oldUsername}`;
+        const arrow = document.createTextNode(' → ');
+        const a = document.createElement('a');
+        a.href = `https://www.instagram.com/${encodeURIComponent(u.newUsername)}/`;
+        a.target = '_blank'; a.rel = 'noopener'; a.textContent = `@${u.newUsername}`;
+        entry.appendChild(oldSpan); entry.appendChild(arrow); entry.appendChild(a);
+        renList.appendChild(entry);
+      });
+      details.appendChild(renList);
+    }
+
     followerChangesEl.textContent = ''; followerChangesEl.appendChild(details); show(followerChangesEl);
   }
 
@@ -215,9 +261,11 @@ export function setupAnalysis(els, state) {
       updateStatDeltas(totalFollowing, totalFollowers, mutual.length, notFollowingBack.length, followerOnly.length);
       setCachedAnalysis(following, followers, notFollowingBack, mutual, followerOnly, totalFollowing, totalFollowers);
       hide(progressSection); show(mainNav); fetchMaliciousUsersList();
-      saveSnapshot(totalFollowing, totalFollowers, notFollowingBack.length, followers.map(u => u.username), following.map(u => u.username));
+      const followerIdMap = Object.fromEntries(followers.map(u => [u.id, u.username]));
+      const followingIdMap = Object.fromEntries(following.map(u => [u.id, u.username]));
+      saveSnapshot(totalFollowing, totalFollowers, notFollowingBack.length, followers.map(u => u.username), following.map(u => u.username), followerIdMap, followingIdMap);
       displayResults(totalFollowing, totalFollowers); buildUnstableUsers(); autoWhitelistMutuals();
-      updateGrowthAndRetention(totalFollowers);
+      updateGrowthAndRetention(totalFollowers); state.showSnapshots?.();
       chrome.runtime.sendMessage({ action: 'CLEAR_BADGE' }).catch(() => {});
     } catch (error) {
       hide(progressSection); show(mainNav);

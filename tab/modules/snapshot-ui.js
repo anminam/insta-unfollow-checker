@@ -2,11 +2,11 @@
 
 import { t } from './i18n.js';
 import { getSnapshots, deleteSnapshot } from '../storage/snapshot.js';
-import { getWhitelist } from '../storage/whitelist.js';
-import { show, hide, showToast, formatDate, usernameLink } from './ui.js';
+import { show, hide, showToast, formatDate } from './ui.js';
 import { drawStatsChart } from './chart.js';
+import { buildChangesDOM } from './change-entry.js';
 
-export function initSnapshotUI({ snapshotSection, snapshotList, compareBtn, compareModal, compareContent, compareCloseBtn, compareSelected }) {
+export function initSnapshotUI({ snapshotSection, snapshotList, compareBtn, compareModal, compareContent, compareCloseBtn, compareSelected, getState }) {
 
   function showSnapshots() {
     const snapshots = getSnapshots();
@@ -19,7 +19,7 @@ export function initSnapshotUI({ snapshotSection, snapshotList, compareBtn, comp
     if (snapshots.length >= 2) show(compareBtn);
     else hide(compareBtn);
 
-    snapshotList.innerHTML = '';
+    snapshotList.textContent = '';
     compareSelected.clear();
 
     snapshots.forEach((snap, i) => {
@@ -39,54 +39,125 @@ export function initSnapshotUI({ snapshotSection, snapshotList, compareBtn, comp
         return `<span class="snapshot-delta ${cls}">${sign}${diff}</span>`;
       };
 
-      let changesHtml = '';
+      // Build changes using shared module (ID-based when available)
+      let changesEl = null;
       if (prev && snap.followerUsernames && prev.followerUsernames) {
-        const prevSet = new Set(prev.followerUsernames);
-        const currSet = new Set(snap.followerUsernames);
-        const lost = prev.followerUsernames.filter(u => !currSet.has(u));
-        const gained = snap.followerUsernames.filter(u => !prevSet.has(u));
+        const prevIdMap = prev.followerIdMap ? new Map(Object.entries(prev.followerIdMap)) : null;
+        const currIdMap = snap.followerIdMap ? new Map(Object.entries(snap.followerIdMap)) : null;
 
-        if (lost.length > 0 || gained.length > 0) {
-          const lostHtml = lost.length > 0
-            ? `<div><span class="change-label-lost">${t('lostFollowers', lost.length)}</span><div class="snapshot-changes-list">${lost.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`
-            : '';
-          const gainedHtml = gained.length > 0
-            ? `<div><span class="change-label-new">${t('newFollowers', gained.length)}</span><div class="snapshot-changes-list">${gained.map(u => `${usernameLink(u)}`).join(', ')}</div></div>`
-            : '';
-          changesHtml = `<details class="snapshot-changes"><summary>${t('followerChanges')}</summary>${lostHtml}${gainedHtml}</details>`;
+        let gained = [], lost = [], renamed = [];
+
+        if (prevIdMap && currIdMap) {
+          const prevIds = new Set(prevIdMap.keys());
+          const currIds = new Set(currIdMap.keys());
+          for (const [id, username] of currIdMap) {
+            if (!prevIds.has(id)) gained.push({ username, userId: id });
+            else if (prevIdMap.get(id) !== username) renamed.push({ oldUsername: prevIdMap.get(id), newUsername: username, userId: id });
+          }
+          for (const [id, username] of prevIdMap) {
+            if (!currIds.has(id)) lost.push({ username, userId: id });
+          }
+        } else {
+          const prevSet = new Set(prev.followerUsernames);
+          const currSet = new Set(snap.followerUsernames);
+          prev.followerUsernames.filter(u => !currSet.has(u)).forEach(u => lost.push({ username: u, userId: null }));
+          snap.followerUsernames.filter(u => !prevSet.has(u)).forEach(u => gained.push({ username: u, userId: null }));
         }
+
+        // resolveUserId: lazy lookup from analysis data + all snapshot idMaps
+        const resolveUserId = (username) => {
+          // 1. Try current analysis data
+          const data = getState?.()?.analysisData;
+          if (data) {
+            const all = [...(data.followers || []), ...(data.following || [])];
+            const found = all.find(u => u.username === username);
+            if (found) return found.id;
+          }
+          // 2. Try all snapshots' idMaps (reverse lookup: find id by username)
+          for (const s of snapshots) {
+            if (s.followerIdMap) {
+              for (const [id, uname] of Object.entries(s.followerIdMap)) {
+                if (uname === username) return id;
+              }
+            }
+            if (s.followingIdMap) {
+              for (const [id, uname] of Object.entries(s.followingIdMap)) {
+                if (uname === username) return id;
+              }
+            }
+          }
+          return null;
+        };
+
+        changesEl = buildChangesDOM({ gained, lost, renamed, resolveUserId });
       }
 
       const autoLabel = snap.auto ? ' (auto)' : '';
 
-      card.innerHTML = `
-        <div class="snapshot-header">
-          <span class="snapshot-date">${formatDate(snap.date)}${autoLabel}</span>
-          <div class="snapshot-actions">
-            <button class="btn btn-secondary btn-sm snapshot-view" data-index="${i}">${t('snapshotView')}</button>
-            <input type="checkbox" class="snapshot-compare-check" data-snap-index="${i}" title="비교 선택">
-            <button class="snapshot-delete" data-index="${i}" title="삭제">&times;</button>
-          </div>
-        </div>
-        <div class="snapshot-stats">
-          <div class="snapshot-stat">
-            <span class="snapshot-stat-label">${t('following')}</span>
-            <span class="snapshot-stat-value">${snap.following}</span>
-            ${deltaHtml(snap.following, prev?.following, false)}
-          </div>
-          <div class="snapshot-stat">
-            <span class="snapshot-stat-label">${t('followers')}</span>
-            <span class="snapshot-stat-value">${snap.followers}</span>
-            ${deltaHtml(snap.followers, prev?.followers, false)}
-          </div>
-          <div class="snapshot-stat">
-            <span class="snapshot-stat-label">${t('notFollowing')}</span>
-            <span class="snapshot-stat-value">${snap.notFollowingBack}</span>
-            ${deltaHtml(snap.notFollowingBack, prev?.notFollowingBack, true)}
-          </div>
-        </div>
-        ${changesHtml}
-      `;
+      // Build card using DOM API
+      const header = document.createElement('div');
+      header.className = 'snapshot-header';
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'snapshot-date';
+      dateSpan.textContent = `${formatDate(snap.date)}${autoLabel}`;
+      const actions = document.createElement('div');
+      actions.className = 'snapshot-actions';
+      const viewBtn = document.createElement('button');
+      viewBtn.className = 'btn btn-secondary btn-sm snapshot-view';
+      viewBtn.dataset.index = i;
+      viewBtn.textContent = t('snapshotView');
+      const compareCheck = document.createElement('input');
+      compareCheck.type = 'checkbox';
+      compareCheck.className = 'snapshot-compare-check';
+      compareCheck.dataset.snapIndex = i;
+      compareCheck.title = '비교 선택';
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'snapshot-delete';
+      deleteBtn.dataset.index = i;
+      deleteBtn.title = '삭제';
+      deleteBtn.textContent = '\u00D7';
+      actions.appendChild(viewBtn);
+      actions.appendChild(compareCheck);
+      actions.appendChild(deleteBtn);
+      header.appendChild(dateSpan);
+      header.appendChild(actions);
+      card.appendChild(header);
+
+      const stats = document.createElement('div');
+      stats.className = 'snapshot-stats';
+      const statItems = [
+        { label: t('following'), value: snap.following, prev: prev?.following, invert: false },
+        { label: t('followers'), value: snap.followers, prev: prev?.followers, invert: false },
+        { label: t('notFollowing'), value: snap.notFollowingBack, prev: prev?.notFollowingBack, invert: true }
+      ];
+      statItems.forEach(s => {
+        const stat = document.createElement('div');
+        stat.className = 'snapshot-stat';
+        const lbl = document.createElement('span');
+        lbl.className = 'snapshot-stat-label';
+        lbl.textContent = s.label;
+        const val = document.createElement('span');
+        val.className = 'snapshot-stat-value';
+        val.textContent = s.value;
+        stat.appendChild(lbl);
+        stat.appendChild(val);
+        if (prev && s.prev !== undefined) {
+          const diff = s.value - s.prev;
+          const delta = document.createElement('span');
+          if (diff === 0) { delta.className = 'snapshot-delta neutral'; delta.textContent = '\u00B10'; }
+          else {
+            const cls = s.invert ? (diff > 0 ? 'down' : 'up') : (diff > 0 ? 'up' : 'down');
+            delta.className = `snapshot-delta ${cls}`;
+            delta.textContent = `${diff > 0 ? '+' : ''}${diff}`;
+          }
+          stat.appendChild(delta);
+        }
+        stats.appendChild(stat);
+      });
+      card.appendChild(stats);
+
+      if (changesEl) card.appendChild(changesEl);
+
       snapshotList.appendChild(card);
     });
 

@@ -290,6 +290,87 @@
 
 .follower-changes .changes-list a:hover { text-decoration: underline; }
 
+.change-renamed {
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.renamed-old {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.change-entry {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  margin-right: 6px;
+  margin-bottom: 4px;
+}
+
+.change-popup {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 5px;
+  gap: 4px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--accent-glow);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.change-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--accent);
+}
+
+.change-entry:hover .change-popup {
+  display: flex;
+}
+
+.change-popup-btn {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-card);
+  border-radius: 7px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  text-align: center;
+}
+
+.change-popup-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.change-popup-btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.change-popup-btn-accent:hover {
+  background: var(--accent-hover);
+  color: #fff;
+}
+
 .no-changes {
   color: var(--text-tertiary);
   font-style: italic;

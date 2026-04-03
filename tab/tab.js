@@ -247,7 +247,8 @@ const { showSnapshots } = initSnapshotUI({
   snapshotSection: $('snapshot-section'), snapshotList: $('snapshot-list'),
   compareBtn: $('snapshot-compare-btn'), compareModal: $('compare-modal'),
   compareContent: $('compare-content'), compareCloseBtn: $('compare-close'),
-  compareSelected: state.compareSelected
+  compareSelected: state.compareSelected,
+  getState: () => state
 });
 state.showSnapshots = showSnapshots;
 

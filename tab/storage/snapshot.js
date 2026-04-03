@@ -11,7 +11,7 @@ export function getSnapshots() {
   return getJSON(SNAPSHOT_KEY, []);
 }
 
-export function saveSnapshot(following, followers, notFollowingBack, followerUsernames, followingUsernames) {
+export function saveSnapshot(following, followers, notFollowingBack, followerUsernames, followingUsernames, followerIdMap, followingIdMap) {
   const snapshots = getSnapshots();
   snapshots.unshift({
     date: new Date().toISOString(),
@@ -19,7 +19,9 @@ export function saveSnapshot(following, followers, notFollowingBack, followerUse
     followers,
     notFollowingBack,
     followerUsernames: followerUsernames || [],
-    followingUsernames: followingUsernames || []
+    followingUsernames: followingUsernames || [],
+    followerIdMap: followerIdMap || null,
+    followingIdMap: followingIdMap || null
   });
   if (snapshots.length > MAX_SNAPSHOTS) snapshots.length = MAX_SNAPSHOTS;
   setJSON(SNAPSHOT_KEY, snapshots);
