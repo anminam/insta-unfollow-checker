@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build": "./build.sh prod",
+    "build:dev": "./build.sh dev",
+    "build:zip": "./build.sh zip"
   },
   "devDependencies": {
     "vitest": "^3.0.0"

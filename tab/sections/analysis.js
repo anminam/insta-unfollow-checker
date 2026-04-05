@@ -284,6 +284,27 @@ export function setupAnalysis(els, state) {
       const instaLink = document.getElementById('instagram-link');
       if (instaLink) { error.message === 'NOT_LOGGED_IN' ? show(instaLink) : hide(instaLink); }
       show(errorSection);
+      // Auto-retry for rate limit errors after 5 minutes
+      if (error.message === 'RATE_LIMITED') {
+        let countdown = 300;
+        const autoRetryEl = document.getElementById('auto-retry-countdown');
+        if (autoRetryEl) {
+          show(autoRetryEl);
+          autoRetryEl.textContent = t('autoRetryIn', countdown);
+          const timer = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+              clearInterval(timer);
+              hide(autoRetryEl);
+              hide(errorSection);
+              sessionStorage.removeItem(CACHE_KEY);
+              startAnalysis();
+            } else {
+              autoRetryEl.textContent = t('autoRetryIn', countdown);
+            }
+          }, 1000);
+        }
+      }
     }
   }
 

@@ -70,6 +70,7 @@
     <!-- Error Section -->
     <div id="error-section" class="error-section hidden">
       <p id="error-message"></p>
+      <p id="auto-retry-countdown" class="auto-retry-countdown hidden"></p>
       <a id="instagram-link" href="https://www.instagram.com/" target="_blank" rel="noopener" class="btn btn-instagram hidden" data-i18n="goToInstagram">Instagram 열기</a>
       <button id="retry-btn" class="btn btn-secondary" data-i18n="retry">다시 시도</button>
     </div>
@@ -89,23 +90,23 @@
     </div>
 
     <!-- ══════ Main Navigation ══════ -->
-    <nav class="main-nav" id="main-nav">
-      <button class="main-nav-btn active" data-view="dashboard">
-        <span class="main-nav-icon">📊</span>
+    <nav class="main-nav" id="main-nav" role="tablist" aria-label="Main navigation">
+      <button class="main-nav-btn active" data-view="dashboard" role="tab" aria-selected="true" aria-controls="view-dashboard">
+        <span class="main-nav-icon" aria-hidden="true">📊</span>
         <span class="main-nav-label" data-i18n="dashboard">대시보드</span>
       </button>
-      <button class="main-nav-btn" data-view="users" id="nav-users-btn" disabled>
-        <span class="main-nav-icon">👥</span>
+      <button class="main-nav-btn" data-view="users" id="nav-users-btn" disabled role="tab" aria-selected="false" aria-controls="view-users">
+        <span class="main-nav-icon" aria-hidden="true">👥</span>
         <span class="main-nav-label" data-i18n="userList">유저 목록</span>
       </button>
-      <button class="main-nav-btn" data-view="settings">
-        <span class="main-nav-icon">⚙️</span>
+      <button class="main-nav-btn" data-view="settings" role="tab" aria-selected="false" aria-controls="view-settings">
+        <span class="main-nav-icon" aria-hidden="true">⚙️</span>
         <span class="main-nav-label" data-i18n="settings">설정</span>
       </button>
     </nav>
 
     <!-- ══════ View: Dashboard ══════ -->
-    <div id="view-dashboard" class="view-panel active">
+    <div id="view-dashboard" class="view-panel active" role="tabpanel" aria-labelledby="nav-dashboard-btn">
 
       <!-- Action Bar -->
       <div class="dashboard-action-bar">
@@ -198,7 +199,7 @@
     </div>
 
     <!-- ══════ View: Users ══════ -->
-    <div id="view-users" class="view-panel">
+    <div id="view-users" class="view-panel" role="tabpanel" aria-labelledby="nav-users-btn">
 
       <!-- Sub Filter (replaces old 6-tab nav) -->
       <nav class="sub-filter" id="sub-filter">
@@ -211,7 +212,7 @@
 
       <!-- Filter Bar -->
       <div class="filter-bar">
-        <input type="text" id="filter-search" class="filter-search" placeholder="사용자 검색..." data-i18n-placeholder="searchPlaceholder">
+        <input type="text" id="filter-search" class="filter-search" placeholder="사용자 검색..." data-i18n-placeholder="searchPlaceholder" aria-label="Search users">
         <button id="filter-verified-btn" class="filter-btn" title="인증 계정만">&#10003; <span data-i18n="verified">인증</span></button>
         <button id="filter-ghost-btn" class="filter-btn" title="고스트 팔로워">&#128123; <span data-i18n="filterGhost">고스트</span></button>
         <select id="filter-sort" class="filter-sort">
@@ -240,6 +241,7 @@
           <span data-i18n="selectAll">전체 선택</span>
         </label>
         <div class="toolbar-right">
+          <button id="batch-tag-btn" class="btn btn-secondary btn-sm" disabled data-i18n="batchTag">일괄 태그</button>
           <button id="scheduled-unfollow-btn" class="btn btn-secondary btn-sm" disabled data-i18n="scheduledUnfollow">예약 언팔</button>
           <button id="unfollow-selected-btn" class="btn btn-danger btn-sm" disabled>
             <span data-i18n="unfollowSelected">선택 언팔로우</span> (<span id="selected-count">0</span>)
@@ -253,7 +255,7 @@
     </div>
 
     <!-- ══════ View: Settings ══════ -->
-    <div id="view-settings" class="view-panel">
+    <div id="view-settings" class="view-panel" role="tabpanel" aria-labelledby="nav-settings-btn">
 
       <!-- Automation -->
       <div class="settings-card">
@@ -386,6 +388,24 @@
         <div class="modal-buttons">
           <button id="memo-cancel" class="btn btn-secondary" data-i18n="no">취소</button>
           <button id="memo-save" class="btn btn-primary btn-sm" data-i18n="save">저장</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Tag Modal -->
+    <div id="batch-tag-modal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <h3 class="modal-title" data-i18n="batchTagTitle">일괄 태그 적용</h3>
+        <p id="batch-tag-count" class="memo-username"></p>
+        <div class="memo-tags">
+          <button class="tag-btn" data-tag="friend" data-i18n="tagFriend">친구</button>
+          <button class="tag-btn" data-tag="celeb" data-i18n="tagCeleb">셀럽</button>
+          <button class="tag-btn" data-tag="brand" data-i18n="tagBrand">브랜드</button>
+          <button class="tag-btn" data-tag="work" data-i18n="tagWork">업무</button>
+        </div>
+        <div class="modal-buttons">
+          <button id="batch-tag-cancel" class="btn btn-secondary" data-i18n="no">취소</button>
+          <button id="batch-tag-apply" class="btn btn-primary btn-sm" data-i18n="batchTagApply">적용</button>
         </div>
       </div>
     </div>

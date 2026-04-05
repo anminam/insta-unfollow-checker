@@ -155,8 +155,12 @@ state.switchView = (viewName) => {
   [els.viewDashboard, els.viewUsers, els.viewSettings].forEach(v => v.classList.remove('active'));
   const viewMap = { dashboard: els.viewDashboard, users: els.viewUsers, settings: els.viewSettings };
   viewMap[viewName]?.classList.add('active');
-  // Toggle nav buttons
-  els.mainNav.querySelectorAll('.main-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewName));
+  // Toggle nav buttons + aria
+  els.mainNav.querySelectorAll('.main-nav-btn').forEach(btn => {
+    const isActive = btn.dataset.view === viewName;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
   // Refresh user list when switching to users
   if (viewName === 'users' && state.analysisData) state.refreshList();
 };

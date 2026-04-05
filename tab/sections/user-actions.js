@@ -24,10 +24,14 @@ export function setupUserActions(els, state) {
   let memoTargetTags = [];
   let scheduledTimer = null;
 
+  const batchTagBtn = document.getElementById('batch-tag-btn');
+
   function updateSelectedCount() {
     selectedCountEl.textContent = state.selectedIds.size;
-    unfollowSelectedBtn.disabled = state.selectedIds.size === 0;
-    scheduledUnfollowBtn.disabled = state.selectedIds.size === 0;
+    const hasSelection = state.selectedIds.size === 0;
+    unfollowSelectedBtn.disabled = hasSelection;
+    scheduledUnfollowBtn.disabled = hasSelection;
+    if (batchTagBtn) batchTagBtn.disabled = hasSelection;
   }
 
   function syncCheckboxes() {
@@ -309,6 +313,55 @@ export function setupUserActions(els, state) {
       else { btn.textContent = t('fail'); setTimeout(() => { btn.textContent = t('refollow'); btn.disabled = false; }, 2000); }
     } catch { btn.textContent = t('error'); setTimeout(() => { btn.textContent = t('refollow'); btn.disabled = false; }, 2000); }
   });
+
+  // ── Batch Tag ──
+  if (batchTagBtn) {
+    let batchTagSelected = [];
+
+    batchTagBtn.addEventListener('click', () => {
+      if (state.selectedIds.size === 0) return;
+      const modal = document.getElementById('batch-tag-modal');
+      const countEl = document.getElementById('batch-tag-count');
+      countEl.textContent = t('selectAll') + `: ${state.selectedIds.size}`;
+      batchTagSelected = [];
+      modal.querySelectorAll('.tag-btn').forEach(btn => btn.classList.remove('active'));
+      show(modal);
+    });
+
+    document.getElementById('batch-tag-modal').addEventListener('click', (e) => {
+      const tagBtn = e.target.closest('.tag-btn');
+      if (!tagBtn) return;
+      const tag = tagBtn.dataset.tag;
+      if (batchTagSelected.includes(tag)) {
+        batchTagSelected = batchTagSelected.filter(t => t !== tag);
+        tagBtn.classList.remove('active');
+      } else {
+        batchTagSelected.push(tag);
+        tagBtn.classList.add('active');
+      }
+    });
+
+    document.getElementById('batch-tag-apply').addEventListener('click', () => {
+      if (batchTagSelected.length === 0 || state.selectedIds.size === 0) return;
+      let count = 0;
+      state.selectedIds.forEach(userId => {
+        const existing = getUserMemo(userId);
+        const currentTags = existing?.tags ? [...existing.tags] : [];
+        const merged = [...new Set([...currentTags, ...batchTagSelected])];
+        setUserMemo(userId, existing?.text || '', merged);
+        count++;
+      });
+      hide(document.getElementById('batch-tag-modal'));
+      showToast(t('batchTagDone', count, batchTagSelected.join(', ')), 'success');
+      if (state.analysisData) state.refreshList();
+      batchTagSelected = [];
+    });
+
+    document.getElementById('batch-tag-cancel').addEventListener('click', () => {
+      hide(document.getElementById('batch-tag-modal'));
+      batchTagSelected = [];
+    });
+  }
 
   // ── Start scheduled if queue exists ──
   function resumeScheduled() {
