@@ -51,10 +51,21 @@ export function setupAnalysis(els, state) {
   });
 
   function updateRatio(totalFollowing, totalFollowers) {
-    if (totalFollowing === 0) { ratioValueEl.textContent = '-'; ratioValueEl.className = 'stat-value'; return; }
+    const ratioBarFill = document.getElementById('ratio-bar-fill');
+    if (totalFollowing === 0) {
+      ratioValueEl.textContent = '-'; ratioValueEl.className = 'stat-value';
+      if (ratioBarFill) { ratioBarFill.style.width = '0'; ratioBarFill.className = 'ratio-bar-fill'; }
+      return;
+    }
     const ratio = totalFollowers / totalFollowing;
     ratioValueEl.textContent = ratio.toFixed(2);
-    ratioValueEl.className = `stat-value ${ratio < 0.5 ? 'ratio-bad' : ratio < 1 ? 'ratio-warning' : 'ratio-good'}`;
+    const cls = ratio < 0.5 ? 'ratio-bad' : ratio < 1 ? 'ratio-warning' : 'ratio-good';
+    ratioValueEl.className = `stat-value ${cls}`;
+    if (ratioBarFill) {
+      const pct = Math.min(ratio / 1.5, 1) * 100;
+      ratioBarFill.style.width = `${pct}%`;
+      ratioBarFill.className = `ratio-bar-fill ${cls}`;
+    }
   }
 
   function setDelta(el, diff, invertColor = false) {

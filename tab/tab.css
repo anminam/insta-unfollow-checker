@@ -800,7 +800,7 @@ body {
 }
 
 .snapshot-changes-list a {
-  color: var(--text-link);
+  color: var(--text-primary);
   text-decoration: none;
   font-weight: 600;
   font-size: 12px;
@@ -808,8 +808,8 @@ body {
 
 .snapshot-changes-list a:hover { text-decoration: underline; }
 
-.change-label-lost { color: var(--color-danger); font-weight: 600; }
-.change-label-new { color: var(--color-up); font-weight: 600; }
+.change-label-lost { color: var(--text-primary); font-weight: 600; }
+.change-label-new { color: var(--text-primary); font-weight: 600; }
 
 /* ── History ── */
 
@@ -1192,13 +1192,13 @@ body {
 .follower-changes summary:hover { color: var(--accent); }
 
 .change-gained {
-  color: var(--color-up);
+  color: var(--text-primary);
   font-weight: 600;
   margin-top: 8px;
 }
 
 .change-lost {
-  color: var(--color-danger);
+  color: var(--text-primary);
   font-weight: 600;
   margin-top: 8px;
 }
@@ -1210,7 +1210,7 @@ body {
 }
 
 .follower-changes .changes-list a {
-  color: var(--text-link);
+  color: var(--text-primary);
   text-decoration: none;
   font-weight: 600;
 }
@@ -1320,7 +1320,7 @@ body {
 
 .filter-btn.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--text-primary);
   border-color: var(--accent);
   box-shadow: var(--shadow-accent);
 }
@@ -2240,7 +2240,7 @@ body {
   top: 4px;
   right: 4px;
   font-size: 10px;
-  color: #fff;
+  color: var(--text-primary);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 

@@ -7,14 +7,18 @@ Find out who doesn't follow you back on Instagram — instantly.
 • Mutual Follows Tab — See all accounts that follow each other
 • One-Click Unfollow — Unfollow individually, by selection, or all at once
 • Scheduled Unfollow — Safely processes 1 account every 3-5 minutes
+• Smart Unfollow Recommendations — Auto-detect ghost/inactive accounts for unfollowing
 
 📊 Statistics & Tracking
 
+• Smart Dashboard — Account insights at a glance
+• Notable Changes Alert — Auto-detect mass unfollows & follower surges
+• Weekly Trend Sparkline — Mini follower change chart
 • Follower/Following/Non-follower trend charts
 • Follower change tracking (gained/lost)
 • Up to 20 analysis history snapshots
 • Snapshot comparison for detailed changes
-• Follower ratio health indicator
+• Follower ratio health + Account safety score
 
 🛡️ Data Management
 

@@ -933,33 +933,33 @@
 }
 
 .badge-ghost {
-  color: #9ca3af;
-  background: #f9fafb;
-  border-color: #e5e7eb;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
 }
 
 .badge-ghost-score {
-  color: #ef4444;
-  background: #fef2f2;
-  border-color: #fecaca;
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+  border-color: var(--color-danger);
 }
 
 .badge-unstable {
-  color: #f59e0b;
-  background: #fffbeb;
-  border-color: #fde68a;
+  color: var(--color-badge-text);
+  background: var(--color-badge-bg);
+  border-color: var(--color-badge-border);
 }
 
 .badge-long-wait {
-  color: #d97706;
-  background: #fef9ee;
-  border-color: #fde68a;
+  color: var(--color-badge-text);
+  background: var(--color-badge-bg);
+  border-color: var(--color-badge-border);
 }
 
 .badge-malicious {
-  color: #dc2626;
-  background: #fef2f2;
-  border-color: #fca5a5;
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+  border-color: var(--color-danger);
   animation: maliciousPulse 2s ease-in-out infinite;
   position: relative;
   cursor: help;

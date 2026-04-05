@@ -18,6 +18,8 @@ import { setupAnalysis } from './sections/analysis.js';
 import { setupUserActions } from './sections/user-actions.js';
 import { setupAuth } from './sections/auth.js';
 import { setupSettings } from './sections/settings.js';
+import { renderInsights, drawSparkline } from './modules/dashboard-insights.js';
+import { getRecommendations, getReasonKey } from './modules/smart-unfollow.js';
 
 // ── DOM References ──
 
@@ -86,6 +88,15 @@ const els = {
   scheduledIntervalSlider: $('scheduled-interval-slider'),
   scheduledIntervalValue: $('scheduled-interval-value'),
   scheduledDailyLimitInput: $('scheduled-daily-limit-input'),
+
+  // Insights + Smart Unfollow
+  insightsCard: $('insights-card'),
+  insightsList: $('insights-list'),
+  smartUnfollowSection: $('smart-unfollow-section'),
+  smartUnfollowList: $('smart-unfollow-list'),
+  smartUnfollowBtn: $('smart-unfollow-btn'),
+  sparklineSection: $('sparkline-section'),
+  sparklineChart: $('sparkline-chart'),
 
   // Settings account card
   settingsAccountEmail: $('settings-account-email'),
@@ -186,7 +197,7 @@ state.showScheduledStatus = userActions.showScheduledStatus;
 // ── Dark Mode + Language ──
 
 initDarkMode(els.darkModeBtn);
-els.darkModeBtn.addEventListener('click', () => { toggleDarkMode(els.darkModeBtn); drawStatsChart(); });
+els.darkModeBtn.addEventListener('click', () => { toggleDarkMode(els.darkModeBtn); drawStatsChart(); drawSparkline(els.sparklineChart, els.sparklineSection); });
 els.langSelect.value = getLang();
 els.langSelect.addEventListener('change', () => {
   setLang(els.langSelect.value); applyI18n(els.filterSortSelect);
@@ -278,6 +289,96 @@ setupSettings(els);
 initShortcuts(els, state);
 
 const { checkAuthState } = setupAuth(els, state, { analysis, userActions, showSnapshots, initProfilePreview });
+
+// ── Dashboard Extras (Insights + Sparkline + Smart Unfollow) ──
+
+function refreshDashboardExtras() {
+  renderInsights(els.insightsList, els.insightsCard);
+  drawSparkline(els.sparklineChart, els.sparklineSection);
+  refreshSmartUnfollow();
+
+  // Premium lock for sparkline and smart unfollow
+  if (state.userTier === 'free') {
+    applyPremiumLock(els.sparklineSection, t('premiumSparkline'));
+    applyPremiumLock(els.smartUnfollowSection, t('premiumSmartUnfollow'));
+  }
+}
+
+function applyPremiumLock(el, msg) {
+  if (!el || el.classList.contains('hidden')) return;
+  el.classList.add('premium-lock');
+  // Remove existing badge if any
+  const existing = el.querySelector('.premium-lock-badge');
+  if (existing) existing.remove();
+  const badge = document.createElement('span');
+  badge.className = 'premium-lock-badge';
+  badge.textContent = t('premiumFeature');
+  badge.title = msg;
+  el.appendChild(badge);
+}
+
+function refreshSmartUnfollow() {
+  if (!state.analysisData?.notFollowingBack) {
+    hide(els.smartUnfollowSection);
+    return;
+  }
+  const recs = getRecommendations(state.analysisData.notFollowingBack, 5);
+  if (recs.length === 0) { hide(els.smartUnfollowSection); return; }
+
+  show(els.smartUnfollowSection);
+  els.smartUnfollowList.textContent = '';
+
+  recs.forEach(({ user, score, reasons }) => {
+    const row = document.createElement('div');
+    row.className = 'smart-user-row';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'smart-user-name';
+    const a = document.createElement('a');
+    a.href = `https://www.instagram.com/${encodeURIComponent(user.username)}/`;
+    a.target = '_blank'; a.rel = 'noopener';
+    a.textContent = `@${user.username}`;
+    nameEl.appendChild(a);
+
+    const reasonsEl = document.createElement('span');
+    reasonsEl.className = 'smart-user-reasons';
+    reasons.forEach(r => {
+      const badge = document.createElement('span');
+      badge.className = 'smart-reason-badge';
+      badge.textContent = t(getReasonKey(r));
+      reasonsEl.appendChild(badge);
+    });
+
+    const scoreEl = document.createElement('span');
+    scoreEl.className = 'smart-user-score';
+    scoreEl.textContent = score;
+
+    row.append(nameEl, reasonsEl, scoreEl);
+    els.smartUnfollowList.appendChild(row);
+  });
+}
+
+els.smartUnfollowBtn.addEventListener('click', async () => {
+  if (!state.analysisData?.notFollowingBack) return;
+  const recs = getRecommendations(state.analysisData.notFollowingBack, 10);
+  if (recs.length === 0) return;
+
+  // Switch to users view with recommended users selected
+  state.switchView('users');
+  state.switchTab('not-following');
+  state.selectedIds.clear();
+  recs.forEach(r => state.selectedIds.add(r.user.id));
+  state.refreshList();
+  // Check the select-all box proportionally
+  els.selectAllCheckbox.checked = false;
+});
+
+// Hook into analysis completion
+const origEnableUsersView = state.enableUsersView;
+state.enableUsersView = () => {
+  origEnableUsersView();
+  refreshDashboardExtras();
+};
 
 // ── Resize + Cleanup ──
 

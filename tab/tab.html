@@ -142,6 +142,9 @@
         </div>
         <div class="stat stat-ratio">
           <span class="stat-value" id="ratio-value">-</span>
+          <div class="ratio-bar-container">
+            <div class="ratio-bar-fill" id="ratio-bar-fill"></div>
+          </div>
           <span class="stat-label" data-i18n="ratio">비율</span>
         </div>
         <div class="stat stat-growth">
@@ -159,8 +162,31 @@
         <p data-i18n="noDataYet">분석을 실행하면 여기에 결과가 표시됩니다</p>
       </div>
 
+      <!-- Insights Card -->
+      <div id="insights-card" class="insights-card hidden">
+        <h3 class="insights-card-title" data-i18n="insightsTitle">주목할 변화</h3>
+        <div id="insights-list" class="insights-list"></div>
+      </div>
+
+      <!-- Smart Unfollow Recommendations -->
+      <div id="smart-unfollow-section" class="smart-unfollow-section hidden">
+        <div class="smart-unfollow-header">
+          <h3 class="smart-unfollow-title" data-i18n="smartUnfollowTitle">추천 언팔로우</h3>
+          <button id="smart-unfollow-btn" class="btn btn-danger btn-sm" data-i18n="smartUnfollowBtn">추천 언팔</button>
+        </div>
+        <div id="smart-unfollow-list" class="smart-unfollow-list"></div>
+      </div>
+
       <!-- Follower Changes -->
       <div id="follower-changes" class="follower-changes hidden"></div>
+
+      <!-- Weekly Sparkline -->
+      <div id="sparkline-section" class="sparkline-section hidden">
+        <h3 class="history-title" data-i18n="weeklyTrend">주간 트렌드</h3>
+        <div class="sparkline-wrapper">
+          <canvas id="sparkline-chart" width="400" height="80"></canvas>
+        </div>
+      </div>
 
       <!-- Stats Chart -->
       <div id="stats-section" class="stats-section hidden">
